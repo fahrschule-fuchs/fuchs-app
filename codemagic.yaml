@@ -15,7 +15,7 @@ workflows:
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         INFO_PLIST: "apps/schueler/ios/App/App/Info.plist"
-      node: 20
+      node: 22
       xcode: latest
 
     scripts:
