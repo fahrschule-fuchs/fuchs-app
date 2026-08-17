@@ -1,0 +1,86 @@
+{
+  "_hinweis": "Zentrale Konfiguration des Build-Vorgangs. Nur diese Datei anpassen, nie die Skripte.",
+
+  "quellordner": "quellen",
+  "_quellordner_hinweis": "Hierhin die Originaldateien aus Dropbox 'Fuchs-App/app-phone/' kopieren: index.html, fahrlehrer_bereich.html, sw.js, alle *.png, *.webmanifest. Sie werden NICHT verändert - der Build erzeugt Kopien.",
+
+  "server": {
+    "origin": "https://app.fahrsyn.de"
+  },
+
+  "apps": [
+    {
+      "id": "schueler",
+      "anzeigename": "FUCHS",
+      "vollname": "FUCHS – Deine Fahrschule",
+      "appId": "de.fahrsyn.fuchs",
+      "quelldatei": "index.html",
+      "apiBasis": "https://app.fahrsyn.de/app/",
+      "pushEndpunkt": "push/native",
+      "loginErkennung": ["login", "login-nummer"],
+      "icons": {
+        "192": "icon-192.png",
+        "512": "icon-512.png",
+        "apple": "apple-touch-icon.png"
+      },
+      "mitkopieren": [
+        "icon-192.png",
+        "icon-512.png",
+        "apple-touch-icon.png",
+        "fuchs-logo-komplett.png",
+        "fuchs-icon.png"
+      ],
+      "ersetzungen": [
+        {
+          "_zweck": "Video-Fallback: relativer MP4-Pfad zeigt sonst ins Leere (wird vom fetch-Wrapper nicht erfasst, da <video src>)",
+          "suchen": "\"videos/\" + l.datei",
+          "ersetzen": "\"https://app.fahrsyn.de/app/videos/\" + l.datei",
+          "pflicht": false
+        },
+        {
+          "_zweck": "Link zur Fahrlehrer-App: absolut machen, wird dann vom Boot-Skript im Systembrowser geoeffnet",
+          "suchen": "href=\"/fl\"",
+          "ersetzen": "href=\"https://app.fahrsyn.de/fl\"",
+          "pflicht": false
+        }
+      ]
+    },
+    {
+      "id": "fahrlehrer",
+      "anzeigename": "FUCHS Fahrlehrer",
+      "vollname": "FUCHS Fahrlehrer",
+      "appId": "de.fahrsyn.fuchs.fahrlehrer",
+      "quelldatei": "fahrlehrer_bereich.html",
+      "apiBasis": "https://app.fahrsyn.de/app/fl/",
+      "pushEndpunkt": "/app/fl/push/native",
+      "loginErkennung": ["ausbildung/fahrlehrer-login"],
+      "icons": {
+        "192": "fl-icon-192.png",
+        "512": "fl-icon-512.png",
+        "apple": "fl-apple-touch-icon.png"
+      },
+      "mitkopieren": [
+        "fl-icon-192.png",
+        "fl-icon-512.png",
+        "fl-apple-touch-icon.png",
+        "fuchs-logo-komplett.png",
+        "fuchs-icon.png"
+      ],
+      "ersetzungen": [
+        {
+          "_zweck": "Bildpfade auf gebuendelte Dateien umbiegen (/app/xxx.png -> xxx.png)",
+          "suchenRegex": "([\"'(=])/app/(fl-icon-192\\.png|fl-apple-touch-icon\\.png|fuchs-logo-komplett\\.png|fuchs-icon\\.png)",
+          "ersetzen": "$1$2",
+          "alle": true,
+          "pflicht": true
+        },
+        {
+          "_zweck": "Fehlende CSS-Klasse .row ergaenzen - Datum/Uhrzeit-Paare brechen sonst um",
+          "suchen": "</style>",
+          "ersetzen": ".row{display:flex;gap:10px;align-items:flex-end}.row>*{flex:1}\n</style>",
+          "pflicht": false
+        }
+      ]
+    }
+  ]
+}

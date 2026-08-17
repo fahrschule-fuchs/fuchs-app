@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FUCHS – Deine Fahrschule</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="shortcut icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FUCHS">
+<meta name="theme-color" content="#F67B32">
+<!-- Wichtig: kein Referer an das Video-CDN senden, sonst blockt dessen
+     Hotlink-Schutz die Streams (403). Ohne Referer liefert es aus. -->
+<meta name="referrer" content="no-referrer">
+<style>
+  :root{
+    --orange:#F67B32; --orange-soft:#FEF0E6; --dark:#1A1A1A; --gray:#6A6A6A;
+    --bg:#FBF8F5; --line:#EDE6DF; --green:#2E9E5B;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:'Avenir Next','Segoe UI',system-ui,sans-serif;
+    background:var(--bg); display:flex; justify-content:center;
+  }
+  .phone{
+    width:100%; max-width:520px; height:100dvh; background:var(--bg);
+    display:flex; flex-direction:column;
+  }
+  .topbar{height:calc(6px + env(safe-area-inset-top)); background:var(--orange); flex-shrink:0;}
+  header{
+    display:flex; align-items:center; gap:10px; padding:10px 20px;
+    background:#fff; border-bottom:1px solid var(--line); flex-shrink:0;
+  }
+  header img{height:36px; width:auto; display:block;}
+  main{flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; -webkit-overflow-scrolling:touch;}
+  .eyebrow{font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--orange);}
+  h1{font-size:24px; font-weight:800; color:var(--dark);}
+  .hint{background:var(--orange-soft); border-radius:12px; padding:10px 14px; font-size:12.5px; color:var(--dark); line-height:1.45;}
+  .meta{font-size:13px; color:var(--gray);}
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px;
+    cursor:pointer;
+  }
+  .card.zeile{display:flex; align-items:center; gap:12px;}
+  .nr{
+    width:44px; height:44px; border-radius:12px; flex-shrink:0; background:var(--line);
+    display:flex; align-items:center; justify-content:center; color:var(--gray);
+    font-weight:800; font-size:15px;
+  }
+  .nr.done{background:var(--orange); color:#fff;}
+  .card .info{flex:1;}
+  .card .titel{font-size:14px; font-weight:600; color:var(--dark);}
+  .card .sub{font-size:12px; color:var(--gray); margin-top:2px;}
+  .card .play{font-size:20px; color:var(--orange);}
+  .bar{height:6px; background:var(--line); border-radius:3px; overflow:hidden; margin-top:6px;}
+  .bar>div{height:100%; background:var(--orange); border-radius:3px; transition:width .4s;}
+  .btn-ghost{
+    background:transparent; color:var(--gray); border:1.5px solid var(--line);
+    border-radius:12px; padding:8px 14px; font-size:13px; font-weight:600; cursor:pointer;
+    align-self:flex-start; font-family:inherit;
+  }
+  .btn-primary{
+    background:var(--orange); color:#fff; border:none; border-radius:12px;
+    padding:13px 20px; font-size:15px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .kbtn{flex:1; min-width:120px; text-align:center; background:var(--orange); color:#fff;
+    border-radius:12px; padding:12px; font-size:14px; font-weight:700; text-decoration:none;}
+  .kbtn-wa{background:#25D366;}
+  .krow{display:flex; align-items:center; gap:10px; padding:11px 2px; border-bottom:1px solid var(--line);
+    text-decoration:none; color:var(--dark); font-size:14px;}
+  .krow:last-child{border-bottom:none;}
+  .krow .lab{color:var(--gray); flex:1;}
+  .krow b{font-weight:700; text-align:right; max-width:58%;}
+  video{width:100%; border-radius:16px; background:#000; aspect-ratio:16/9;}
+  .done-note{font-size:13px; color:var(--green); font-weight:600;}
+  nav{
+    display:flex; background:#fff; border-top:1px solid var(--line);
+    padding:8px 6px calc(8px + env(safe-area-inset-bottom)); flex-shrink:0;
+  }
+  nav button{
+    flex:1; background:none; border:none; cursor:pointer; display:flex;
+    flex-direction:column; align-items:center; gap:2px; color:var(--gray);
+    font-family:inherit; font-weight:500;
+  }
+  nav button .ic{font-size:20px; filter:grayscale(1) opacity(.55);}
+  nav button span{font-size:10.5px;}
+  nav button.aktiv{color:var(--orange); font-weight:700;}
+  nav button.aktiv .ic{filter:none;}
+  /* Zugangscode-Overlay */
+  #gate{
+    position:fixed; inset:0; background:var(--bg); z-index:20;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; padding:30px; text-align:center;
+  }
+  #gate img{height:90px;}
+  #gate input{
+    width:100%; max-width:280px; border:1.5px solid var(--line); border-radius:12px;
+    padding:13px 16px; font-size:16px; outline:none; text-align:center; font-family:inherit;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="topbar"></div>
+  <header><img src="fuchs-logo-komplett.png" alt="FUCHS – Deine Fahrschule"></header>
+  <main id="main"></main>
+  <nav id="nav"></nav>
+</div>
+
+<div id="gate" style="display:none;">
+  <img src="fuchs-icon.png" alt="Fuchs">
+  <div style="font-size:22px; font-weight:800; color:var(--dark);">FUCHS – Deine Fahrschule</div>
+
+  <!-- Schritt 1: Handynummer -->
+  <div id="schritt1" style="display:flex; flex-direction:column; gap:12px; align-items:center; width:100%;">
+    <div class="meta">Melde dich mit deiner Handynummer an –<br>der, die deine Fahrschule von dir kennt.</div>
+    <input id="loginNummer" type="tel" placeholder="Deine Handynummer" autocomplete="tel">
+    <button class="btn-primary" id="loginWeiter">Anmelde-Code holen</button>
+    <div class="meta" style="font-size:12px;"><a href="#" id="teamLink" style="color:var(--gray);">Ich habe einen Team-Zugangscode</a></div>
+  </div>
+
+  <!-- Schritt 2: Code aus WhatsApp -->
+  <div id="schritt2" style="display:none; flex-direction:column; gap:12px; align-items:center; width:100%;">
+    <div class="meta" style="line-height:1.5;">Schick jetzt <b>Foxy per WhatsApp</b> das Wort<br>
+      <span style="font-size:20px; font-weight:800; color:var(--dark);">App</span><br>
+      – von genau dieser Nummer. Du bekommst sofort einen 6-stelligen Code.</div>
+    <a id="waLink" class="btn-primary" style="display:none; text-decoration:none;" target="_blank" rel="noopener">WhatsApp öffnen 🦊</a>
+    <input id="loginPin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6-stelliger Code" autocomplete="one-time-code">
+    <button class="btn-primary" id="loginFertig">Anmelden</button>
+    <div class="meta" style="font-size:12px;"><a href="#" id="zurueckLink" style="color:var(--gray);">← Nummer ändern</a></div>
+  </div>
+
+  <!-- Alternative: Team-Zugangscode -->
+  <div id="schrittTeam" style="display:none; flex-direction:column; gap:12px; align-items:center; width:100%;">
+    <div class="meta">Team-Zugang (nur für die Fahrschule)</div>
+    <input id="gateInput" placeholder="Zugangscode" autocomplete="off">
+    <button class="btn-primary" id="gateBtn">Los geht’s</button>
+    <div class="meta" style="font-size:12px;"><a href="#" id="teamZurueck" style="color:var(--gray);">← Zur Schüler-Anmeldung</a></div>
+  </div>
+
+  <div class="meta" id="gateFehler" style="color:#D64545; display:none;"></div>
+
+  <div class="meta" style="font-size:12px; margin-top:14px; border-top:1px solid var(--line); padding-top:12px; width:100%;">
+    <a href="/fl" style="color:var(--orange); font-weight:700; text-decoration:none;">Du bist Fahrlehrer? →</a>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// FUCHS-App · iPhone-Testversion (Stand 14.07.2026)
+// Wird vom fuchs_app_server.py (Bot-PC, Port 8020) ausgeliefert.
+// Videos: HLS-Stream vom Video-CDN (Safari nativ), Fallback MP4
+// über den Server. Chat: echter Foxy-Bot über /app-chat.
+// ============================================================
+const LEKTIONEN = [
+  { nr: 1,  gruppe: "Grundstoff", titel: "Persönliche Voraussetzungen", dauer: "21:36", datei: "Lektion-01_Persoenliche-Voraussetzungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/adae0399-ca3f-433a-93c1-8dceba7fcc62/playlist.m3u8" },
+  { nr: 2,  gruppe: "Grundstoff", titel: "Rechtliche Rahmenbedingungen", dauer: "20:27", datei: "Lektion-02_Rechtliche-Rahmenbedingungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/941ea622-8b57-4bae-b02e-dfe07207bba6/playlist.m3u8" },
+  { nr: 3,  gruppe: "Grundstoff", titel: "Verkehrseinrichtungen und Verkehrszeichen", dauer: "17:15", datei: "Lektion-03_Verkehrseinrichtungen-und-Verkehrszeichen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/fede511b-78a1-40f6-95e3-990a8b5e2c24/playlist.m3u8" },
+  { nr: 4,  gruppe: "Grundstoff", titel: "Straßenverkehrssysteme und ihre Nutzung", dauer: "20:14", datei: "Lektion-04_Strassenverkehrssysteme-und-ihre-Nutzung.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/76fad974-eb8a-48c7-95a6-a91ab2ccd9cb/playlist.m3u8" },
+  { nr: 5,  gruppe: "Grundstoff", titel: "Vorfahrt", dauer: "15:19", datei: "Lektion-05_Vorfahrt.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/647e9cf5-01c2-40d1-8c32-677a9d98764a/playlist.m3u8" },
+  { nr: 6,  gruppe: "Grundstoff", titel: "Verkehrsregelungen / Bahnübergänge", dauer: "21:29", datei: "Lektion-06_Verkehrsregelungen-Bahnuebergaenge.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/42ad2be4-c3ce-4ddf-a78f-4407a34d237c/playlist.m3u8" },
+  { nr: 7,  gruppe: "Grundstoff", titel: "Geschwindigkeit, Abstand und umweltschonende Fahrweise", dauer: "28:57", datei: "Lektion-07_Geschwindigkeit-Abstand-und-umweltschonende-Fahrweise.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/40118ada-a7dd-49ee-a320-c5da0215b85a/playlist.m3u8" },
+  { nr: 8,  gruppe: "Grundstoff", titel: "Andere Teilnehmer im Straßenverkehr", dauer: "26:48", datei: "Lektion-08_Andere-Teilnehmer-im-Strassenverkehr.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/d0f5d4a6-dccb-43fe-849d-4647d8ec918a/playlist.m3u8" },
+  { nr: 9,  gruppe: "Grundstoff", titel: "Verkehrsverhalten bei Fahrmanövern, Verkehrsbeobachtungen", dauer: "24:33", datei: "Lektion-09_Verkehrsverhalten-bei-Fahrmanoevern-Verkehrsbeobachtungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/8aae1a67-f5ea-42c8-b72b-fc89bc9013ff/playlist.m3u8" },
+  { nr: 10, gruppe: "Grundstoff", titel: "Ruhender Verkehr", dauer: "17:08", datei: "Lektion-10_Ruhender-Verkehr.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/f14b9086-cfaf-4604-9908-213887f80391/playlist.m3u8" },
+  { nr: 11, gruppe: "Grundstoff", titel: "Verhalten in besonderen Situationen", dauer: "26:21", datei: "Lektion-11_Verhalten-in-besonderen-Situationen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/f8400da5-1636-4924-bb24-e35e7becdb95/playlist.m3u8" },
+  { nr: 12, gruppe: "Grundstoff", titel: "Lebenslanges Lernen", dauer: "22:50", datei: "Lektion-12_Lebenslanges-Lernen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/d66e05a4-614b-4e9b-bb6d-49f407363573/playlist.m3u8" },
+  { nr: 13, gruppe: "Zusatzstoff Klasse B", titel: "Technische Bedingungen", dauer: "18:55", datei: "Lektion-13_Zusatzstoff-B1-Technische-Bedingungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/4441e544-a730-4f98-9594-d3b5979a2efb/playlist.m3u8" },
+  { nr: 14, gruppe: "Zusatzstoff Klasse B", titel: "Fahren mit Solokraftfahrzeugen und Zügen, Personen- und Güterbeförderung", dauer: "11:15", datei: "Lektion-14_Zusatzstoff-B2-Fahren-mit-Solarkraftfahrzeugen-und-Zuegen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/a27fef02-3b5c-42a6-8352-002d5bdfee80/playlist.m3u8" },
+  { nr: 15, gruppe: "Zusatzstoff Klasse A", titel: "Fahrer/Beifahrer, Fahrzeug", dauer: "28:58", datei: "Lektion-15_Zusatzstoff-A1-Fahrer-Beifahrer-Fahrzeug.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/2abd615d-b3c0-45a6-9ff0-c0425f1c89d3/playlist.m3u8" },
+  { nr: 16, gruppe: "Zusatzstoff Klasse A", titel: "Fahrtechnik und Fahrphysik", dauer: "24:47", datei: "Lektion-16_Zusatzstoff-A2-Fahrtechnik-und-Fahrphysik.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/2fd55e3b-87f8-4fc1-a99f-aede1ef64bd7/playlist.m3u8" },
+  { nr: 17, gruppe: "Zusatzstoff Klasse A", titel: "Besondere Schwierigkeiten und Gefahren", dauer: "25:38", datei: "Lektion-17_Zusatzstoff-A3-Besondere-Schwierigkeiten-und-Gefahren.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/18a3f7e5-c44e-46ef-9ba8-3a209ab3f869/playlist.m3u8" },
+  { nr: 18, gruppe: "Zusatzstoff Klasse A", titel: "Besonderes Verhalten beim Motorradfahren", dauer: "18:00", datei: "Lektion-18_Zusatzstoff-A4-Besonderes-Verhalten-beim-Motorradfahren.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/282b7890-120c-4540-862a-6e99ebcc9b69/playlist.m3u8" },
+];
+
+// ── Gespeicherter Zustand (auf dem Gerät) ────────────────────
+function lade(schluessel, standard) {
+  try { return JSON.parse(localStorage.getItem(schluessel)) ?? standard; } catch (e) { return standard; }
+}
+function speichere(schluessel, wert) {
+  try { localStorage.setItem(schluessel, JSON.stringify(wert)); } catch (e) {}
+}
+let fortschritt = lade("fuchs_mediathek", {});
+let zugangscode = lade("fuchs_code", "");
+let chatNummer = lade("fuchs_nummer", "");
+let token = lade("fuchs_token", "");
+let vorname = lade("fuchs_vorname", "");
+let profilbild = lade("fuchs_profilbild", "");
+let kontoDaten = null;   // Kontostand-Cache für die Startseite
+let chatVerlauf = lade("fuchs_chat", null) || [{ von: "bot", text: "Hey! 🦊 Ich bin Foxy. Frag mich z. B. nach Preisen, dem Theorieplan oder deinem nächsten Schritt zum Führerschein." }];
+let chatWartet = false;
+
+// Videostand an den Server melden (nur angemeldete Schüler, fire-and-forget).
+function meldeVideoStand(nr) {
+  if (!token) return;
+  try {
+    fetch("fortschritt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, nr, ...fortschritt[nr] }),
+    }).catch(() => {});
+  } catch (e) {}
+}
+// Beim Start einmal den kompletten lokalen Stand abgleichen (falls der Schüler
+// schon Videos gesehen hat, bevor die Meldung eingebaut war).
+function meldeAlles() {
+  if (!token || !Object.keys(fortschritt).length) return;
+  try {
+    fetch("fortschritt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, alle: fortschritt }),
+    }).catch(() => {});
+  } catch (e) {}
+}
+
+const main = document.getElementById("main");
+let aktiv = null;
+function esc(s){ const d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+// ── Zugangscode-Gate ─────────────────────────────────────────
+const gate = document.getElementById("gate");
+function gateFehler(text) {
+  const f = document.getElementById("gateFehler");
+  f.textContent = text || "";
+  f.style.display = text ? "block" : "none";
+}
+function zeigeSchritt(id) {
+  for (const s of ["schritt1", "schritt2", "schrittTeam"])
+    document.getElementById(s).style.display = (s === id ? "flex" : "none");
+  gateFehler("");
+}
+function zeigeGate() {
+  gate.style.display = "flex";
+  zeigeSchritt("schritt1");
+
+  // Foxys WhatsApp-Nummer vom Server holen (für den Ein-Tipp-Link).
+  fetch("config").then(r => r.json()).then(c => {
+    if (c && c.wa) {
+      const a = document.getElementById("waLink");
+      a.href = "https://wa.me/" + c.wa + "?text=App";
+      a.style.display = "inline-block";
+    }
+  }).catch(() => {});
+
+  document.getElementById("loginWeiter").onclick = async () => {
+    const n = document.getElementById("loginNummer").value.trim();
+    if (n.replace(/\D/g, "").length < 8) { gateFehler("Das sieht noch nicht nach einer Handynummer aus."); return; }
+    chatNummer = n;
+    speichere("fuchs_nummer", n);
+    gateFehler("");
+    const btn = document.getElementById("loginWeiter");
+    const alt = btn.textContent; btn.textContent = "Moment …"; btn.disabled = true;
+    // Erst prüfen, ob die Nummer schon bekannt ist – dann ohne Code direkt rein.
+    try {
+      const r = await fetch("login-nummer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nummer: n }) });
+      const d = await r.json();
+      if (d && d.ok) { anmeldeErfolg(d); return; }
+    } catch (e) {}
+    btn.textContent = alt; btn.disabled = false;
+    zeigeSchritt("schritt2");   // Nummer noch nicht bestätigt -> einmalig Code holen
+  };
+  document.getElementById("zurueckLink").onclick = e => { e.preventDefault(); zeigeSchritt("schritt1"); };
+  document.getElementById("teamLink").onclick = e => { e.preventDefault(); zeigeSchritt("schrittTeam"); };
+  document.getElementById("teamZurueck").onclick = e => { e.preventDefault(); zeigeSchritt("schritt1"); };
+
+  document.getElementById("loginFertig").onclick = async () => {
+    const pin = document.getElementById("loginPin").value.trim();
+    if (pin.length !== 6) { gateFehler("Der Code hat 6 Ziffern."); return; }
+    gateFehler("");
+    try {
+      const r = await fetch("login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nummer: chatNummer, pin }),
+      });
+      const d = await r.json();
+      if (!d.ok) { gateFehler(d.fehler || "Anmeldung fehlgeschlagen – versuch es nochmal."); return; }
+      anmeldeErfolg(d);
+    } catch (e) {
+      gateFehler("Keine Verbindung – versuch es gleich nochmal.");
+    }
+  };
+
+  const inp = document.getElementById("gateInput");
+  const btn = document.getElementById("gateBtn");
+  const los = () => {
+    const code = inp.value.trim();
+    if (!code) return;
+    zugangscode = code;
+    speichere("fuchs_code", code);
+    gate.style.display = "none";
+    renderHome();
+  };
+  btn.onclick = los;
+  inp.onkeydown = e => { if (e.key === "Enter") los(); };
+}
+function abmelden() {
+  token = ""; vorname = ""; zugangscode = ""; profilbild = "";
+  speichere("fuchs_token", ""); speichere("fuchs_vorname", ""); speichere("fuchs_code", ""); speichere("fuchs_profilbild", "");
+  zeigeGate();
+}
+// Gemeinsamer Erfolgs-Handler für Code- und Nummer-Login.
+function anmeldeErfolg(d) {
+  token = d.token; vorname = d.vorname || "";
+  speichere("fuchs_token", token);
+  speichere("fuchs_vorname", vorname);
+  profilbild = ""; speichere("fuchs_profilbild", "");
+  gate.style.display = "none";
+  renderHome();
+  ladeProfilbild();
+}
+// Beim App-Start: bekannte Nummer -> automatisch anmelden (kein Code nötig).
+function autoLoginNummer(nr) {
+  fetch("login-nummer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nummer: nr }) })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d && d.ok) { chatNummer = nr; anmeldeErfolg(d); meldeAlles(); }
+      else { zeigeGate(); const inp = document.getElementById("loginNummer"); if (inp) inp.value = nr; }
+    })
+    .catch(() => { zeigeGate(); const inp = document.getElementById("loginNummer"); if (inp) inp.value = nr; });
+}
+
+// ── Start (Home) ─────────────────────────────────────────────
+function renderHome() {
+  aktiv = null;
+  const gesehen = LEKTIONEN.filter(l => fortschritt[l.nr]?.done).length;
+  main.innerHTML = `
+    <div style="display:flex; align-items:center; gap:16px;">
+      <div onclick="${token ? 'bildWaehlen()' : ''}" style="width:80px; height:80px; border-radius:50%; flex-shrink:0; position:relative; overflow:visible; ${token ? 'cursor:pointer;' : ''}">
+        <div style="width:100%; height:100%; border-radius:50%; overflow:hidden; background:var(--orange-soft); display:flex; align-items:center; justify-content:center;">
+          ${profilbild
+            ? `<img src="${profilbild}" alt="Profilbild" style="width:100%; height:100%; object-fit:cover;">`
+            : `<span style="font-size:32px; font-weight:800; color:var(--orange);">${vorname ? esc(vorname.trim()[0].toUpperCase()) : "🦊"}</span>`}
+        </div>
+        ${token ? `<div style="position:absolute; right:-2px; bottom:-2px; width:28px; height:28px; border-radius:50%; background:var(--orange); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; border:3px solid var(--bg);">📷</div>` : ""}
+      </div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:15px; color:var(--gray);">Moin! 🦊</div>
+        <div style="font-size:30px; font-weight:800; color:var(--dark); letter-spacing:-.02em; line-height:1.08; overflow:hidden; text-overflow:ellipsis;">${vorname ? esc(vorname) : "Deine Fahrschule"}</div>
+        <div class="meta" style="margin-top:3px;">${token ? "Angemeldet · <a href='#' onclick='abmelden();return false;' style='color:var(--gray);'>abmelden</a>" : "Testversion der Fuchs-App"}</div>
+      </div>
+    </div>
+    <input type="file" id="bildInput" accept="image/*" style="display:none;">
+    ${token ? `<div id="kontoSlot">${kontoKarteHTML()}</div>` : ""}
+    <div class="card" onclick="waehleTab('mediathek','Videos')">
+      <div class="eyebrow">Mediathek</div>
+      <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">${gesehen} von ${LEKTIONEN.length} Lektionen angesehen</div>
+      <div class="bar" style="margin-top:10px;"><div style="width:${Math.round(gesehen/LEKTIONEN.length*100)}%"></div></div>
+      <div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:10px;">Weiterschauen →</div>
+    </div>
+    <div class="card" onclick="waehleTab('fahrstunden','Fahrstunden')">
+      <div class="eyebrow">Fahrstunden</div>
+      <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">Deine Stunden & Termine</div>
+      <div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:8px;">Ansehen & Fahrstunde anfragen →</div>
+    </div>
+    <div class="card" onclick="renderKontakt()">
+      <div class="eyebrow">Kontakt</div>
+      <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">Dein/e Fahrlehrer/in & Büro</div>
+      <div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:8px;">Telefon, WhatsApp, Adresse & Zeiten →</div>
+    </div>
+    <div class="card" onclick="renderDokumente()">
+      <div class="eyebrow">Meine Dokumente</div>
+      <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">Unterlagen senden & empfangen</div>
+      <div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:8px;">DEKRA/TÜV-Schreiben hochladen · Post vom Büro →</div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="card" style="background:var(--orange-soft); border:none;" onclick="waehleTab('chat','Chat')">
+        <div style="font-size:22px;">💬</div>
+        <div style="font-size:14px; font-weight:700; color:var(--dark); margin-top:6px;">Frag den Fuchs</div>
+        <div style="font-size:12px; color:var(--gray);">24/7-Support</div>
+      </div>
+      <div class="card" onclick="waehleTab('ausbildung','Ausbildung')">
+        <div style="font-size:22px;">🚗</div>
+        <div style="font-size:14px; font-weight:700; color:var(--dark); margin-top:6px;">Meine Ausbildung</div>
+        <div style="font-size:12px; color:var(--gray);">dein Fahr-Fortschritt</div>
+      </div>
+    </div>
+    <div class="hint">ℹ️ Die Mediathek ist eine <b>Ergänzung</b> und ersetzt aktuell nicht den Pflicht-Theorieunterricht in deiner Filiale.</div>`;
+  const bi = document.getElementById("bildInput");
+  if (bi) bi.onchange = bildGewaehlt;
+  if (token) ladeKonto();
+  main.scrollTop = 0;
+}
+
+// ── Kontostand-Karte (Guthaben / offener Betrag / ausgeglichen) ──
+function kontoKarteHTML() {
+  const k = kontoDaten;
+  let bg, border, farbe, label, betrag, sub, icon;
+  if (!k) {
+    bg = "#fff"; border = "1px solid #EDE6DF"; farbe = "var(--gray)";
+    label = "Kontostand"; betrag = "Lädt …"; sub = ""; icon = "💳";
+  } else if (!k.gefunden) {
+    return "";
+  } else if (k.status === "guthaben") {
+    bg = "#E9F7EE"; border = "1px solid #A7DCBB"; farbe = "#1E7A43";
+    label = "Dein Guthaben"; betrag = k.betrag_text; sub = "Du hast Guthaben bei der Fahrschule. 🦊"; icon = "💰";
+  } else if (k.status === "offen") {
+    bg = "#FDECEC"; border = "1px solid #F3B4B4"; farbe = "#B3261E";
+    label = "Offener Betrag"; betrag = k.betrag_text; sub = "Bitte gleiche den offenen Betrag beim Büro aus."; icon = "⚠️";
+  } else {
+    bg = "#fff"; border = "1px solid #EDE6DF"; farbe = "var(--dark)";
+    label = "Konto ausgeglichen"; betrag = k.betrag_text || "0,00 €"; sub = "Alles beglichen – top!"; icon = "✅";
+  }
+  return `<div class="card" style="background:${bg}; border:${border}; display:flex; align-items:center; gap:14px;">
+    <div style="font-size:26px; line-height:1;">${icon}</div>
+    <div style="flex:1; min-width:0;">
+      <div class="eyebrow" style="color:${farbe};">${label}</div>
+      <div style="font-size:26px; font-weight:800; color:${farbe}; letter-spacing:-.01em; margin-top:2px;">${esc(betrag)}</div>
+      ${sub ? `<div style="font-size:12.5px; color:var(--gray); margin-top:3px;">${sub}</div>` : ""}
+    </div>
+  </div>`;
+}
+async function ladeKonto() {
+  if (!token) return;
+  try {
+    const r = await fetch("konto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    kontoDaten = (d && d.ok) ? (d.gefunden ? d : { gefunden: false }) : { gefunden: false };
+  } catch (e) { if (!kontoDaten) kontoDaten = { gefunden: false }; }
+  const slot = document.getElementById("kontoSlot");
+  if (slot) slot.innerHTML = kontoKarteHTML();
+}
+
+// ── Kontakt (Fahrlehrer + Büro) ──────────────────────────────
+function waNummer(n) {
+  let z = (n || "").replace(/\D/g, "");
+  if (z.startsWith("00")) z = z.slice(2);
+  else if (z.startsWith("0")) z = "49" + z.slice(1);
+  return z;
+}
+async function renderKontakt() {
+  aktiv = null;
+  main.innerHTML = `
+    <button class="btn-ghost" onclick="renderHome()">← Start</button>
+    <div><div class="eyebrow">Kontakt</div><h1>Fahrlehrer & Büro</h1></div>
+    <div id="kontaktInhalt"><div class="meta">Lädt …</div></div>`;
+  main.scrollTop = 0;
+  if (!token) {
+    document.getElementById("kontaktInhalt").innerHTML =
+      `<div class="hint">Bitte melde dich mit deiner Handynummer an – dann zeigen wir dir deine/n Fahrlehrer/in und dein Büro.</div>`;
+    return;
+  }
+  let d = null;
+  try {
+    const r = await fetch("kontakt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+    if (r.ok) d = await r.json();
+  } catch (e) {}
+  const el = document.getElementById("kontaktInhalt");
+  const k = d && d.kontakt;
+  if (!k) { el.innerHTML = `<div class="hint">Konnte gerade nicht geladen werden. Versuch es gleich nochmal.</div>`; return; }
+  let h = "";
+  const fl = k.fahrlehrer;
+  if (fl && fl.name) {
+    h += `<div class="card"><div class="eyebrow">Dein/e Fahrlehrer/in</div>
+      <div style="font-size:20px; font-weight:800; margin-top:4px;">${esc(fl.name)}</div>`;
+    if (fl.mobil) {
+      const tel = fl.mobil.replace(/[^\d+]/g, "");
+      h += `<div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <a href="tel:${tel}" class="kbtn">📞 Anrufen</a>
+        <a href="https://wa.me/${waNummer(fl.mobil)}" target="_blank" rel="noopener" class="kbtn kbtn-wa">💬 WhatsApp</a></div>
+        <div class="meta" style="margin-top:8px;">${esc(fl.mobil)}</div>`;
+    } else {
+      h += `<div class="meta" style="margin-top:8px;">Handynummer ist nicht hinterlegt – frag gern im Büro danach.</div>`;
+    }
+    h += `</div>`;
+  } else {
+    h += `<div class="card"><div class="eyebrow">Dein/e Fahrlehrer/in</div>
+      <div class="meta" style="margin-top:6px;">Sobald du Fahrstunden hattest, erscheint hier dein/e Fahrlehrer/in.</div></div>`;
+  }
+  const f = k.filiale;
+  if (f && f.name) {
+    h += `<div class="card"><div class="eyebrow">Dein Büro · ${esc(f.name)}</div><div style="margin-top:8px;">`;
+    if (f.telefon) { const t = f.telefon.replace(/[^\d+]/g, ""); h += `<a href="tel:${t}" class="krow">☎️<span class="lab">Festnetz</span><b>${esc(f.telefon)}</b></a>`; }
+    if (f.whatsapp) h += `<a href="https://wa.me/${waNummer(f.whatsapp)}" target="_blank" rel="noopener" class="krow">💬<span class="lab">Büro-WhatsApp</span><b>${esc(f.whatsapp)}</b></a>`;
+    if (f.adresse) h += `<a href="https://maps.google.com/?q=${encodeURIComponent(f.adresse)}" target="_blank" rel="noopener" class="krow">📍<span class="lab">Adresse</span><b>${esc(f.adresse)}</b></a>`;
+    if (f.zeiten) h += `<div class="krow">🕒<span class="lab">Öffnungszeiten</span><b>${esc(f.zeiten)}</b></div>`;
+    h += `</div></div>`;
+  } else {
+    h += `<div class="card"><div class="eyebrow">Dein Büro</div>
+      <div class="meta" style="margin-top:6px;">Deine Filiale konnte nicht automatisch bestimmt werden – frag gern im Büro nach.</div></div>`;
+  }
+  el.innerHTML = h;
+}
+
+// ── Profilbild ───────────────────────────────────────────────
+function bildWaehlen() {
+  const bi = document.getElementById("bildInput");
+  if (bi) bi.click();
+}
+function bildGewaehlt(e) {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      const size = 320, c = document.createElement("canvas");
+      c.width = size; c.height = size;
+      const ctx = c.getContext("2d");
+      const s = Math.min(img.width, img.height);
+      const sx = (img.width - s) / 2, sy = (img.height - s) / 2;
+      ctx.drawImage(img, sx, sy, s, s, 0, 0, size, size);
+      const dataURL = c.toDataURL("image/jpeg", 0.85);
+      profilbild = dataURL;
+      speichere("fuchs_profilbild", dataURL);
+      renderHome();
+      if (token) {
+        fetch("profilbild", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, bild: dataURL }),
+        }).catch(() => {});
+      }
+    };
+    img.src = ev.target.result;
+  };
+  rd.readAsDataURL(f);
+}
+// Profilbild vom Server holen (falls auf einem anderen Gerät hochgeladen).
+function ladeProfilbild() {
+  if (!token) return;
+  fetch("profilbild", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  }).then(r => r.ok ? r.json() : null).then(d => {
+    if (d && d.ok && d.bild && d.bild !== profilbild) {
+      profilbild = d.bild;
+      speichere("fuchs_profilbild", d.bild);
+      if (document.getElementById("bildInput")) renderHome();  // nur wenn Startseite offen
+    }
+  }).catch(() => {});
+}
+
+// ── Meine Dokumente (Upload ans Büro + Empfang) ──────────────
+let dokDaten = [];
+function renderDokumente() {
+  aktiv = null;
+  main.innerHTML = `
+    <button class="btn-ghost" onclick="renderHome()">← Start</button>
+    <div><div class="eyebrow">Meine Dokumente</div><h1>Dokumente</h1></div>
+    <div class="hint">Lade hier Unterlagen für dein Büro hoch – z. B. dein Schreiben von <b>DEKRA</b> oder <b>TÜV</b>. Dokumente, die dir das Büro schickt, findest du ebenfalls hier.</div>
+    <button class="btn-primary" id="dokUpload">📎 Dokument oder Foto hochladen</button>
+    <input type="file" id="dokFile" accept="image/*,application/pdf,.pdf" style="display:none;">
+    <div id="dokListe"><div class="meta">Lädt …</div></div>`;
+  main.scrollTop = 0;
+  if (!token) {
+    document.getElementById("dokUpload").style.display = "none";
+    document.getElementById("dokListe").innerHTML =
+      `<div class="hint">Bitte melde dich mit deiner Handynummer an, um Dokumente zu senden und zu empfangen.</div>`;
+    return;
+  }
+  const fi = document.getElementById("dokFile");
+  document.getElementById("dokUpload").onclick = () => fi.click();
+  fi.onchange = () => dokHochladen(fi);
+  ladeDokumente();
+}
+function dokIcon(m) { return (m || "").startsWith("image/") ? "🖼" : ((m || "").includes("pdf") ? "📄" : "📎"); }
+function dokGroesse(n) { return n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round((n || 0) / 1024)) + " kB"; }
+async function ladeDokumente() {
+  const el = document.getElementById("dokListe");
+  if (el) el.innerHTML = `<div class="meta">Lädt …</div>`;
+  let d = null;
+  try {
+    const r = await fetch("dokumente/liste", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+    if (r.ok) d = await r.json();
+  } catch (e) {}
+  if (!el) return;
+  if (!d || !d.ok) { el.innerHTML = `<div class="hint">Konnte gerade nicht geladen werden. Versuch es gleich nochmal.</div>`; return; }
+  const docs = d.dokumente || [];
+  dokDaten = docs;
+  const empfangen = docs.filter(x => x.richtung === "ausgang");
+  const gesendet = docs.filter(x => x.richtung === "eingang");
+  let h = "";
+  if (empfangen.length) {
+    h += `<div class="eyebrow" style="margin-top:16px;">Vom Büro erhalten</div>`;
+    h += empfangen.map(x => `
+      <div class="card" onclick="dokOeffnen(${x.id})" style="display:flex; align-items:center; gap:12px; cursor:pointer;">
+        <div style="font-size:24px;">${dokIcon(x.mimetyp)}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; word-break:break-word;">${esc(x.dateiname)}${x.neu ? ' <span style="color:var(--orange);">• neu</span>' : ''}</div>
+          <div class="meta">${esc(x.hochgeladen_am || "")} · ${dokGroesse(x.groesse)}</div>
+        </div>
+        <div style="color:var(--orange); font-weight:700; white-space:nowrap;">Öffnen →</div>
+      </div>`).join("");
+  }
+  h += `<div class="eyebrow" style="margin-top:16px;">Von dir gesendet</div>`;
+  if (gesendet.length) {
+    h += gesendet.map(x => `
+      <div class="card" style="display:flex; align-items:center; gap:12px;">
+        <div style="font-size:24px;">${dokIcon(x.mimetyp)}</div>
+        <div style="flex:1; min-width:0;">
+          <div style="font-weight:700; word-break:break-word;">${esc(x.dateiname)}</div>
+          <div class="meta">${esc(x.hochgeladen_am || "")} · ${dokGroesse(x.groesse)} · ✓ beim Büro angekommen</div>
+        </div>
+      </div>`).join("");
+  } else {
+    h += `<div class="hint">Noch nichts gesendet. Tippe oben auf „Dokument oder Foto hochladen".</div>`;
+  }
+  el.innerHTML = h;
+}
+async function dokHochladen(input) {
+  const f = input.files && input.files[0];
+  input.value = "";
+  if (!f) return;
+  if (f.size > 25 * 1024 * 1024) { alert("Die Datei ist zu groß (max. 25 MB)."); return; }
+  const btn = document.getElementById("dokUpload");
+  if (btn) { btn.disabled = true; btn.textContent = "Wird hochgeladen …"; }
+  const rd = new FileReader();
+  rd.onload = async () => {
+    let ok = false, fehler = "";
+    try {
+      const r = await fetch("dokumente/hochladen", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, dateiname: f.name, mimetyp: f.type, inhalt: rd.result }) });
+      const d = r.ok ? await r.json() : null;
+      ok = !!(d && d.ok); fehler = (d && d.fehler) || "";
+    } catch (e) {}
+    if (btn) { btn.disabled = false; btn.textContent = "📎 Dokument oder Foto hochladen"; }
+    if (ok) ladeDokumente();
+    else alert(fehler || "Hochladen hat nicht geklappt. Bitte versuch es gleich nochmal.");
+  };
+  rd.readAsDataURL(f);
+}
+async function dokOeffnen(id) {
+  const doc = (dokDaten || []).find(x => x.id === id);
+  const name = doc ? doc.dateiname : "Dokument";
+  try {
+    const r = await fetch("dokumente/datei", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id }) });
+    if (!r.ok) { alert("Konnte das Dokument gerade nicht öffnen."); return; }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name || "Dokument"; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (e) { alert("Konnte das Dokument gerade nicht öffnen."); }
+}
+
+// ── Mediathek ────────────────────────────────────────────────
+function renderListe() {
+  aktiv = null;
+  const gesehen = LEKTIONEN.filter(l => fortschritt[l.nr]?.done).length;
+  const gruppen = [...new Set(LEKTIONEN.map(l => l.gruppe))];
+  let html = `
+    <h1>Mediathek</h1>
+    <div class="meta">${gesehen} von ${LEKTIONEN.length} Lektionen angesehen</div>`;
+  for (const g of gruppen) {
+    html += `<div class="eyebrow">${esc(g)}</div>`;
+    for (const l of LEKTIONEN.filter(x => x.gruppe === g)) {
+      const f = fortschritt[l.nr];
+      const pct = f?.dauer ? Math.min(100, Math.round((f.pos / f.dauer) * 100)) : 0;
+      html += `
+        <div class="card zeile" onclick="renderPlayer(${l.nr})">
+          <div class="nr ${f?.done ? "done" : ""}">${l.nr}</div>
+          <div class="info">
+            <div class="titel">${esc(l.titel)}</div>
+            <div class="sub">${l.dauer} Min · ${f?.done ? "✓ angesehen" : pct > 0 ? pct + " % gesehen" : "noch offen"}</div>
+            ${pct > 0 && !f?.done ? `<div class="bar"><div style="width:${pct}%"></div></div>` : ""}
+          </div>
+          <div class="play">▶</div>
+        </div>`;
+    }
+  }
+  main.innerHTML = html;
+  main.scrollTop = 0;
+}
+
+function videoQuelle(l) {
+  // Safari (iPhone/iPad/Mac) spielt HLS nativ -> schneller CDN-Stream.
+  // Andere Browser bekommen die MP4-Datei vom Server.
+  const v = document.createElement("video");
+  const kannHls = v.canPlayType("application/vnd.apple.mpegurl");
+  return kannHls ? l.hls : "videos/" + l.datei;
+}
+
+function renderPlayer(nr) {
+  const l = LEKTIONEN.find(x => x.nr === nr);
+  aktiv = l;
+  const f = fortschritt[nr];
+  main.innerHTML = `
+    <button class="btn-ghost" onclick="renderListe()">← Alle Lektionen</button>
+    <div>
+      <div class="eyebrow">${esc(l.gruppe)} · Lektion ${l.nr}</div>
+      <h1 style="font-size:20px; line-height:1.3;">${esc(l.titel)}</h1>
+      <div class="meta" style="margin-top:2px;">${l.dauer} Min</div>
+    </div>
+    <video id="player" src="${videoQuelle(l)}" controls playsinline preload="metadata"></video>
+    <div class="done-note" id="doneNote" style="display:${f?.done ? "block" : "none"}">✓ Als angesehen markiert</div>
+    <div class="hint">ℹ️ Ergänzung – ersetzt nicht den Pflicht-Theorieunterricht in deiner Filiale.</div>`;
+  const v = document.getElementById("player");
+  v.addEventListener("loadedmetadata", () => {
+    const p = fortschritt[nr]?.pos;
+    if (p && p > 3 && p < v.duration - 5) v.currentTime = p;
+  });
+  let letztes = 0;
+  v.addEventListener("timeupdate", () => {
+    const alt = fortschritt[nr] || {};
+    fortschritt[nr] = {
+      pos: v.currentTime,
+      dauer: v.duration || 0,
+      done: alt.done || (v.duration > 0 && v.currentTime / v.duration >= 0.9),
+    };
+    if (fortschritt[nr].done) document.getElementById("doneNote").style.display = "block";
+    if (Math.abs(v.currentTime - letztes) > 5) { letztes = v.currentTime; speichere("fuchs_mediathek", fortschritt); }
+  });
+  let gemeldetDone = !!f?.done;
+  v.addEventListener("timeupdate", () => {
+    if (!gemeldetDone && fortschritt[nr]?.done) { gemeldetDone = true; meldeVideoStand(nr); }
+  });
+  v.addEventListener("pause", () => { speichere("fuchs_mediathek", fortschritt); meldeVideoStand(nr); });
+  main.scrollTop = 0;
+}
+
+// ── Chat (Foxy) ──────────────────────────────────────────────
+function renderChat() {
+  aktiv = null;
+  main.innerHTML = `
+    <h1>Frag den Fuchs</h1>
+    ${token ? `<div class="meta" style="font-size:12px;">Angemeldet${vorname ? " als " + esc(vorname) : ""} – Foxy kennt deinen Ausbildungsstand.</div>`
+            : `<input id="nummerFeld" type="tel" placeholder="Team-Modus: Handynummer zum Testen (optional)" value="${esc(chatNummer)}"
+      style="border:1.5px solid var(--line); border-radius:999px; padding:9px 14px; font-size:12.5px; outline:none; background:#fff; font-family:inherit;">`}
+    <div id="chatListe" style="flex:1; display:flex; flex-direction:column; gap:10px; overflow-y:auto; min-height:200px;"></div>
+    <div style="display:flex; gap:8px;">
+      <input id="chatInput" placeholder="Nachricht schreiben …"
+        style="flex:1; border:1.5px solid var(--line); border-radius:999px; padding:12px 16px; font-size:16px; outline:none; background:#fff; font-family:inherit;">
+      <button id="chatSenden" style="background:var(--orange); color:#fff; border:none; border-radius:999px; padding:0 18px; font-size:15px; font-weight:700; cursor:pointer;">➤</button>
+    </div>`;
+  const liste = document.getElementById("chatListe");
+  const input = document.getElementById("chatInput");
+  const nummernFeld = document.getElementById("nummerFeld");
+  if (nummernFeld) nummernFeld.addEventListener("input", () => { chatNummer = nummernFeld.value; speichere("fuchs_nummer", chatNummer); });
+
+  function zeichne() {
+    liste.innerHTML = chatVerlauf.map(m => `
+      <div style="align-self:${m.von === "du" ? "flex-end" : "flex-start"};
+        background:${m.von === "du" ? "var(--orange)" : "#fff"};
+        color:${m.von === "du" ? "#fff" : "var(--dark)"};
+        border:${m.von === "du" ? "none" : "1px solid var(--line)"};
+        border-radius:16px;
+        border-bottom-right-radius:${m.von === "du" ? "4px" : "16px"};
+        border-bottom-left-radius:${m.von === "bot" ? "4px" : "16px"};
+        padding:10px 14px; max-width:82%; font-size:14px; line-height:1.45; white-space:pre-wrap;">${esc(m.text)}</div>`).join("")
+      + (chatWartet ? `<div style="align-self:flex-start; color:var(--gray); font-size:13px; padding:4px 8px;">Foxy tippt …</div>` : "");
+    liste.scrollTop = liste.scrollHeight;
+  }
+
+  async function senden() {
+    const t = input.value.trim();
+    if (!t || chatWartet) return;
+    chatVerlauf.push({ von: "du", text: t });
+    input.value = "";
+    chatWartet = true;
+    zeichne();
+    try {
+      const r = await fetch("app-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(token ? { nachricht: t, token }
+                                   : { nachricht: t, nummer: chatNummer, code: zugangscode }),
+      });
+      if (r.status === 403) {
+        chatVerlauf.push({ von: "bot", text: "Deine Anmeldung ist abgelaufen – melde dich einmal neu an." });
+        speichere("fuchs_chat", chatVerlauf);
+        chatWartet = false;
+        abmelden();
+        return;
+      } else {
+        const d = await r.json();
+        chatVerlauf.push({ von: "bot", text: d.antwort || "Hm, da kam nichts zurück – versuch es nochmal." });
+      }
+    } catch (e) {
+      chatVerlauf.push({ von: "bot", text: "Ich bin gerade nicht erreichbar. 🦊 Läuft auf dem Bot-PC das Foxy-Fenster („Handy-App starten.bat“) und der App-Tunnel?" });
+    }
+    chatWartet = false;
+    chatVerlauf = chatVerlauf.slice(-60);
+    speichere("fuchs_chat", chatVerlauf);
+    zeichne();
+  }
+  document.getElementById("chatSenden").addEventListener("click", senden);
+  input.addEventListener("keydown", e => { if (e.key === "Enter") senden(); });
+  zeichne();
+}
+
+// ── Meine Ausbildung (Diagrammkarte) ─────────────────────────
+let ausbKatalog = null;
+let ausbKataloge = {};   // klasse -> katalog
+let ausbStand = {};
+let ausbFilter = "alle";   // alle | offen | sicher
+
+async function renderAusbildung() {
+  aktiv = null;
+  if (!token) {
+    main.innerHTML = `
+      <h1>Meine Ausbildung</h1>
+      <div class="hint" style="margin-top:6px;">Melde dich mit deiner Handynummer an, dann zeigt dir dein
+      Fahrlehrer hier, was du schon kannst und was noch zur Prüfung fehlt.</div>
+      <button class="btn-primary" style="margin-top:6px;" onclick="abmelden()">Jetzt anmelden</button>`;
+    return;
+  }
+  main.innerHTML = `<h1>Meine Ausbildung</h1><div class="meta">Lädt …</div>`;
+  try {
+    // Erst die Klasse des Schülers (aus dem Fahrschulmanager) holen …
+    const rs = await fetch("ausbildung/stand", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const d = await rs.json();
+    const klasse = d.klasse || "B";
+    ausbStand = d.stand || {};
+    // … dann NUR die passende Karte laden (Motorrad-Schüler sehen keine Pkw-Karte).
+    if (!ausbKataloge[klasse]) {
+      const rk = await fetch("ausbildung/katalog?klasse=" + klasse);
+      if (!rk.ok) {
+        main.innerHTML = `<h1>Meine Ausbildung</h1>
+          <div class="hint">Deine Ausbildungskarte (Klasse ${esc(klasse)}) wird gerade vorbereitet –
+          schau bald wieder rein. 🦊</div>`;
+        return;
+      }
+      ausbKataloge[klasse] = (await rk.json()).katalog;
+    }
+    ausbKatalog = ausbKataloge[klasse];
+    zeichneAusbildung();
+    main.scrollTop = 0;
+  } catch (e) {
+    main.innerHTML = `<h1>Meine Ausbildung</h1>
+      <div class="hint">Ich konnte deinen Ausbildungsstand gerade nicht laden. Versuch es gleich nochmal –
+      oder frag kurz in deiner Filiale nach.</div>`;
+  }
+}
+
+function ausbSetFilter(f) { ausbFilter = f; zeichneAusbildung(); }
+
+function zeichneAusbildung() {
+  const k = ausbKatalog, stand = ausbStand, stufen = k.stufen;
+  const stufe = w => stufen.find(s => s.wert === w) || stufen[0];
+  const alle = k.sektionen.flatMap(s => s.items);
+  const gesamt = alle.length;
+  const sicher = alle.filter(it => (stand[it.key] || 0) === 3).length;
+  const begonnen = alle.filter(it => (stand[it.key] || 0) >= 1).length;
+  const pct = Math.round(sicher / gesamt * 100);
+  const inUebung = k.sektionen.flatMap(s => s.items.filter(it => (stand[it.key] || 0) === 1).map(it => it.label));
+
+  // Kopf: Fortschritt zur Prüfungsreife
+  let h = `
+    <h1 style="margin-bottom:2px;">Meine Ausbildung</h1>
+    <div class="meta" style="margin-bottom:2px;">${esc(k.titel || ('Klasse ' + k.klasse))} · alle ${gesamt} Aufgaben, die du für die Prüfung können musst</div>
+
+    <div class="card" style="border:none; background:var(--orange-soft);">
+      <div class="eyebrow">Weg zur Prüfungsreife</div>
+      <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
+        <span style="font-size:32px; font-weight:800; color:var(--dark);">${sicher}</span>
+        <span style="font-size:14px; color:var(--gray);">von ${gesamt} Aufgaben prüfungssicher</span>
+      </div>
+      <div class="bar" style="margin-top:10px; height:9px; background:#F3D9C6;"><div style="width:${pct}%; background:var(--green);"></div></div>
+      <div style="font-size:12.5px; color:var(--gray); margin-top:8px;">${begonnen} schon in Arbeit · noch ${gesamt - sicher} bis zur vollen Prüfungsreife</div>
+    </div>`;
+
+  if (inUebung.length) {
+    h += `<div class="card" style="border-left:4px solid var(--orange);">
+      <div class="eyebrow">Daran arbeitest du gerade</div>
+      <div style="font-size:14px; color:var(--dark); line-height:1.7; margin-top:4px;">
+        ${inUebung.slice(0, 8).map(t => "• " + esc(t)).join("<br>")}
+        ${inUebung.length > 8 ? `<br><span style="color:var(--gray);">… und ${inUebung.length - 8} weitere</span>` : ""}
+      </div></div>`;
+  }
+
+  // Filter-Chips
+  const chip = (f, txt) => `<button onclick="ausbSetFilter('${f}')" style="
+    border:1.5px solid ${ausbFilter===f ? 'var(--orange)' : 'var(--line)'};
+    background:${ausbFilter===f ? 'var(--orange)' : '#fff'}; color:${ausbFilter===f ? '#fff' : 'var(--gray)'};
+    border-radius:999px; padding:7px 14px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;">${txt}</button>`;
+  h += `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:2px;">
+    ${chip('alle','Alle')} ${chip('offen','Noch zu üben')} ${chip('sicher','Schon sicher')}
+  </div>`;
+
+  // Legende
+  h += `<div style="display:flex; flex-wrap:wrap; gap:8px 14px; padding:2px 2px 2px;">
+    ${stufen.map(s => `<span style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:var(--gray);">
+      <span style="width:11px; height:11px; border-radius:50%; background:${s.farbe}; display:inline-block;"></span>${esc(s.name)}</span>`).join("")}
+  </div>`;
+
+  // Passt ein Item zum aktuellen Filter?
+  const passt = w => ausbFilter === "alle" || (ausbFilter === "offen" ? w < 3 : w === 3);
+
+  // Alle Sektionen, immer offen und voll lesbar
+  let sichtbar = 0;
+  for (const s of k.sektionen) {
+    const items = s.items.filter(it => passt(stand[it.key] || 0));
+    if (!items.length) continue;
+    sichtbar += items.length;
+    const secSicher = s.items.filter(it => (stand[it.key] || 0) === 3).length;
+    h += `
+      <div class="card" style="padding:0; overflow:hidden;">
+        <div style="background:${s.farbe}; color:#fff; padding:11px 14px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div>
+            <div style="font-weight:800; font-size:15px;">${esc(s.titel)}</div>
+            ${s.unter ? `<div style="font-size:11px; opacity:.9; margin-top:1px;">${esc(s.unter)}</div>` : ""}
+          </div>
+          <span style="font-size:11.5px; font-weight:700; background:rgba(255,255,255,.22); padding:4px 9px; border-radius:999px; white-space:nowrap;">${secSicher}/${s.items.length} sicher</span>
+        </div>`;
+    for (const it of items) {
+      const w = stand[it.key] || 0;
+      const st = stufe(w);
+      const pillBg = w === 0 ? "#EFEAE4" : st.farbe;
+      const pillCol = w === 0 ? "#9A9088" : "#fff";
+      h += `
+        <div style="display:flex; align-items:center; gap:12px; padding:13px 14px; border-top:1px solid #F1EBE4; border-left:5px solid ${w === 0 ? "#E7E0D8" : st.farbe};">
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:14.5px; font-weight:600; color:var(--dark); line-height:1.3;">${esc(it.label)}</div>
+            ${it.detail ? `<div style="font-size:12px; color:var(--gray); margin-top:2px; line-height:1.35;">${esc(it.detail)}</div>` : ""}
+          </div>
+          <span style="font-size:11px; font-weight:800; color:${pillCol}; background:${pillBg}; padding:5px 11px; border-radius:999px; white-space:nowrap; flex-shrink:0;">${esc(st.name)}</span>
+        </div>`;
+    }
+    h += `</div>`;
+  }
+
+  if (!sichtbar) {
+    h += `<div class="hint">${ausbFilter === "sicher"
+      ? "Noch ist keine Aufgabe als „prüfungssicher\" eingetragen – das kommt mit den nächsten Fahrstunden. 🦊"
+      : "Hier ist gerade nichts zu zeigen."}</div>`;
+  }
+
+  h += `<div class="hint" style="margin-top:4px;">ℹ️ Deinen Stand tragen deine Fahrlehrer nach jeder Fahrstunde ein.
+    „Prüfungssicher" heißt: Das beherrschst du prüfungsreif.</div>`;
+  // Eigener Container (nicht direkt Flex-Kind von #main), sonst quetscht die
+  // Flex-Spalte die overflow:hidden-Karten zu dünnen Balken zusammen.
+  main.innerHTML = `<div style="display:flex; flex-direction:column; gap:14px;">${h}</div>`;
+}
+
+// ── Fahrstunden (Ansicht + Buchungsanfrage) ──────────────────
+const FS_TAGE = ["Mo","Di","Mi","Do","Fr","Sa"];
+const FS_BLOECKE = [["08-10","08–10"],["10-12","10–12"],["12-14","12–14"],["14-16","14–16"],["16-18","16–18"],["18-20","18–20"]];
+let fsAnsicht = "liste";        // liste | anfrage
+let fsAuswahl = {};             // tag -> [blockKeys]
+let fsAbDatum = "";
+let fsFiliale = "";
+let fsData = null;
+let fsGesendet = false;
+
+async function renderFahrstunden() {
+  aktiv = null;
+  if (!token) {
+    main.innerHTML = `
+      <h1>Fahrstunden</h1>
+      <div class="hint" style="margin-top:6px;">Melde dich mit deiner Handynummer an, dann siehst du hier
+      deine Fahrstunden und kannst neue anfragen.</div>
+      <button class="btn-primary" style="margin-top:6px;" onclick="abmelden()">Jetzt anmelden</button>`;
+    return;
+  }
+  main.innerHTML = `<h1>Fahrstunden</h1><div class="meta">Lädt …</div>`;
+  try {
+    const r = await fetch("fahrstunden", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    fsData = await r.json();
+  } catch (e) {
+    if (!fsData) {
+      main.innerHTML = `<h1>Fahrstunden</h1>
+        <div class="hint">Ich konnte deine Fahrstunden gerade nicht laden. Versuch es gleich nochmal.</div>`;
+      return;
+    }
+  }
+  if (fsAnsicht === "anfrage") renderFsAnfrage();
+  else { zeichneFahrstunden(fsData); main.scrollTop = 0; }
+}
+
+function zeichneFahrstunden(d) {
+  if (!d || !d.ok || !d.bekannt) {
+    main.innerHTML = `<h1>Fahrstunden</h1>
+      <div class="hint">Ich konnte dich gerade nicht eindeutig deiner Akte zuordnen. Melde dich kurz in
+      deiner Filiale, dann klären wir das. Eine Fahrstunde anfragen kannst du trotzdem:</div>
+      <button class="btn-primary" style="margin-top:8px;" onclick="fsAnsicht='anfrage';renderFahrstunden();">Fahrstunde anfragen</button>`;
+    return;
+  }
+  const zus = d.zusammenfassung || {};
+  const kommende = d.kommende || [];
+  const gefahren = (d.gefahren || []).slice().reverse();   // neueste zuerst
+  let h = `<h1 style="margin-bottom:2px;">Fahrstunden</h1>`;
+
+  h += `<div class="card" style="border:none; background:var(--orange-soft);">
+    <div class="eyebrow">Dein Stand</div>
+    <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
+      <span style="font-size:32px; font-weight:800; color:var(--dark);">${zus.gesamt || 0}</span>
+      <span style="font-size:14px; color:var(--gray);">Fahrstunden gefahren</span>
+    </div>
+    <button class="btn-primary" style="margin-top:12px; width:100%;" onclick="fsAnsicht='anfrage';renderFahrstunden();">➕ Fahrstunde anfragen</button>
+  </div>`;
+
+  // Kommende Termine
+  h += `<div class="eyebrow" style="margin-top:2px;">Kommende Termine</div>`;
+  if (kommende.length) {
+    h += `<div class="card" style="padding:0; overflow:hidden;">`;
+    kommende.forEach((t, i) => {
+      const kannStorno = (t.id !== undefined && t.id !== null);
+      h += `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; ${i ? "border-top:1px solid #F1EBE4;" : ""}">
+        <div style="min-width:0;">
+          <div style="font-weight:700; font-size:14.5px; color:var(--dark);">${esc(t.datum)}${t.uhrzeit ? " · " + esc(t.uhrzeit) + (t.bis ? "–" + esc(t.bis) : "") + " Uhr" : ""}</div>
+          <div style="font-size:12.5px; color:var(--gray); margin-top:1px;">${esc(t.art_text || "Fahrstunde")}${t.fahrlehrer && t.fahrlehrer !== "unbekannt" ? " · " + esc(t.fahrlehrer) : ""}</div>
+        </div>
+        ${kannStorno ? `<button onclick="fsStornoStart(${t.id})" style="flex:0 0 auto; padding:7px 13px; border:1px solid #E7D9CC; background:#fff; color:#8A4B10; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer;">Absagen</button>` : ""}
+      </div>`;
+    });
+    h += `</div>`;
+  } else {
+    h += `<div class="hint">Aktuell ist kein Termin eingetragen. Frag über den Button oben eine Fahrstunde an. 🦊</div>`;
+  }
+
+  // Gefahrene Stunden
+  h += `<div class="eyebrow" style="margin-top:6px;">Bereits gefahren (${gefahren.length})</div>`;
+  if (gefahren.length) {
+    h += `<div class="card" style="padding:0; overflow:hidden;">`;
+    gefahren.forEach((t, i) => {
+      h += `<div style="display:flex; justify-content:space-between; gap:10px; padding:11px 14px; ${i ? "border-top:1px solid #F1EBE4;" : ""}">
+        <div>
+          <div style="font-size:14px; color:var(--dark);">${esc(t.datum)}${t.uhrzeit ? " · " + esc(t.uhrzeit) + " Uhr" : ""}</div>
+          ${t.fahrlehrer && t.fahrlehrer !== "unbekannt" ? `<div style="font-size:11.5px; color:var(--gray);">${esc(t.fahrlehrer)}</div>` : ""}
+        </div>
+        <span style="font-size:11px; font-weight:700; color:var(--orange); white-space:nowrap;">${esc(t.art_text || "Fahrstunde")}</span>
+      </div>`;
+    });
+    h += `</div>`;
+  } else {
+    h += `<div class="hint">Noch keine gefahrenen Stunden – das wird sich bald ändern. 🦊</div>`;
+  }
+
+  main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">${h}</div>`;
+}
+
+// ── Fahrstunde absagen (Storno) ──────────────────────────────
+function fsModalSchliessen() { const o = document.getElementById("fsStornoModal"); if (o) o.remove(); }
+function fsModal(inhalt) {
+  fsModalSchliessen();
+  const o = document.createElement("div");
+  o.id = "fsStornoModal";
+  o.style.cssText = "position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:99998; display:flex; align-items:flex-end; justify-content:center;";
+  o.innerHTML = `<div style="background:#fff; width:100%; max-width:520px; border-radius:18px 18px 0 0; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); box-shadow:0 -8px 30px rgba(0,0,0,.25);">${inhalt}</div>`;
+  o.addEventListener("click", (e) => { if (e.target === o) fsModalSchliessen(); });
+  document.body.appendChild(o);
+}
+function fsEuro(n) { return (Number(n || 0)).toFixed(2).replace(".", ",") + " €"; }
+function fsToast(msg) {
+  let t = document.getElementById("toast");
+  if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:99999;max-width:85%;text-align:center;transition:opacity .3s;"; document.body.appendChild(t); }
+  t.textContent = msg; t.style.opacity = "1"; clearTimeout(t._timer); t._timer = setTimeout(() => { t.style.opacity = "0"; }, 3400);
+}
+
+async function fsStornoStart(id) {
+  fsModal(`<div style="text-align:center; color:var(--gray); font-size:14px; padding:16px 0;">Einen Moment – ich prüfe die Absagefrist …</div>`);
+  let v;
+  try {
+    const r = await fetch("fahrstunden/storno", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, fahrstunde_id: id, ausfuehren: false }) });
+    v = await r.json();
+  } catch (e) { v = { ok: false, fehler: "Verbindung fehlgeschlagen." }; }
+  if (!v || !v.ok) {
+    fsModal(`<div style="font-size:16px; font-weight:800; color:var(--dark); margin-bottom:8px;">Absage nicht möglich</div>
+      <div style="font-size:14px; color:var(--gray); line-height:1.45;">${esc((v && v.fehler) || "Das hat gerade nicht geklappt.")}</div>
+      <button onclick="fsModalSchliessen()" style="margin-top:16px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Schließen</button>`);
+    return;
+  }
+  const termin = `${esc(v.datum_de || "")}${v.uhrzeit ? ", " + esc(v.uhrzeit) + " Uhr" : ""}`;
+  const art = esc(v.art_text || "Fahrstunde");
+  if (v.kostenpflichtig) {
+    fsModal(`
+      <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:4px;">Fahrstunde absagen?</div>
+      <div style="font-size:13.5px; color:var(--gray); margin-bottom:12px;">${art} · ${termin}</div>
+      <div style="background:#FDECEC; border:1px solid #F3B4B4; border-radius:12px; padding:13px 14px;">
+        <div style="font-weight:800; color:#B3261E; font-size:14.5px;">⚠️ Diese Absage ist kostenpflichtig</div>
+        <div style="font-size:13.5px; color:#7A1F1A; line-height:1.5; margin-top:6px;">
+          Die AGB-Frist von <b>${v.frist} Werktagen</b> ist unterschritten. Die Stunde wird als
+          <b>Fehlstunde (FE)</b> gewertet und mit <b>${fsEuro(v.betrag)}</b> (75 % des Entgelts) berechnet.</div>
+      </div>
+      <button onclick="fsStornoAusfuehren(${id})" style="margin-top:14px; width:100%; padding:13px; border:none; border-radius:12px; background:#B3261E; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">Trotzdem absagen · ${fsEuro(v.betrag)}</button>
+      <button onclick="fsModalSchliessen()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Doch nicht absagen</button>`);
+  } else {
+    fsModal(`
+      <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:4px;">Fahrstunde absagen?</div>
+      <div style="font-size:13.5px; color:var(--gray); margin-bottom:12px;">${art} · ${termin}</div>
+      <div style="background:#E9F7EE; border:1px solid #A7DCBB; border-radius:12px; padding:13px 14px;">
+        <div style="font-weight:800; color:#1E7A43; font-size:14.5px;">✓ Rechtzeitig – kostenfrei</div>
+        <div style="font-size:13.5px; color:#1E5B37; line-height:1.5; margin-top:6px;">
+          Du sagst rechtzeitig ab (Frist: ${v.frist} Werktage). Für diese Absage entstehen <b>keine Kosten</b>.</div>
+      </div>
+      <button onclick="fsStornoAusfuehren(${id})" style="margin-top:14px; width:100%; padding:13px; border:none; border-radius:12px; background:#E8600B; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">Fahrstunde absagen</button>
+      <button onclick="fsModalSchliessen()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Abbrechen</button>`);
+  }
+}
+
+async function fsStornoAusfuehren(id) {
+  fsModal(`<div style="text-align:center; color:var(--gray); font-size:14px; padding:16px 0;">Absage wird gespeichert …</div>`);
+  let v;
+  try {
+    const r = await fetch("fahrstunden/storno", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, fahrstunde_id: id, ausfuehren: true }) });
+    v = await r.json();
+  } catch (e) { v = { ok: false, fehler: "Verbindung fehlgeschlagen." }; }
+  fsModalSchliessen();
+  if (!v || !v.ok) { fsToast((v && v.fehler) || "Absage fehlgeschlagen."); return; }
+  fsToast(v.kostenpflichtig ? `Abgesagt · Fehlstunde ${fsEuro(v.betrag)} berechnet` : "Fahrstunde abgesagt – kostenfrei ✓");
+  renderFahrstunden();
+}
+
+function fsToggle(tag, block) {
+  const arr = fsAuswahl[tag] || [];
+  fsAuswahl[tag] = arr.includes(block) ? arr.filter(b => b !== block) : [...arr, block];
+  if (!fsAuswahl[tag].length) delete fsAuswahl[tag];
+  const inp = document.getElementById("fsDatum");
+  if (inp) fsAbDatum = inp.value;
+  renderFsAnfrage();
+}
+
+function fsSetFiliale(name) {
+  fsFiliale = name;
+  const inp = document.getElementById("fsDatum");
+  if (inp) fsAbDatum = inp.value;
+  renderFsAnfrage();
+}
+
+function renderFsAnfrage() {
+  fsGesendet = false;
+  if (!fsFiliale && fsData && fsData.filiale_vorschlag) fsFiliale = fsData.filiale_vorschlag;
+  const filialen = (fsData && fsData.filialen) || [];
+  let h = `
+    <button class="btn-ghost" onclick="fsAnsicht='liste';renderFahrstunden();">← Zurück</button>
+    <h1 style="margin-top:4px;">Fahrstunde anfragen</h1>
+    <div class="meta" style="margin-bottom:2px;">Sag uns, in welcher Filiale, ab wann und wann du kannst – das Büro meldet sich mit einem Termin.</div>`;
+
+  if (filialen.length) {
+    h += `<div class="card">
+      <div class="eyebrow">In welcher Filiale möchtest du fahren?</div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">`;
+    for (const f of filialen) {
+      const an = fsFiliale === f;
+      h += `<button onclick="fsSetFiliale('${f.replace(/'/g, "\\'")}')" style="
+        border:1.5px solid ${an ? "var(--orange)" : "var(--line)"}; background:${an ? "var(--orange)" : "#fff"};
+        color:${an ? "#fff" : "var(--gray)"}; border-radius:999px; padding:8px 14px; font-size:13px;
+        font-weight:700; cursor:pointer; font-family:inherit;">${esc(f)}</button>`;
+    }
+    h += `</div></div>`;
+  }
+
+  h += `
+    <div class="card">
+      <div class="eyebrow">Ab wann möchtest du fahren?</div>
+      <input id="fsDatum" type="date" value="${esc(fsAbDatum)}" style="margin-top:8px; width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 14px; font-size:15px; font-family:inherit; outline:none; background:#fff;">
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">An welchen Tagen & Zeiten kannst du?</div>
+      <div style="font-size:12px; color:var(--gray); margin:4px 0 4px;">Tippe die Zeitfenster an, die dir passen (mehrere möglich).</div>`;
+  for (const tag of FS_TAGE) {
+    const sel = fsAuswahl[tag] || [];
+    h += `<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid #F4EEE8;">
+      <span style="width:28px; font-weight:800; font-size:13px; color:var(--dark);">${tag}</span>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">`;
+    for (const [key, label] of FS_BLOECKE) {
+      const an = sel.includes(key);
+      h += `<button onclick="fsToggle('${tag}','${key}')" style="
+        border:1.5px solid ${an ? "var(--orange)" : "var(--line)"}; background:${an ? "var(--orange)" : "#fff"};
+        color:${an ? "#fff" : "var(--gray)"}; border-radius:999px; padding:6px 10px; font-size:12px;
+        font-weight:700; cursor:pointer; font-family:inherit;">${label}</button>`;
+    }
+    h += `</div></div>`;
+  }
+  h += `</div>
+    <button class="btn-primary" id="fsSenden" style="width:100%;" onclick="sendeFsAnfrage()">Anfrage senden</button>
+    <div id="fsHinweis" class="meta" style="text-align:center; color:#D64545;"></div>`;
+  main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">${h}</div>`;
+  main.scrollTop = 0;
+}
+
+async function sendeFsAnfrage() {
+  const inp = document.getElementById("fsDatum");
+  fsAbDatum = inp ? inp.value : "";
+  const hinweis = document.getElementById("fsHinweis");
+  const filialen = (fsData && fsData.filialen) || [];
+  if (filialen.length && !fsFiliale) { hinweis.textContent = "Bitte wähle eine Filiale."; return; }
+  if (!fsAbDatum) { hinweis.textContent = "Bitte wähle ein Startdatum."; return; }
+  if (!Object.keys(fsAuswahl).length) { hinweis.textContent = "Bitte wähle mindestens einen Tag mit Uhrzeit."; return; }
+  hinweis.textContent = "";
+  const btn = document.getElementById("fsSenden");
+  btn.disabled = true; btn.textContent = "Wird gesendet …";
+  try {
+    const r = await fetch("fahrstunden/anfrage", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, filiale: fsFiliale, ab_datum: fsAbDatum, verfuegbarkeit: fsAuswahl }),
+    });
+    const d = await r.json();
+    if (!d.ok) { hinweis.textContent = d.fehler || "Das hat nicht geklappt – versuch es nochmal."; btn.disabled = false; btn.textContent = "Anfrage senden"; return; }
+    fsAuswahl = {}; fsAbDatum = ""; fsFiliale = "";
+    main.innerHTML = `<div style="display:flex; flex-direction:column; gap:14px;">
+      <h1>Anfrage gesendet 🦊</h1>
+      <div class="card" style="border:none; background:var(--orange-soft);">
+        <div style="font-size:15px; color:var(--dark); line-height:1.5;">Super, deine Anfrage ist beim Büro gelandet.
+        Wir schauen nach passenden Terminen und melden uns bei dir. Deine bestätigten Termine erscheinen dann
+        oben unter „Kommende Termine".</div>
+      </div>
+      <button class="btn-primary" onclick="fsAnsicht='liste';renderFahrstunden();">Zurück zur Übersicht</button>
+    </div>`;
+  } catch (e) {
+    hinweis.textContent = "Keine Verbindung – versuch es gleich nochmal.";
+    btn.disabled = false; btn.textContent = "Anfrage senden";
+  }
+}
+
+// ── Navigation ───────────────────────────────────────────────
+const TABS = [
+  { id: "home", label: "Start", icon: "🏠" },
+  { id: "ausbildung", label: "Ausbildung", icon: "📋" },
+  { id: "fahrstunden", label: "Fahren", icon: "🚗" },
+  { id: "chat", label: "Chat", icon: "💬" },
+  { id: "mediathek", label: "Videos", icon: "▶️" },
+];
+function demoHinweis(label) {
+  let t = document.getElementById("toast");
+  if (!t) {
+    t = document.createElement("div");
+    t.id = "toast";
+    t.style.cssText = "position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:9;max-width:85%;text-align:center;transition:opacity .3s;";
+    document.body.appendChild(t);
+  }
+  t.textContent = "„" + label + "“ kommt in der nächsten Ausbaustufe – aktuell sind Start, Videos und Chat aktiv.";
+  t.style.opacity = "1";
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = "0"; }, 2600);
+}
+function waehleTab(id, label) {
+  if (!["mediathek","chat","home","ausbildung","fahrstunden"].includes(id)) { demoHinweis(label); return; }
+  document.querySelectorAll("nav button").forEach(b => b.classList.toggle("aktiv", b.dataset.tab === id));
+  if (id === "fahrstunden") { fsAnsicht = "liste"; }
+  if (id === "mediathek") renderListe();
+  else if (id === "chat") renderChat();
+  else if (id === "ausbildung") renderAusbildung();
+  else if (id === "fahrstunden") renderFahrstunden();
+  else renderHome();
+}
+document.getElementById("nav").innerHTML = TABS.map(t => `
+  <button data-tab="${t.id}" class="${t.id === "home" ? "aktiv" : ""}" onclick="waehleTab('${t.id}','${t.label}')">
+    <span class="ic">${t.icon}</span><span>${t.label}</span>
+  </button>`).join("");
+
+// ── Start ────────────────────────────────────────────────────
+if (token || zugangscode) {
+  renderHome();
+  meldeAlles();
+  ladeProfilbild();
+} else {
+  const gespeicherteNr = lade("fuchs_nummer", "");
+  if (gespeicherteNr) autoLoginNummer(gespeicherteNr);   // bekannte Nummer -> ohne Code rein
+  else zeigeGate();
+}
+</script>
+<script>
+/* Fuchs-App: Web-Push (Benachrichtigungen). Eigenständig, nutzt nur localStorage. */
+(function () {
+  var VAPID = "BJYc8H02c4QqwL883jsXq-LMmnP6zr30rNoepYqtxEMBTmHK2pa6kBdxoq5iowdETozJHXmim487uj7o4m8_7YQ";
+  var support = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  var reg = null;
+  function token() { try { return JSON.parse(localStorage.getItem("fuchs_token")) || ""; } catch (e) { return ""; } }
+  function b64u(s) {
+    var pad = "=".repeat((4 - s.length % 4) % 4);
+    var b = (s + pad).replace(/-/g, "+").replace(/_/g, "/");
+    var raw = atob(b), arr = new Uint8Array(raw.length);
+    for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+    return arr;
+  }
+  async function initSW() {
+    if (!support || reg) return reg;
+    try { reg = await navigator.serviceWorker.register('sw.js'); } catch (e) { }
+    return reg;
+  }
+  async function abo() { try { return reg ? await reg.pushManager.getSubscription() : null; } catch (e) { return null; } }
+  async function anmelden(interaktiv) {
+    var t = token();
+    if (!t) { if (interaktiv) alert("Bitte zuerst in der App anmelden."); return false; }
+    if (!support) { if (interaktiv) alert("Dein Handy unterstützt keine Benachrichtigungen. Tipp fürs iPhone: die App über Teilen und dann Zum Home-Bildschirm hinzufügen, dann geht es."); return false; }
+    await initSW();
+    if (interaktiv && Notification.permission !== "granted") {
+      var perm = await Notification.requestPermission();
+      if (perm !== "granted") { alert("Du hast Benachrichtigungen nicht erlaubt."); return false; }
+    }
+    if (Notification.permission !== "granted") return false;
+    try {
+      var s = await abo();
+      if (!s) s = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID) });
+      await fetch("push/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: t, subscription: s }) });
+      localStorage.setItem("fuchs_push", "1");
+      return true;
+    } catch (e) { if (interaktiv) alert("Benachrichtigung konnte nicht aktiviert werden."); return false; }
+  }
+  function istStandalone() {
+    try { return (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true; }
+    catch (e) { return false; }
+  }
+  function entferne(id) { var e = document.getElementById(id); if (e) e.remove(); }
+  function knopf() {
+    entferne("fuchsPushHint");
+    if (document.getElementById("fuchsPushBtn")) return;
+    var b = document.createElement("button");
+    b.id = "fuchsPushBtn";
+    b.textContent = "🔔 Benachrichtigungen aktivieren";
+    b.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:9999;padding:12px 16px;border:none;border-radius:14px;background:#E8600B;color:#fff;font-size:15px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.22);cursor:pointer;display:block;";
+    b.onclick = function () { anmelden(true).then(function (ok) { if (ok) b.remove(); }); };
+    document.body.appendChild(b);
+  }
+  function hinweis(text) {
+    entferne("fuchsPushBtn");
+    var h = document.getElementById("fuchsPushHint");
+    if (!h) {
+      h = document.createElement("div");
+      h.id = "fuchsPushHint";
+      h.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:9999;padding:10px 14px;border-radius:12px;background:#FFF3E9;border:1px solid #F3C79E;color:#8A4B10;font-size:13px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.12);text-align:center;";
+      document.body.appendChild(h);
+    }
+    h.textContent = text;
+  }
+  async function pruefe() {
+    var t = token();
+    if (!t) { entferne("fuchsPushBtn"); entferne("fuchsPushHint"); return; }   // nicht angemeldet
+    if (!support) {
+      hinweis(istStandalone()
+        ? "🔔 Dein iPhone/System unterstützt keine Web-Benachrichtigungen (evtl. iOS zu alt)."
+        : "🔔 Für Benachrichtigungen: App über das Fuchs-Symbol auf dem Home-Bildschirm öffnen.");
+      return;
+    }
+    await initSW();
+    var hatAbo = !!(await abo());
+    if (Notification.permission === "granted" && hatAbo) { entferne("fuchsPushBtn"); entferne("fuchsPushHint"); return; }  // schon aktiv
+    if (Notification.permission === "granted" && !hatAbo) {                              // erlaubt, Abo fehlt -> still erneuern
+      if (await anmelden(false)) { entferne("fuchsPushBtn"); entferne("fuchsPushHint"); return; }
+    }
+    knopf();
+  }
+  window.addEventListener("load", function () { initSW().then(pruefe); setInterval(pruefe, 5000); });
+})();
+</script>
+</body>
+</html>

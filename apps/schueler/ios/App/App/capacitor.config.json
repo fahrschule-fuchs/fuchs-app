@@ -1,0 +1,56 @@
+{
+	"appId": "de.fahrsyn.fuchs",
+	"appName": "FUCHS",
+	"webDir": "www",
+	"server": {
+		"androidScheme": "https",
+		"iosScheme": "capacitor",
+		"allowNavigation": [
+			"app.fahrsyn.de",
+			"*.fahrsyn.de"
+		]
+	},
+	"ios": {
+		"contentInset": "always",
+		"backgroundColor": "#FBF8F5",
+		"limitsNavigationsToAppBoundDomains": false
+	},
+	"android": {
+		"allowMixedContent": false,
+		"captureInput": true,
+		"backgroundColor": "#FBF8F5",
+		"webContentsDebuggingEnabled": false
+	},
+	"plugins": {
+		"SplashScreen": {
+			"launchShowDuration": 1200,
+			"launchAutoHide": false,
+			"backgroundColor": "#FBF8F5",
+			"androidScaleType": "CENTER_CROP",
+			"showSpinner": false
+		},
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		},
+		"Keyboard": {
+			"resize": "body"
+		}
+	},
+	"packageClassList": [
+		"AppPlugin",
+		"CAPBrowserPlugin",
+		"CAPCameraPlugin",
+		"FilesystemPlugin",
+		"KeyboardPlugin",
+		"LocalNotificationsPlugin",
+		"CAPNetworkPlugin",
+		"PreferencesPlugin",
+		"PushNotificationsPlugin",
+		"SplashScreenPlugin",
+		"StatusBarPlugin"
+	]
+}

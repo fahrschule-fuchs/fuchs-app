@@ -1,0 +1,19 @@
+{
+  "name": "fuchs-apps",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Native Apps (iOS + Android) fuer die FUCHS Fahrschueler- und Fahrlehrer-PWA",
+  "scripts": {
+    "build": "node scripts/build-www.mjs",
+    "pruefe": "node scripts/pruefe.mjs",
+    "rauchtest": "node scripts/rauchtest.mjs",
+    "sync:schueler": "npm run build -- schueler && cd apps/schueler && npx cap sync",
+    "sync:fahrlehrer": "npm run build -- fahrlehrer && cd apps/fahrlehrer && npx cap sync",
+    "sync": "npm run build && npm run pruefe && npm run sync:schueler && npm run sync:fahrlehrer",
+    "ios:schueler": "cd apps/schueler && npx cap open ios",
+    "ios:fahrlehrer": "cd apps/fahrlehrer && npx cap open ios",
+    "android:schueler": "cd apps/schueler && npx cap open android",
+    "android:fahrlehrer": "cd apps/fahrlehrer && npx cap open android"
+  }
+}
