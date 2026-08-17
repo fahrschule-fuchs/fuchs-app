@@ -9,10 +9,9 @@ workflows:
       app_store_connect: FuchsApiKey
 
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: de.fahrsyn.fuchs
       vars:
+        BUNDLE_ID: "de.fahrsyn.fuchs"
+        IOS_DIR: "apps/schueler/ios/App"
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         INFO_PLIST: "apps/schueler/ios/App/App/Info.plist"
@@ -34,13 +33,50 @@ workflows:
           npm ci
           npx cap sync ios
 
+      - name: Geteiltes Schema sicherstellen
+        script: |
+          SCHEME_DIR="$XCODE_PROJECT/xcshareddata/xcschemes"
+          mkdir -p "$SCHEME_DIR"
+          if [ ! -f "$SCHEME_DIR/App.xcscheme" ]; then
+            cat > "$SCHEME_DIR/App.xcscheme" <<'XCSCHEME'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <Scheme LastUpgradeVersion="1430" version="1.3">
+             <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
+                <BuildActionEntries>
+                   <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
+                      <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="504EC3031FED79650016851F" BuildableName="App.app" BlueprintName="App" ReferencedContainer="container:App.xcodeproj"></BuildableReference>
+                   </BuildActionEntry>
+                </BuildActionEntries>
+             </BuildAction>
+             <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES"></TestAction>
+             <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES">
+                <BuildableProductRunnable runnableDebuggingMode="0">
+                   <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="504EC3031FED79650016851F" BuildableName="App.app" BlueprintName="App" ReferencedContainer="container:App.xcodeproj"></BuildableReference>
+                </BuildableProductRunnable>
+             </LaunchAction>
+             <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
+                <BuildableProductRunnable runnableDebuggingMode="0">
+                   <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="504EC3031FED79650016851F" BuildableName="App.app" BlueprintName="App" ReferencedContainer="container:App.xcodeproj"></BuildableReference>
+                </BuildableProductRunnable>
+             </ProfileAction>
+             <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
+             <ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>
+          </Scheme>
+          XCSCHEME
+          fi
+          echo "Vorhandene Schemata:"
+          xcodebuild -list -project "$XCODE_PROJECT" || true
+
       - name: Buildnummer setzen
         script: |
-          cd apps/schueler/ios/App
+          cd "$IOS_DIR"
           agvtool new-version -all "$BUILD_NUMBER" || true
 
-      - name: Signierprofile setzen
+      - name: Zertifikat und Profil bei Apple erzeugen
         script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain initialize
+          keychain add-certificates
           xcode-project use-profiles
 
       - name: iPhone-App bauen
@@ -49,6 +85,7 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
 
     publishing:
       app_store_connect:
