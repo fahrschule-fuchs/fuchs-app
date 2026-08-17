@@ -64,8 +64,6 @@ workflows:
           </Scheme>
           XCSCHEME
           fi
-          echo "Vorhandene Schemata:"
-          xcodebuild -list -project "$XCODE_PROJECT" || true
 
       - name: Buildnummer setzen
         script: |
@@ -74,10 +72,14 @@ workflows:
 
       - name: Zertifikat und Profil bei Apple erzeugen
         script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          openssl genrsa -out /tmp/fuchs_cert_key.pem 2048
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key @file:/tmp/fuchs_cert_key.pem \
+            --create
           keychain initialize
-          keychain add-certificates
-          xcode-project use-profiles
+          keychain add-certificates --certificate-password ""
+          xcode-project use-profiles --project "$XCODE_PROJECT"
 
       - name: iPhone-App bauen
         script: |
