@@ -1,203 +1,56 @@
-# =====================================================================
-# CODEMAGIC - iOS und Android bauen OHNE eigenen Mac
-# ---------------------------------------------------------------------
-# Codemagic baut beide Apps auf echten Apple-Rechnern in der Cloud.
-# Ihr braucht dafuer keinen Mac - nur ein Git-Konto (GitHub/GitLab/
-# Bitbucket), in das dieses Projekt liegt.
-#
-# Kostenrahmen: Der Gratis-Tarif enthaelt 500 Mac-Minuten pro Monat.
-# Ein Build dauert rund 10 Minuten -> reicht fuer beide Apps bequem.
-#
-# EINRICHTUNG (einmalig, alles in der Codemagic-Weboberflaeche):
-#   1. Projekt aus dem Git-Repository verbinden.
-#   2. Unter "Teams > Integrations" den App Store Connect API-Key
-#      hinterlegen (Apple: Benutzer & Zugriff > Integrationen > .p8).
-#   3. Umgebungsvariablen-Gruppen anlegen (Namen wie unten):
-#        - "appstore"  : APP_STORE_CONNECT_* (von Codemagic verwaltet)
-#        - "google"    : GCLOUD_SERVICE_ACCOUNT_CREDENTIALS (Play-JSON)
-#        - "signing"   : Android-Keystore (siehe unten)
-#   4. Bundle-IDs in App Store Connect anlegen:
-#        de.fahrsyn.fuchs            (Fahrschueler)
-#        de.fahrsyn.fuchs.fahrlehrer (Fahrlehrer)
-#
-# WICHTIG: Die nativen Ordner apps/*/ios und apps/*/android muessen
-# EINMAL lokal per "npx cap add ..." erzeugt, mit den Berechtigungs-
-# texten (Info.plist) und google-services.json bestueckt und dann ins
-# Git-Repository eingecheckt werden. Nur so bleiben Push-Rechte und
-# Kamera-Texte erhalten. Danach genuegt hier "npx cap sync".
-# =====================================================================
-
-definitions:
-  # Gemeinsamer Vorbau: Web-Bundle erzeugen und pruefen
-  scripts:
-    - &web_bauen
-      name: Web-Bundle bauen und pruefen
-      script: |
-        npm ci
-        npm run build
-        npm run pruefe
-
-  instanz: &instanz
-    instance_type: mac_mini_m2      # Gratis-Kontingent laeuft auf M2
-    max_build_duration: 30
-
 workflows:
 
-  # ------------------------------------------------------------------
-  # FAHRSCHUELER-APP  ->  iOS
-  # ------------------------------------------------------------------
   schueler-ios:
-    name: Fahrschueler · iOS
-    <<: *instanz
-    environment:
-      groups:
-        - appstore
-      vars:
-        APP_ID: de.fahrsyn.fuchs
-        XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
-        XCODE_SCHEME: "App"
-      node: 20
-      xcode: latest
-    integrations:
-      app_store_connect: FuchsApiKey     # Name eures API-Key in Codemagic
-    scripts:
-      - *web_bauen
-      - name: Capacitor mit iOS abgleichen
-        script: |
-          cd apps/schueler
-          npm ci
-          npx cap sync ios
-      - name: Signierung von App Store Connect holen
-        script: |
-          app-store-connect fetch-signing-files "$APP_ID" \
-            --type IOS_APP_STORE --create
-          keychain initialize
-          keychain add-certificates
-          xcode-project use-profiles
-      - name: iOS-App bauen (.ipa)
-        script: |
-          xcode-project build-ipa \
-            --project "$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME"
-    artifacts:
-      - build/ios/ipa/*.ipa
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true       # automatisch an TestFlight
+    name: Fahrschueler iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 45
 
-  # ------------------------------------------------------------------
-  # FAHRSCHUELER-APP  ->  Android
-  # ------------------------------------------------------------------
-  schueler-android:
-    name: Fahrschueler · Android
-    <<: *instanz
-    environment:
-      groups:
-        - google
-        - signing
-      vars:
-        PACKAGE_NAME: de.fahrsyn.fuchs
-      node: 20
-    scripts:
-      - *web_bauen
-      - name: Capacitor mit Android abgleichen
-        script: |
-          cd apps/schueler
-          npm ci
-          npx cap sync android
-      - name: Android-Bundle bauen und signieren
-        script: |
-          cd apps/schueler/android
-          # Keystore aus der Umgebungsvariablen-Gruppe "signing"
-          echo $CM_KEYSTORE | base64 --decode > keystore.jks
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/keystore.jks \
-            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
-            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
-            -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
-    artifacts:
-      - apps/schueler/android/app/build/outputs/**/*.aab
-    publishing:
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal                  # erst interner Test, dann manuell hoch
-
-  # ------------------------------------------------------------------
-  # FAHRLEHRER-APP  ->  iOS
-  # ------------------------------------------------------------------
-  fahrlehrer-ios:
-    name: Fahrlehrer · iOS
-    <<: *instanz
-    environment:
-      groups:
-        - appstore
-      vars:
-        APP_ID: de.fahrsyn.fuchs.fahrlehrer
-        XCODE_PROJECT: "apps/fahrlehrer/ios/App/App.xcodeproj"
-        XCODE_SCHEME: "App"
-      node: 20
-      xcode: latest
     integrations:
       app_store_connect: FuchsApiKey
+
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: de.fahrsyn.fuchs
+      vars:
+        XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+        INFO_PLIST: "apps/schueler/ios/App/App/Info.plist"
+      node: 20
+      xcode: latest
+
     scripts:
-      - *web_bauen
+      - name: Web-Bundle bauen
+        script: |
+          node scripts/build-www.mjs schueler
+
+      - name: Verschluesselungs-Erklaerung ergaenzen
+        script: |
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$INFO_PLIST" || true
+
       - name: Capacitor mit iOS abgleichen
         script: |
-          cd apps/fahrlehrer
+          cd apps/schueler
           npm ci
           npx cap sync ios
-      - name: Signierung von App Store Connect holen
+
+      - name: Buildnummer setzen
         script: |
-          app-store-connect fetch-signing-files "$APP_ID" \
-            --type IOS_APP_STORE --create
-          keychain initialize
-          keychain add-certificates
+          cd apps/schueler/ios/App
+          agvtool new-version -all "$BUILD_NUMBER" || true
+
+      - name: Signierprofile setzen
+        script: |
           xcode-project use-profiles
-      - name: iOS-App bauen (.ipa)
+
+      - name: iPhone-App bauen
         script: |
-          xcode-project build-ipa \
-            --project "$XCODE_PROJECT" \
-            --scheme "$XCODE_SCHEME"
+          xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+
     artifacts:
       - build/ios/ipa/*.ipa
+
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-
-  # ------------------------------------------------------------------
-  # FAHRLEHRER-APP  ->  Android
-  # ------------------------------------------------------------------
-  fahrlehrer-android:
-    name: Fahrlehrer · Android
-    <<: *instanz
-    environment:
-      groups:
-        - google
-        - signing
-      vars:
-        PACKAGE_NAME: de.fahrsyn.fuchs.fahrlehrer
-      node: 20
-    scripts:
-      - *web_bauen
-      - name: Capacitor mit Android abgleichen
-        script: |
-          cd apps/fahrlehrer
-          npm ci
-          npx cap sync android
-      - name: Android-Bundle bauen und signieren
-        script: |
-          cd apps/fahrlehrer/android
-          echo $CM_KEYSTORE | base64 --decode > keystore.jks
-          ./gradlew bundleRelease \
-            -Pandroid.injected.signing.store.file=$(pwd)/keystore.jks \
-            -Pandroid.injected.signing.store.password=$CM_KEYSTORE_PASSWORD \
-            -Pandroid.injected.signing.key.alias=$CM_KEY_ALIAS \
-            -Pandroid.injected.signing.key.password=$CM_KEY_PASSWORD
-    artifacts:
-      - apps/fahrlehrer/android/app/build/outputs/**/*.aab
-    publishing:
-      google_play:
-        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
-        track: internal
