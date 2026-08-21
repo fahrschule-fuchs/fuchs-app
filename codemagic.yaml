@@ -141,6 +141,14 @@ workflows:
 
       - name: Zertifikat und Profil bei Apple erzeugen
         script: |
+          echo "--- Vorhandene Verteil-Zertifikate zurueckziehen ---"
+          for CID in $(app-store-connect certificates list \
+                --type DISTRIBUTION IOS_DISTRIBUTION \
+                --json | python3 -c "import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print('\n'.join(c['id'] for c in d))" || echo ""); do
+            echo "Loesche Zertifikat $CID"
+            app-store-connect certificates delete "$CID" --ignore-not-found || true
+          done
+
           openssl genrsa -out /tmp/fuchs_cert_key.pem 2048
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
@@ -169,8 +177,12 @@ workflows:
                 || echo "FEHLT >>> Profil ohne Push"
             done
           done
-          [ "$FOUND" = "1" ] || echo "Kein Profil auf der Maschine gefunden"
           echo "=============================================="
+          if [ "$FOUND" != "1" ]; then
+            echo "FEHLER: Es wurde kein Bereitstellungsprofil erzeugt."
+            echo "Ohne Profil kann nicht signiert werden - Abbruch."
+            exit 1
+          fi
 
       - name: iPhone-App bauen
         script: |
@@ -179,9 +191,4 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
+      -
