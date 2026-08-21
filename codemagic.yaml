@@ -79,37 +79,62 @@ workflows:
           </dict>
           </plist>
           PLIST
-            echo "Entitlements angelegt."
           fi
+          echo "--- App.entitlements ---"
+          cat "$ENT"
           python3 - <<'PYEOF'
-          import os
-          p = os.environ["IOS_DIR"] + "/App/AppDelegate.swift"
-          s = open(p, encoding="utf-8").read()
-          if "capacitorDidRegisterForRemoteNotifications" in s:
-              print("AppDelegate: schon vorbereitet."); raise SystemExit
-          zusatz = """
-              // Push: Geraete-Token von iOS an das Capacitor-Plugin weiterreichen.
-              func application(_ application: UIApplication,
-                               didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+          import os, re
+          path = os.path.join(os.environ["IOS_DIR"], "App", "AppDelegate.swift")
+          src = open(path, encoding="utf-8").read()
+          if "didRegisterForRemoteNotificationsWithDeviceToken" in src:
+              print("AppDelegate: Push-Weiterleitung bereits vorhanden")
+          else:
+              block = '''
+              func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
                   NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
               }
 
-              func application(_ application: UIApplication,
-                               didFailToRegisterForRemoteNotificationsWithError error: Error) {
+              func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
                   NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
               }
-          """
-          i = s.rfind("}")
-          if i == -1:
-              raise SystemExit("FEHLER: keine schliessende Klammer")
-          open(p, "w", encoding="utf-8").write(s[:i] + zusatz + s[i:])
-          print("AppDelegate: Push-Weiterleitung ergaenzt.")
+          '''
+              idx = src.rstrip().rfind("}")
+              src = src[:idx] + block + "\n}\n"
+              open(path, "w", encoding="utf-8").write(src)
+              print("AppDelegate: Push-Weiterleitung eingefuegt")
           PYEOF
 
       - name: Buildnummer setzen
         script: |
           cd "$IOS_DIR"
           agvtool new-version -all "$BUILD_NUMBER" || true
+
+      - name: Push-Faehigkeit bei Apple sicherstellen
+        script: |
+          RES_ID=$(app-store-connect bundle-ids list \
+            --bundle-id-identifier "$BUNDLE_ID" \
+            --strict-match-identifier \
+            --json | python3 -c "import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print(d[0]['id'])" || echo "")
+          echo "Bundle-ID-Kennung bei Apple: [$RES_ID]"
+          if [ -z "$RES_ID" ]; then
+            echo "WARNUNG: Kennung nicht gefunden - Schritt wird uebersprungen"
+            exit 0
+          fi
+
+          app-store-connect bundle-ids enable-capabilities "$RES_ID" \
+            --capability "Push Notifications" || echo "Push war bereits aktiv"
+
+          echo "--- Aktive Faehigkeiten ---"
+          app-store-connect bundle-ids capabilities "$RES_ID" || true
+
+          echo "--- Alte App-Store-Profile entfernen ---"
+          for PID in $(app-store-connect bundle-ids profiles \
+                --bundle-ids "$RES_ID" \
+                --type IOS_APP_STORE \
+                --json | python3 -c "import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print('\n'.join(p['id'] for p in d))" || echo ""); do
+            echo "Loesche Profil $PID"
+            app-store-connect profiles delete "$PID" --ignore-not-found
+          done
 
       - name: Zertifikat und Profil bei Apple erzeugen
         script: |
