@@ -18,6 +18,14 @@ workflows:
       node: 22
       xcode: latest
 
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
     scripts:
       - name: Web-Bundle bauen
         script: |
@@ -35,160 +43,86 @@ workflows:
 
       - name: Geteiltes Schema sicherstellen
         script: |
-          SCHEME_DIR="$XCODE_PROJECT/xcshareddata/xcschemes"
-          mkdir -p "$SCHEME_DIR"
-          if [ ! -f "$SCHEME_DIR/App.xcscheme" ]; then
-            cat > "$SCHEME_DIR/App.xcscheme" <<'XCSCHEME'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <Scheme LastUpgradeVersion="1430" version="1.3">
-             <BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES">
-                <BuildActionEntries>
-                   <BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" buildForArchiving="YES" buildForAnalyzing="YES">
-                      <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="504EC3031FED79650016851F" BuildableName="App.app" BlueprintName="App" ReferencedContainer="container:App.xcodeproj"></BuildableReference>
-                   </BuildActionEntry>
-                </BuildActionEntries>
-             </BuildAction>
-             <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES"></TestAction>
-             <LaunchAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle="0" useCustomWorkingDirectory="NO" ignoresPersistentStateOnLaunch="NO" debugDocumentVersioning="YES" debugServiceExtension="internal" allowLocationSimulation="YES">
-                <BuildableProductRunnable runnableDebuggingMode="0">
-                   <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="504EC3031FED79650016851F" BuildableName="App.app" BlueprintName="App" ReferencedContainer="container:App.xcodeproj"></BuildableReference>
-                </BuildableProductRunnable>
-             </LaunchAction>
-             <ProfileAction buildConfiguration="Release" shouldUseLaunchSchemeArgsEnv="YES" savedToolIdentifier="" useCustomWorkingDirectory="NO" debugDocumentVersioning="YES">
-                <BuildableProductRunnable runnableDebuggingMode="0">
-                   <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="504EC3031FED79650016851F" BuildableName="App.app" BlueprintName="App" ReferencedContainer="container:App.xcodeproj"></BuildableReference>
-                </BuildableProductRunnable>
-             </ProfileAction>
-             <AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>
-             <ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>
-          </Scheme>
-          XCSCHEME
+          D="$XCODE_PROJECT/xcshareddata/xcschemes"
+          mkdir -p "$D"
+          B='BuildableIdentifier="primary" BlueprintIdentifier="504EC3031FED79650016851F" BuildableName="App.app" BlueprintName="App" ReferencedContainer="container:App.xcodeproj"'
+          if [ ! -f "$D/App.xcscheme" ]; then
+            {
+              echo '<?xml version="1.0" encoding="UTF-8"?>'
+              echo '<Scheme LastUpgradeVersion="1430" version="1.3">'
+              echo '<BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES"><BuildActionEntries>'
+              echo "<BuildActionEntry buildForTesting=\"YES\" buildForRunning=\"YES\" buildForProfiling=\"YES\" buildForArchiving=\"YES\" buildForAnalyzing=\"YES\"><BuildableReference $B></BuildableReference></BuildActionEntry>"
+              echo '</BuildActionEntries></BuildAction>'
+              echo '<TestAction buildConfiguration="Debug"></TestAction>'
+              echo "<LaunchAction buildConfiguration=\"Debug\"><BuildableProductRunnable runnableDebuggingMode=\"0\"><BuildableReference $B></BuildableReference></BuildableProductRunnable></LaunchAction>"
+              echo "<ProfileAction buildConfiguration=\"Release\"><BuildableProductRunnable runnableDebuggingMode=\"0\"><BuildableReference $B></BuildableReference></BuildableProductRunnable></ProfileAction>"
+              echo '<AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>'
+              echo '<ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>'
+              echo '</Scheme>'
+            } > "$D/App.xcscheme"
           fi
 
       - name: Push-Berechtigung und AppDelegate vorbereiten
         script: |
           ENT="$IOS_DIR/App/App.entitlements"
-          if [ ! -f "$ENT" ]; then
-            cat > "$ENT" <<'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>aps-environment</key>
-            <string>production</string>
-          </dict>
-          </plist>
-          PLIST
-          fi
-          echo "--- App.entitlements ---"
-          cat "$ENT"
-          python3 - <<'PYEOF'
-          import os, re
-          path = os.path.join(os.environ["IOS_DIR"], "App", "AppDelegate.swift")
-          src = open(path, encoding="utf-8").read()
-          if "didRegisterForRemoteNotificationsWithDeviceToken" in src:
-              print("AppDelegate: Push-Weiterleitung bereits vorhanden")
+          printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+            '<plist version="1.0"><dict><key>aps-environment</key><string>production</string></dict></plist>' > "$ENT"
+          python3 -c "
+          import os
+          p = os.path.join(os.environ['IOS_DIR'], 'App', 'AppDelegate.swift')
+          s = open(p).read()
+          if 'didRegisterForRemoteNotifications' in s:
+              print('AppDelegate schon fertig')
           else:
-              block = '''
+              b = '''
               func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
                   NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
               }
-
               func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
                   NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
               }
           '''
-              idx = src.rstrip().rfind("}")
-              src = src[:idx] + block + "\n}\n"
-              open(path, "w", encoding="utf-8").write(src)
-              print("AppDelegate: Push-Weiterleitung eingefuegt")
-          PYEOF
+              i = s.rstrip().rfind('}')
+              open(p, 'w').write(s[:i] + b + chr(10) + '}' + chr(10))
+              print('AppDelegate ergaenzt')
+          "
 
       - name: Buildnummer setzen
         script: |
           cd "$IOS_DIR"
           agvtool new-version -all "$BUILD_NUMBER" || true
 
-      - name: Push-Faehigkeit bei Apple sicherstellen
+      - name: Altes Zertifikat und Profil entfernen
         script: |
-          RES_ID=$(app-store-connect bundle-ids list \
-            --bundle-id-identifier "$BUNDLE_ID" \
-            --strict-match-identifier \
-            --json | python3 -c "import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print(d[0]['id'])" || echo "")
-          echo "Bundle-ID-Kennung bei Apple: [$RES_ID]"
-          if [ -z "$RES_ID" ]; then
-            echo "WARNUNG: Kennung nicht gefunden - Schritt wird uebersprungen"
-            exit 0
-          fi
-
-          app-store-connect bundle-ids enable-capabilities "$RES_ID" \
-            --capability "Push Notifications" || echo "Push war bereits aktiv"
-
-          echo "--- Aktive Faehigkeiten ---"
-          app-store-connect bundle-ids capabilities "$RES_ID" || true
-
-          echo "--- Alte App-Store-Profile entfernen ---"
-          for PID in $(app-store-connect bundle-ids profiles \
-                --bundle-ids "$RES_ID" \
-                --type IOS_APP_STORE \
-                --json | python3 -c "import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print('\n'.join(p['id'] for p in d))" || echo ""); do
-            echo "Loesche Profil $PID"
-            app-store-connect profiles delete "$PID" --ignore-not-found
+          J="import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print(chr(10).join(x['id'] for x in d))"
+          RES=$(app-store-connect bundle-ids list --bundle-id-identifier "$BUNDLE_ID" \
+            --strict-match-identifier --json | python3 -c "$J" | head -1)
+          echo "Bundle-ID bei Apple: $RES"
+          app-store-connect bundle-ids enable-capabilities "$RES" \
+            --capability "Push Notifications" || echo "Push war schon aktiv"
+          for P in $(app-store-connect bundle-ids profiles --bundle-ids "$RES" \
+              --type IOS_APP_STORE --json | python3 -c "$J"); do
+            echo "Profil weg: $P"; app-store-connect profiles delete "$P" --ignore-not-found || true
           done
+          for C in $(app-store-connect certificates list --type DISTRIBUTION IOS_DISTRIBUTION \
+              --json | python3 -c "$J"); do
+            echo "Zertifikat weg: $C"; app-store-connect certificates delete "$C" --ignore-not-found || true
+          done
+          sleep 20
 
-          echo "--- 30 Sekunden warten, damit Apple die Faehigkeit uebernimmt ---"
-          sleep 30
-
-      - name: Zertifikat und Profil bei Apple erzeugen
+      - name: Zertifikat und Profil neu erzeugen
         script: |
-          echo "--- Vorhandene Verteil-Zertifikate zurueckziehen ---"
-          for CID in $(app-store-connect certificates list \
-                --type DISTRIBUTION IOS_DISTRIBUTION \
-                --json | python3 -c "import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print('\n'.join(c['id'] for c in d))" || echo ""); do
-            echo "Loesche Zertifikat $CID"
-            app-store-connect certificates delete "$CID" --ignore-not-found || true
-          done
-
-          openssl genrsa -out /tmp/fuchs_cert_key.pem 2048
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --certificate-key @file:/tmp/fuchs_cert_key.pem \
-            --create
+          openssl genrsa -out /tmp/k.pem 2048
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE \
+            --certificate-key @file:/tmp/k.pem --create
           keychain initialize
           keychain add-certificates --certificate-password ""
           xcode-project use-profiles --project "$XCODE_PROJECT"
-
-          echo "=============================================="
-          echo " PRUEFUNG: Enthaelt das Profil die Push-Berechtigung?"
-          echo "=============================================="
-          FOUND=0
-          for DIR in "$HOME/Library/MobileDevice/Provisioning Profiles" \
-                     "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
-            [ -d "$DIR" ] || continue
-            for PROF in "$DIR"/*.mobileprovision; do
-              [ -f "$PROF" ] || continue
-              FOUND=1
-              security cms -D -i "$PROF" > /tmp/prof.plist 2>/dev/null || continue
-              echo "----------------------------------------------"
-              /usr/libexec/PlistBuddy -c "Print :Name" /tmp/prof.plist 2>/dev/null
-              /usr/libexec/PlistBuddy -c "Print :CreationDate" /tmp/prof.plist 2>/dev/null
-              printf "aps-environment: "
-              /usr/libexec/PlistBuddy -c "Print :Entitlements:aps-environment" /tmp/prof.plist 2>/dev/null \
-                || echo "FEHLT >>> Profil ohne Push"
-            done
-          done
-          echo "=============================================="
-          if [ "$FOUND" != "1" ]; then
-            echo "FEHLER: Es wurde kein Bereitstellungsprofil erzeugt."
-            echo "Ohne Profil kann nicht signiert werden - Abbruch."
-            exit 1
-          fi
+          ls -1 "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision \
+            || { echo "FEHLER: kein Profil erzeugt"; exit 1; }
 
       - name: iPhone-App bauen
         script: |
           xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME" \
             --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual CODE_SIGN_ENTITLEMENTS=App/App.entitlements"
-
-    artifacts:
-      - build/ios/ipa/*.ipa
-      -
