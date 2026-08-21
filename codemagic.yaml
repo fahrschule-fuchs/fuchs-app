@@ -65,6 +65,47 @@ workflows:
           XCSCHEME
           fi
 
+      - name: Push-Berechtigung und AppDelegate vorbereiten
+        script: |
+          ENT="$IOS_DIR/App/App.entitlements"
+          if [ ! -f "$ENT" ]; then
+            cat > "$ENT" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>aps-environment</key>
+            <string>production</string>
+          </dict>
+          </plist>
+          PLIST
+            echo "Entitlements angelegt."
+          fi
+          python3 - <<'PYEOF'
+          import os
+          p = os.environ["IOS_DIR"] + "/App/AppDelegate.swift"
+          s = open(p, encoding="utf-8").read()
+          if "capacitorDidRegisterForRemoteNotifications" in s:
+              print("AppDelegate: schon vorbereitet."); raise SystemExit
+          zusatz = """
+              // Push: Geraete-Token von iOS an das Capacitor-Plugin weiterreichen.
+              func application(_ application: UIApplication,
+                               didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+                  NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+              }
+
+              func application(_ application: UIApplication,
+                               didFailToRegisterForRemoteNotificationsWithError error: Error) {
+                  NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+              }
+          """
+          i = s.rfind("}")
+          if i == -1:
+              raise SystemExit("FEHLER: keine schliessende Klammer")
+          open(p, "w", encoding="utf-8").write(s[:i] + zusatz + s[i:])
+          print("AppDelegate: Push-Weiterleitung ergaenzt.")
+          PYEOF
+
       - name: Buildnummer setzen
         script: |
           cd "$IOS_DIR"
@@ -83,7 +124,8 @@ workflows:
 
       - name: iPhone-App bauen
         script: |
-          xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME"
+          xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME" \
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual CODE_SIGN_ENTITLEMENTS=App/App.entitlements"
 
     artifacts:
       - build/ios/ipa/*.ipa
