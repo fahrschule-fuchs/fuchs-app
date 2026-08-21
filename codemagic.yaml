@@ -20,6 +20,7 @@ workflows:
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
 
     publishing:
       app_store_connect:
@@ -87,6 +88,18 @@ workflows:
               open(p, 'w').write(s[:i] + b + chr(10) + '}' + chr(10))
               print('AppDelegate ergaenzt')
           "
+          python3 -c "
+          import os
+          p = os.path.join(os.environ['IOS_DIR'], 'App.xcodeproj', 'project.pbxproj')
+          s = open(p).read()
+          if 'CODE_SIGN_ENTITLEMENTS' in s:
+              print('Projekteintrag schon vorhanden')
+          else:
+              a = 'PRODUCT_BUNDLE_IDENTIFIER = de.fahrsyn.fuchs;'
+              b = a + chr(10) + chr(9)*4 + 'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;'
+              print('Projekteintrag in', s.count(a), 'Konfigurationen ergaenzt')
+              open(p, 'w').write(s.replace(a, b))
+          "
 
       - name: Buildnummer setzen
         script: |
@@ -119,7 +132,15 @@ workflows:
           keychain initialize
           keychain add-certificates --certificate-password ""
           xcode-project use-profiles --project "$XCODE_PROJECT"
+
       - name: iPhone-App bauen
         script: |
           xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME" \
-            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CODE_SIGN_STYLE=Manual CODE_SIGN_ENTITLEMENTS=App/App.entitlements"
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO" \
+          || {
+            echo "=================== FEHLERGRUND ==================="
+            grep -h -A4 -E "error:|error :" /tmp/xcodebuild_logs/*.log | tail -n 60
+            echo "=================== LETZTE ZEILEN ================="
+            tail -n 40 /tmp/xcodebuild_logs/*.log
+            exit 1
+          }
