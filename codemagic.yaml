@@ -119,9 +119,6 @@ workflows:
           keychain initialize
           keychain add-certificates --certificate-password ""
           xcode-project use-profiles --project "$XCODE_PROJECT"
-          ls -1 "$HOME/Library/MobileDevice/Provisioning Profiles"/*.mobileprovision \
-            || { echo "FEHLER: kein Profil erzeugt"; exit 1; }
-
       - name: iPhone-App bauen
         script: |
           xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME" \
