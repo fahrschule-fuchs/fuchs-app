@@ -136,6 +136,9 @@ workflows:
             app-store-connect profiles delete "$PID" --ignore-not-found
           done
 
+          echo "--- 30 Sekunden warten, damit Apple die Faehigkeit uebernimmt ---"
+          sleep 30
+
       - name: Zertifikat und Profil bei Apple erzeugen
         script: |
           openssl genrsa -out /tmp/fuchs_cert_key.pem 2048
@@ -146,6 +149,28 @@ workflows:
           keychain initialize
           keychain add-certificates --certificate-password ""
           xcode-project use-profiles --project "$XCODE_PROJECT"
+
+          echo "=============================================="
+          echo " PRUEFUNG: Enthaelt das Profil die Push-Berechtigung?"
+          echo "=============================================="
+          FOUND=0
+          for DIR in "$HOME/Library/MobileDevice/Provisioning Profiles" \
+                     "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            [ -d "$DIR" ] || continue
+            for PROF in "$DIR"/*.mobileprovision; do
+              [ -f "$PROF" ] || continue
+              FOUND=1
+              security cms -D -i "$PROF" > /tmp/prof.plist 2>/dev/null || continue
+              echo "----------------------------------------------"
+              /usr/libexec/PlistBuddy -c "Print :Name" /tmp/prof.plist 2>/dev/null
+              /usr/libexec/PlistBuddy -c "Print :CreationDate" /tmp/prof.plist 2>/dev/null
+              printf "aps-environment: "
+              /usr/libexec/PlistBuddy -c "Print :Entitlements:aps-environment" /tmp/prof.plist 2>/dev/null \
+                || echo "FEHLT >>> Profil ohne Push"
+            done
+          done
+          [ "$FOUND" = "1" ] || echo "Kein Profil auf der Maschine gefunden"
+          echo "=============================================="
 
       - name: iPhone-App bauen
         script: |
