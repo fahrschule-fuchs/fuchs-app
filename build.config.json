@@ -31,6 +31,18 @@
         "fuchs-icon.png"
       ],
       "ersetzungen": [
+                {
+          "_zweck": "Push-Erkennung: in der nativen App gibt es keinen Service Worker und kein PushManager. Ohne diese Regel haelt die App sich faelschlich fuer eine Webseite.",
+          "suchenRegex": "var support = \\('serviceWorker' in navigator\\) && \\('PushManager' in window\\) && \\('Notification' in window\\);",
+          "ersetzen": "var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));",
+          "pflicht": true
+        },
+        {
+          "_zweck": "Konto loeschen: Apple verlangt (Richtlinie 5.1.1(v)) einen Einstieg zur Kontoloeschung in der App selbst.",
+          "suchen": "Angemeldet · <a href='#' onclick='abmelden();return false;' style='color:var(--gray);'>abmelden</a>",
+          "ersetzen": "Angemeldet · <a href='#' onclick='abmelden();return false;' style='color:var(--gray);'>abmelden</a> · <a href='https://app.fahrsyn.de/konto-loeschen' style='color:var(--gray);'>Konto löschen</a>",
+          "pflicht": true
+        },
         {
           "_zweck": "Video-Fallback: relativer MP4-Pfad zeigt sonst ins Leere (wird vom fetch-Wrapper nicht erfasst, da <video src>)",
           "suchen": "\"videos/\" + l.datei",
