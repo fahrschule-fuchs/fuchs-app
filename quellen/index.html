@@ -1261,7 +1261,7 @@ if (token || zugangscode) {
 /* Fuchs-App: Web-Push (Benachrichtigungen). Eigenständig, nutzt nur localStorage. */
 (function () {
   var VAPID = "BJYc8H02c4QqwL883jsXq-LMmnP6zr30rNoepYqtxEMBTmHK2pa6kBdxoq5iowdETozJHXmim487uj7o4m8_7YQ";
-var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));
+var support = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
   var reg = null;
   function token() { try { return JSON.parse(localStorage.getItem("fuchs_token")) || ""; } catch (e) { return ""; } }
   function b64u(s) {
