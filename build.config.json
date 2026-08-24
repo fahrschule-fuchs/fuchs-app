@@ -80,6 +80,12 @@
       ],
       "ersetzungen": [
         {
+          "_zweck": "Push-Erkennung: in der nativen App gibt es keinen Service Worker und kein PushManager. Ohne diese Regel haelt die App sich faelschlich fuer eine Webseite und zeigt den Hinweis 'App ueber das Fuchs-Symbol auf dem Home-Bildschirm oeffnen'.",
+          "suchenRegex": "var support = \\('serviceWorker' in navigator\\) && \\('PushManager' in window\\) && \\('Notification' in window\\);",
+          "ersetzen": "var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));",
+          "pflicht": true
+        },
+        {
           "_zweck": "Bildpfade auf gebuendelte Dateien umbiegen (/app/xxx.png -> xxx.png)",
           "suchenRegex": "([\"'(=])/app/(fl-icon-192\\.png|fl-apple-touch-icon\\.png|fuchs-logo-komplett\\.png|fuchs-icon\\.png)",
           "ersetzen": "$1$2",
