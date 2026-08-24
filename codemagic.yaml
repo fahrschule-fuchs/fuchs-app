@@ -197,6 +197,19 @@ workflows:
           [ -d android ] || npx cap add android
           npx cap sync android
 
+      - name: App-Symbol und Startbild erzeugen
+        script: |
+          set -e
+          cd apps/fahrlehrer
+          mkdir -p assets
+          cp ../../quellen/fl-icon-512.png assets/icon.png
+          npx capacitor-assets generate --android --assetPath assets \
+            --iconBackgroundColor '#FBF8F5' --iconBackgroundColorDark '#FBF8F5' \
+            --splashBackgroundColor '#FBF8F5' --splashBackgroundColorDark '#FBF8F5'
+          test -f android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png \
+            || { echo "ABBRUCH: App-Symbol wurde nicht erzeugt"; exit 1; }
+          echo "Symbol erzeugt aus quellen/fl-icon-512.png"
+
       - name: Versionsnummer setzen
         script: |
           set -e
@@ -254,7 +267,16 @@ workflows:
           if nummer <= 1:
               raise SystemExit("ABBRUCH - versionCode %d, Google wuerde das Paket ablehnen" % nummer)
 
-          # 3. Ist es signiert?
+          # 3. Ist das Fuchs-Symbol drin und nicht das Standard-Symbol?
+          symbole = [n for n in z.namelist() if n.endswith("mipmap-xxxhdpi-v4/ic_launcher.png")]
+          if not symbole:
+              raise SystemExit("ABBRUCH - kein App-Symbol im Paket")
+          groesse = z.getinfo(symbole[0]).file_size
+          print("App-Symbol:", groesse, "Bytes")
+          if groesse < 4000:
+              raise SystemExit("ABBRUCH - App-Symbol zu klein, vermutlich das Standard-Symbol")
+
+          # 4. Ist es signiert?
           sig = [n for n in z.namelist() if n.startswith("META-INF/") and n[-4:] in (".RSA", ".DSA", ".EC")]
           if not sig:
               raise SystemExit("ABBRUCH - das Paket ist nicht signiert")
