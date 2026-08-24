@@ -199,12 +199,23 @@ workflows:
 
       - name: Versionsnummer setzen
         script: |
-          cd apps/fahrlehrer/android/app
-          NEUE_NUMMER=$((VERSION_OFFSET + BUILD_NUMBER))
-          sed -i "s/versionCode 1$/versionCode $NEUE_NUMMER/" build.gradle
-          sed -i "s/versionName \"1.0\"/versionName \"$VERSION_NAME\"/" build.gradle
-          echo "versionCode ist jetzt $NEUE_NUMMER, versionName $VERSION_NAME"
-          grep -E "versionCode|versionName|applicationId" build.gradle
+          set -e
+          python3 - <<'SETZEN'
+          import os, re
+          p = "apps/fahrlehrer/android/app/build.gradle"
+          s = open(p).read()
+          nummer = int(os.environ.get("VERSION_OFFSET", "10")) + int(os.environ["BUILD_NUMBER"])
+          name = os.environ.get("VERSION_NAME", "1.1")
+          s, n1 = re.subn(r"versionCode\s+\d+", "versionCode %d" % nummer, s, count=1)
+          s, n2 = re.subn(r'versionName\s+"[^"]*"', 'versionName "%s"' % name, s, count=1)
+          if n1 != 1 or n2 != 1:
+              raise SystemExit("ABBRUCH: versionCode/versionName nicht gefunden (%d/%d)" % (n1, n2))
+          if nummer <= 1:
+              raise SystemExit("ABBRUCH: versionCode %d ist nicht hoeher als die veroeffentlichte Fassung" % nummer)
+          open(p, "w").write(s)
+          print("versionCode ist jetzt", nummer, "- versionName", name)
+          SETZEN
+          grep -E "versionCode|versionName|applicationId" apps/fahrlehrer/android/app/build.gradle
 
       - name: Paket bauen und signieren
         script: |
@@ -219,14 +230,35 @@ workflows:
 
       - name: Nachsehen, was im Paket steckt
         script: |
+          set -e
           python3 - <<'PRUEF'
           import zipfile, glob
           p = glob.glob("apps/fahrlehrer/android/app/build/outputs/bundle/release/*.aab")[0]
           z = zipfile.ZipFile(p)
+
+          # 1. Steckt die neue Oberflaeche wirklich drin?
           h = z.read("base/assets/public/index.html").decode("utf-8", "ignore")
           fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf") if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
-              raise SystemExit("FEHLT im Paket: " + ", ".join(fehlt))
-          print("Alle neuen Merkmale sind enthalten.")
+              raise SystemExit("ABBRUCH - fehlt im Paket: " + ", ".join(fehlt))
+
+          # 2. Ist die Versionsnummer wirklich hoeher als die veroeffentlichte (1)?
+          m = z.read("base/manifest/AndroidManifest.xml")
+          i = m.find(b"versionCode")
+          if i < 0 or m[i + 11] != 0x1a:
+              raise SystemExit("ABBRUCH - versionCode nicht lesbar")
+          laenge = m[i + 12]
+          nummer = int(m[i + 13:i + 13 + laenge].decode())
+          print("versionCode im fertigen Paket:", nummer)
+          if nummer <= 1:
+              raise SystemExit("ABBRUCH - versionCode %d, Google wuerde das Paket ablehnen" % nummer)
+
+          # 3. Ist es signiert?
+          sig = [n for n in z.namelist() if n.startswith("META-INF/") and n[-4:] in (".RSA", ".DSA", ".EC")]
+          if not sig:
+              raise SystemExit("ABBRUCH - das Paket ist nicht signiert")
+          print("Signiert mit:", sig[0])
+
+          print("Alles in Ordnung.")
           PRUEF
