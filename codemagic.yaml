@@ -144,3 +144,89 @@ workflows:
             tail -n 40 /tmp/xcodebuild_logs/*.log
             exit 1
           }
+
+  # ====================================================================
+  # FAHRLEHRER-APP  ->  Android (.aab fuer den Play Store)
+  # --------------------------------------------------------------------
+  # Laeuft auf einer Linux-Maschine, kein Mac noetig.
+  #
+  # Einmalig in der Codemagic-Weboberflaeche anzulegen:
+  #   Umgebungsvariablen-Gruppe "signing" mit vier Eintraegen:
+  #     CM_KEYSTORE           <- fuchs-fahrlehrer-upload.keystore, als Datei
+  #                              hochladen (Codemagic kodiert sie selbst)
+  #     CM_KEYSTORE_PASSWORD  <- Passwort des Schluesselspeichers   [secure]
+  #     CM_KEY_ALIAS          <- Alias des Schluessels
+  #     CM_KEY_PASSWORD       <- Passwort des Schluessels           [secure]
+  #
+  # Die Versionsnummer steigt automatisch mit jedem Bau ($BUILD_NUMBER),
+  # startet aber bei VERSION_OFFSET, damit sie sicher ueber der
+  # veroeffentlichten Fassung liegt (die hat versionCode 1).
+  #
+  # Der Ordner apps/fahrlehrer/android liegt bewusst nicht im Repository -
+  # Capacitor erzeugt ihn hier bei jedem Lauf neu aus capacitor.config.json.
+  # Dadurch stimmt die applicationId immer und es gibt nichts, was
+  # veralten kann.
+  # ====================================================================
+  fahrlehrer-android:
+    name: Fahrlehrer Android
+    instance_type: linux_x2
+    max_build_duration: 45
+
+    environment:
+      groups:
+        - signing
+      vars:
+        VERSION_OFFSET: 10
+        VERSION_NAME: "1.1"
+      node: 22
+      java: 21
+
+    artifacts:
+      - apps/fahrlehrer/android/app/build/outputs/bundle/release/*.aab
+
+    scripts:
+      - name: Web-Bundle bauen und pruefen
+        script: |
+          node scripts/build-www.mjs fahrlehrer
+          node scripts/pruefe.mjs fahrlehrer
+
+      - name: Android-Projekt erzeugen
+        script: |
+          cd apps/fahrlehrer
+          npm install --no-audit --no-fund
+          [ -d android ] || npx cap add android
+          npx cap sync android
+
+      - name: Versionsnummer setzen
+        script: |
+          cd apps/fahrlehrer/android/app
+          NEUE_NUMMER=$((VERSION_OFFSET + BUILD_NUMBER))
+          sed -i "s/versionCode 1$/versionCode $NEUE_NUMMER/" build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"$VERSION_NAME\"/" build.gradle
+          echo "versionCode ist jetzt $NEUE_NUMMER, versionName $VERSION_NAME"
+          grep -E "versionCode|versionName|applicationId" build.gradle
+
+      - name: Paket bauen und signieren
+        script: |
+          cd apps/fahrlehrer/android
+          echo $CM_KEYSTORE | base64 --decode > /tmp/fahrlehrer.keystore
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=/tmp/fahrlehrer.keystore \
+            -Pandroid.injected.signing.store.password="$CM_KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$CM_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$CM_KEY_PASSWORD"
+          rm -f /tmp/fahrlehrer.keystore
+
+      - name: Nachsehen, was im Paket steckt
+        script: |
+          python3 - <<'PRUEF'
+          import zipfile, glob
+          p = glob.glob("apps/fahrlehrer/android/app/build/outputs/bundle/release/*.aab")[0]
+          z = zipfile.ZipFile(p)
+          h = z.read("base/assets/public/index.html").decode("utf-8", "ignore")
+          fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf") if w not in h]
+          print("Oberflaeche im Paket:", len(h), "Zeichen")
+          if fehlt:
+              raise SystemExit("FEHLT im Paket: " + ", ".join(fehlt))
+          print("Alle neuen Merkmale sind enthalten.")
+          PRUEF
