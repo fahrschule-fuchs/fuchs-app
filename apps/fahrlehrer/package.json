@@ -1,0 +1,29 @@
+{
+  "name": "fuchs-fahrlehrer",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "icons": "npx @capacitor/assets generate --assetPath ../../marke/fahrlehrer --iconBackgroundColor '#FBF8F5' --iconBackgroundColorDark '#FBF8F5' --splashBackgroundColor '#FBF8F5' --splashBackgroundColorDark '#1F2937'",
+    "aab": "cd android && ./gradlew bundleRelease"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/browser": "^8.0.0",
+    "@capacitor/camera": "^8.0.0",
+    "@capacitor/core": "^8.4.0",
+    "@capacitor/filesystem": "^8.0.0",
+    "@capacitor/ios": "^8.4.0",
+    "@capacitor/keyboard": "^8.0.0",
+    "@capacitor/local-notifications": "^8.0.0",
+    "@capacitor/network": "^8.0.0",
+    "@capacitor/preferences": "^8.0.0",
+    "@capacitor/push-notifications": "^8.0.0",
+    "@capacitor/splash-screen": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.4.0"
+  }
+}
