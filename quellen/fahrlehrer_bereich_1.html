@@ -1,0 +1,2024 @@
+<!DOCTYPE html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Fahrlehrer Fuchs App</title>
+<link rel="manifest" href="/app/fahrlehrer.webmanifest">
+<link rel="icon" type="image/png" href="/app/fl-icon-192.png">
+<link rel="shortcut icon" type="image/png" href="/app/fl-icon-192.png">
+<link rel="apple-touch-icon" href="/app/fl-apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Fahrlehrer Fuchs App">
+<meta name="theme-color" content="#F67B32">
+<style>
+ :root{--orange:#F67B32; --orange-soft:#FEF0E6; --dark:#1A1A1A; --gray:#6A6A6A;
+   --bg:#FBF8F5; --line:#EDE6DF; --green:#2E9E5B;}
+ *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
+ html,body{height:100%;}
+ body{font-family:'Avenir Next','Segoe UI',system-ui,sans-serif; background:var(--bg);
+   display:flex; justify-content:center; color:var(--dark);}
+ .phone{width:100%; max-width:520px; height:100dvh; background:var(--bg); display:flex; flex-direction:column;}
+ .topbar{height:calc(6px + env(safe-area-inset-top)); background:var(--orange); flex-shrink:0;}
+ header{display:flex; align-items:center; gap:10px; padding:10px 20px; background:#fff;
+   border-bottom:1px solid var(--line); flex-shrink:0;}
+ header img{height:34px; width:auto; display:block;}
+ .kopfrechts{margin-left:auto; text-align:right; font-size:11.5px; color:var(--gray); line-height:1.35;}
+ .kopfrechts .eb{font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--orange);}
+ .kopfrechts b{color:var(--dark); font-size:12.5px;}
+ .kopfrechts a{color:var(--gray); text-decoration:underline;}
+ .abmeldebtn{display:inline-block; margin-top:4px; background:#fff; border:1.5px solid var(--line); border-radius:999px;
+   padding:4px 12px; font-size:12px; font-weight:700; color:var(--dark); text-decoration:none; cursor:pointer;}
+ .abmeldebtn:active{background:var(--bg);}
+ main{flex:1; overflow-y:auto; padding:20px; display:flex; flex-direction:column; gap:14px; -webkit-overflow-scrolling:touch;}
+ main>*{flex-shrink:0;}
+ .eyebrow{font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--orange);}
+ h1{font-size:24px; font-weight:800; color:var(--dark);}
+ h2sec{}
+ .secttitel{font-size:18px; font-weight:800; color:var(--dark); margin-top:2px;}
+ .hint{background:var(--orange-soft); border-radius:12px; padding:10px 14px; font-size:12.5px; color:var(--dark); line-height:1.45;}
+ .meta{font-size:13px; color:var(--gray);}
+ .card{background:#fff; border:1px solid var(--line); border-radius:16px; padding:16px;}
+ .card.klick{cursor:pointer;}
+ .card.zeile{display:flex; align-items:center; gap:12px;}
+ .nr{width:44px; height:44px; border-radius:12px; flex-shrink:0; background:var(--line);
+   display:flex; align-items:center; justify-content:center; font-size:20px;}
+ .nr.done{background:var(--orange);}
+ .card .info{flex:1; min-width:0;}
+ .card .titel{font-size:15px; font-weight:700; color:var(--dark);}
+ .card .sub{font-size:12px; color:var(--gray); margin-top:2px;}
+ .card .play{font-size:22px; color:var(--orange); font-weight:800;}
+ .zeit{font-weight:800; font-size:14px; min-width:96px; color:var(--dark);}
+ .klbadge{font-size:11px; font-weight:800; color:var(--orange); background:var(--orange-soft); border-radius:8px; padding:3px 9px; flex-shrink:0;}
+ .flname{font-size:12px; color:var(--orange); font-weight:600; margin-top:2px;}
+ .kaltag{font-size:11px; font-weight:800; letter-spacing:.06em; color:var(--orange); text-transform:uppercase; margin-top:6px;}
+ .app-select,.app-input{width:100%; border:1.5px solid var(--line); border-radius:12px; padding:13px 15px;
+   font-size:15px; outline:none; font-family:inherit; background:#fff; color:var(--dark);}
+ .app-input{text-align:center;}
+ .btn-primary{background:var(--orange); color:#fff; border:none; border-radius:12px; padding:14px 20px;
+   font-size:15px; font-weight:700; cursor:pointer; font-family:inherit; width:100%;}
+ .btn-ghost{background:transparent; color:var(--gray); border:1.5px solid var(--line); border-radius:12px;
+   padding:9px 15px; font-size:13px; font-weight:700; cursor:pointer; align-self:flex-start; font-family:inherit;}
+ /* Login */
+ .login{margin:5vh auto 0; max-width:330px; width:100%; display:flex; flex-direction:column; align-items:center; gap:13px; text-align:center;}
+ .login img{height:82px;}
+ .login h1{font-size:21px;}
+ .fehler{color:#D64545; font-size:13px; min-height:16px;}
+ /* Kompetenzkarte */
+ .sekt{margin-top:8px;}
+ .sekthead{width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px;
+   color:#fff; padding:12px 14px; border:none; border-radius:12px; margin:8px 0 8px; font-weight:800;
+   font-size:14px; font-family:inherit; cursor:pointer; text-align:left;}
+ .sekthead:active{filter:brightness(.95);}
+ .sekttitel-t{flex:1;}
+ .sekthead-r{display:flex; align-items:center; gap:9px; flex-shrink:0;}
+ .sektzahl{font-size:11.5px; font-weight:800; background:rgba(255,255,255,.28); border-radius:999px; padding:2px 9px;}
+ .chev{font-size:12px; opacity:.9;}
+ .item{background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:8px;}
+ .lab{font-weight:700; font-size:14px;}
+ .det{color:var(--gray); font-size:12px; margin-top:1px;}
+ .stufen{display:flex; gap:7px; margin-top:9px; flex-wrap:wrap;}
+ .stufen button{border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:9px 14px;
+   font-size:12.5px; font-weight:700; cursor:pointer; color:var(--gray); font-family:inherit;}
+ .stufen button.an{color:#fff; border-color:transparent;}
+ .kompf{background:var(--orange-soft); border:1px solid #F6C9A6; border-radius:12px; padding:10px 13px;
+   font-size:12.5px; color:#8A5A2B; line-height:1.4;}
+ .leer{background:#fff; border:1px dashed var(--line); border-radius:14px; padding:26px 18px; text-align:center; color:var(--gray); font-size:13.5px; line-height:1.5;}
+ .status{position:fixed; bottom:22px; left:50%; transform:translateX(-50%); background:var(--dark); color:#fff;
+   padding:10px 18px; border-radius:999px; font-size:13px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:50;}
+ .kbtn{flex:1; display:flex; align-items:center; justify-content:center; gap:8px;
+   border-radius:12px; padding:12px 10px; font-size:14px; font-weight:700;
+   font-family:inherit; cursor:pointer; text-decoration:none; box-sizing:border-box;}
+ .kbtn svg{width:18px; height:18px; flex:none;}
+ .kbtn.wa{background:#25D366; color:#fff; border:1.5px solid #25D366;}
+ .kbtn.wa svg{fill:#fff;}
+ .kbtn.ruf{background:#fff; color:var(--dark,#1A1A1A); border:1.5px solid var(--line,#E7DED6);}
+ .kbtn.ruf svg{fill:none; stroke:currentColor; stroke-width:1.8;}
+ .knummer{font-size:13.5px; color:var(--text-2,#6A6A6A); letter-spacing:.02em;}
+ .wnav{background:#fff; color:var(--orange,#E8600B); border:1.5px solid var(--line,#E7DED6); border-radius:11px;
+   width:46px; height:47px; font-size:21px; font-weight:800; cursor:pointer; font-family:inherit; flex:none;}
+ .wknopf{flex:1; background:#fff; color:var(--dark,#1A1A1A); border:1.5px solid var(--line,#E7DED6);
+   border-radius:11px; padding:10px 8px; font-size:12.5px; line-height:1.3; font-weight:700;
+   cursor:pointer; font-family:inherit;}
+ .wknopf[disabled]{opacity:.55; cursor:default;}
+ .wrahmen{border:1.5px solid var(--line,#E7DED6); border-radius:13px; background:#fff; overflow:auto; max-height:68vh;}
+ .wkopf{display:flex; border-bottom:1.5px solid var(--line,#E7DED6); background:#faf7f4; position:sticky; top:0; z-index:3;}
+ .wkopf .wecke{width:34px; flex:none;}
+ .wtag{flex:1; min-width:48px; text-align:center; padding:5px 2px; font-size:10.5px; color:#7A6C61; line-height:1.2;}
+ .wtag b{display:block; font-size:12.5px; color:#1A1A1A;}
+ .wzeit{font-size:10px;}
+ .wtag i{display:block; font-style:normal; font-size:9.5px; font-weight:700; color:#E8600B; margin-top:1px;}
+ .wtag.heute{background:#E8600B;}
+ .wtag.heute b, .wtag.heute span, .wtag.heute i{color:#fff;}
+ .wkoerper{display:flex;}
+ .wleiste{width:34px; flex:none; border-right:1px solid var(--line,#E7DED6); background:#fcfaf8; position:sticky; left:0; z-index:2;}
+ .wstd{font-size:9.5px; color:#7A6C61; text-align:center; border-bottom:1px solid var(--line,#E7DED6); padding-top:1px;}
+ .wspalte{flex:1; min-width:48px; position:relative; border-right:1px solid var(--line,#E7DED6); cursor:pointer;}
+ .wlinie{position:absolute; left:0; right:0; border-bottom:1px solid #f3eee9;}
+ .wblock{position:absolute; left:2px; right:2px; border-radius:7px; padding:3px 4px; font-size:9px;
+   line-height:1.15; overflow:hidden; color:#fff; cursor:pointer; word-break:break-word;
+   hyphens:auto; -webkit-hyphens:auto;}
+ .wblock b{display:block; font-size:9.5px; font-weight:800;}
+ .wlegende{display:flex; flex-wrap:wrap; gap:4px 12px; font-size:11px; color:#7A6C61; margin:2px 0 4px;}
+ .wlegende span{display:inline-flex; align-items:center; gap:5px;}
+ .wlegende i{width:11px; height:11px; border-radius:3px; display:inline-block;}
+</style></head>
+<body>
+<div class="phone">
+  <div class="topbar"></div>
+  <header>
+    <img src="/app/fuchs-logo-komplett.png" alt="FUCHS – Deine Fahrschule">
+    <div class="kopfrechts" id="kopfrechts"></div>
+  </header>
+  <main id="main"></main>
+</div>
+<div class="status" id="status"></div>
+<script>
+let aktKlasseEcht="";
+let FL=null, PIN=null, TOKEN=null, FLNAME="", FEHLERTEXT="", katalog=null, kataloge={}, stand={}, aktNummer="", aktKlasse="B", schuelerListe=[], eigeneListe=false, IS_MASTER=false, aktFahrstunden=null, offeneSekt=new Set(), aktZuletzt=null;
+const main=()=>document.getElementById("main");
+
+function toast(t){const s=document.getElementById("status");s.textContent=t;s.style.opacity=1;clearTimeout(s._t);s._t=setTimeout(()=>s.style.opacity=0,1500);}
+function esc(s){const d=document.createElement("div");d.textContent=s==null?"":s;return d.innerHTML;}
+// Betrag in deutscher Schreibweise - 62.75 -> "62,75 €"
+function eurTxt(n){return (Number(n)||0).toFixed(2).replace(".",",")+" €";}
+// Preisvorschau wie im Manager: aendert sich Fahrtart oder Dauer, wird neu
+// gerechnet. Die zuletzt gestartete Abfrage gewinnt - sonst ueberholt eine
+// langsame Antwort die neue Eingabe.
+function preisLader(prefix, werte){
+  let lauf=0;
+  return async function(){
+    const feld=document.getElementById(prefix+"Preis");
+    const hin=document.getElementById(prefix+"PreisHinweis");
+    if(!feld)return;
+    const w=werte()||{};
+    if(!w.schueler_id){feld.textContent="–";if(hin)hin.textContent="";return;}
+    const nr=++lauf;
+    feld.textContent="…";
+    const d=await jpost("fahrlehrer/stunde-preis",
+      {fl:FL,schueler_id:w.schueler_id,art:w.art,dauer:w.dauer});
+    if(nr!==lauf)return;
+    const box=document.getElementById(prefix+"Berechnen");
+    const bez=document.getElementById(prefix+"PreisLabel");
+    if(!d){feld.textContent="–";if(hin)hin.textContent="Preis gerade nicht abrufbar.";return;}
+    if(d.enthalten){
+      // Mofa, B96: die Fahrstunde steckt im Kurspreis. Kein Haken, keine Warnung.
+      if(box){ if(box.dataset.aus!=="1"){box.dataset.aus="1";box.dataset.vorher=box.checked?"1":"0";}
+               box.checked=false; box.style.display="none"; }
+      if(bez)bez.textContent="💶 Diese Fahrstunde ist ";
+      feld.textContent="im Kurspreis enthalten";
+      if(hin)hin.textContent="";
+      return;
+    }
+    if(box&&box.dataset.aus==="1"){ box.style.display=""; box.checked=box.dataset.vorher!=="0"; box.dataset.aus="0"; }
+    if(bez)bez.textContent="Fahrstunde jetzt berechnen: ";
+    feld.textContent=d.betrag_text||"–";
+    if(hin)hin.textContent=d.hinweis||"";
+  };
+}
+function normNr(n){let z=(n||"").replace(/\D/g,"");if(z.startsWith("00"))z=z.slice(2);else if(z.startsWith("0"))z="49"+z.slice(1);return z;}
+// API immer absolut unter /app/ ansprechen – damit die App unter /fl (eigener
+// PWA-Pfad) genauso läuft wie unter /app/fl.
+const API="/app/";
+// Zentrale Stelle fuer alle Server-Anfragen. Wichtig: ein Fehler wird hier
+// NICHT verschluckt - er landet in FEHLERTEXT, damit jede Ansicht ihn zeigen
+// kann. Vorher gab es bei jedem Problem still ein "null", und die App sah aus,
+// als haette der Schueler einfach keine Daten.
+const SPEICHER="fuchs_fl_sitzung";
+function fehlerText(status){
+  if(status===403)return "Die Anmeldung ist abgelaufen. Bitte neu anmelden.";
+  if(status===429)return "Zu viele Versuche. Bitte einen Moment warten.";
+  if(status===0)return "Keine Verbindung zum Server. Bitte Empfang prüfen.";
+  if(status>=500)return "Der Server meldet einen Fehler ("+status+"). Bitte im Büro melden.";
+  return "Der Server hat die Anfrage abgelehnt ("+status+").";
+}
+async function jget(u){
+  FEHLERTEXT="";
+  try{
+    const r=await fetch(API+u);
+    if(r.status===403&&TOKEN){sitzungAbgelaufen();return null;}
+    if(!r.ok){FEHLERTEXT=fehlerText(r.status);return null;}
+    return await r.json();
+  }catch(e){FEHLERTEXT=fehlerText(0);return null;}
+}
+async function jpost(u,b){
+  FEHLERTEXT="";
+  try{
+    const koerper=Object.assign({},b||{});
+    if(TOKEN&&!koerper.token)koerper.token=TOKEN;
+    const r=await fetch(API+u,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(koerper)});
+    if(r.status===403&&TOKEN&&u!=="fahrlehrer/anmelden"){sitzungAbgelaufen();return null;}
+    if(!r.ok){
+      let d=null;try{d=await r.json();}catch(e){}
+      FEHLERTEXT=(d&&d.fehler)||fehlerText(r.status);
+      return d&&typeof d==="object"?Object.assign({ok:false},d):null;
+    }
+    return await r.json();
+  }catch(e){FEHLERTEXT=fehlerText(0);return null;}
+}
+// Ein Fehlerkasten, den jede Ansicht benutzen kann - immer mit Grund.
+function fehlerKasten(zusatz){
+  return `<div class="card" style="border-left:5px solid #C0392B">
+    <div style="font-weight:800;margin-bottom:3px">Das hat nicht geklappt</div>
+    <div style="font-size:13.5px">${esc(FEHLERTEXT||zusatz||"Unbekannter Fehler.")}</div>
+    <div class="meta" style="font-size:12px;margin-top:6px">Es wurde nichts gespeichert. Bitte noch einmal versuchen.</div>
+  </div>`;
+}
+function sitzungAbgelaufen(){
+  try{localStorage.removeItem(SPEICHER);}catch(e){}
+  FL=null;TOKEN=null;PIN=null;FLNAME="";IS_MASTER=false;
+  FEHLERTEXT="Die Anmeldung ist abgelaufen. Bitte neu anmelden.";
+  try{init();}catch(e){}
+}
+function sitzungMerken(){
+  try{localStorage.setItem(SPEICHER,JSON.stringify({fl:FL,token:TOKEN,name:FLNAME,master:IS_MASTER}));}catch(e){}
+}
+function sitzungLesen(){
+  try{const r=JSON.parse(localStorage.getItem(SPEICHER)||"null");return (r&&r.token&&r.fl)?r:null;}catch(e){return null;}
+}
+function setKopf(){
+  const k=document.getElementById("kopfrechts");
+  if(!FL){k.innerHTML="";return;}
+  k.innerHTML=`<div class="eb">${IS_MASTER?"Masterzugang":"Fahrlehrer"}</div><b>${esc(FLNAME)}</b><br><a href="#" class="abmeldebtn" onclick="abmelden();return false">Abmelden</a>`;
+}
+
+// ---------------- Login ----------------
+async function init(){
+  setKopf();
+  let opts="";
+  const dl=await jget("ausbildung/fahrlehrer");
+  if(dl&&dl.fahrlehrer)opts=dl.fahrlehrer.map(f=>`<option value="${esc(f.fl)}">${esc(f.name)}</option>`).join("");
+  // Ohne Liste kann sich niemand anmelden - dann muss der Grund auf dem
+  // Bildschirm stehen und nicht nur eine leere Auswahl.
+  else if(!FEHLERTEXT)FEHLERTEXT="Die Namensliste konnte nicht geladen werden. Bitte Internet prüfen.";
+  main().innerHTML=`
+   <div class="login">
+     <img src="/app/fuchs-icon.png" alt="Fuchs">
+     <div class="eyebrow">Fahrlehrer-Bereich</div>
+     <h1>Anmelden</h1>
+     <div class="meta" style="line-height:1.5">Wähle deinen Namen und gib dein persönliches Passwort ein.<br>Du bleibst danach angemeldet – bis du dich abmeldest.</div>
+     <select id="flSel" class="app-select"><option value="">— Fahrlehrer wählen —</option>${opts}</select>
+     <input id="flPw" class="app-input" type="password" autocomplete="current-password" placeholder="Passwort">
+     <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-2);margin:8px 2px 0;justify-content:center">
+       <input type="checkbox" id="flZeigen"> Passwort anzeigen</label>
+     <button class="btn-primary" id="flBtn">Anmelden</button>
+     <div class="fehler" id="flErr">${esc(FEHLERTEXT||"")}</div>
+   </div>`;
+  document.getElementById("flBtn").onclick=login;
+  document.getElementById("flPw").onkeydown=e=>{if(e.key==="Enter")login();};
+  document.getElementById("flZeigen").onchange=e=>{
+    document.getElementById("flPw").type=e.target.checked?"text":"password";};
+  const gemerkt=sitzungLesen();
+  if(gemerkt){const s=document.getElementById("flSel");if(s)s.value=gemerkt.fl;}
+  FEHLERTEXT="";
+}
+// Beim Start: gespeicherte Anmeldung wiederherstellen, damit die App nicht
+// bei jedem Öffnen nach dem Passwort fragt.
+async function sitzungWiederherstellen(){
+  const g=sitzungLesen();
+  if(!g)return false;
+  FL=g.fl;TOKEN=g.token;FLNAME=g.name||"";IS_MASTER=!!g.master;
+  setKopf();
+  main().innerHTML='<div class="meta" style="padding:30px 0;text-align:center">Einen Moment …</div>';
+  const d=await jpost("ausbildung/schueler",{fl:FL});
+  // Kein TOKEN mehr = die Sitzung war wirklich abgelaufen, die Anmeldeseite steht schon.
+  if(!d&&!TOKEN)return true;
+  if(!d){
+    // Anmeldung ist gueltig, nur der Server war nicht erreichbar.
+    main().innerHTML=`<div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>Keine Verbindung</h1></div>
+      <div class="card" style="border-left:5px solid #C0392B">
+        <div style="font-weight:800;margin-bottom:3px">Die Daten konnten nicht geladen werden</div>
+        <div style="font-size:13.5px">${esc(FEHLERTEXT||"Der Server ist gerade nicht erreichbar.")}</div>
+        <div class="meta" style="font-size:12px;margin-top:6px">Du bist weiterhin angemeldet – es liegt nicht am Passwort.</div>
+      </div>
+      <button class="btn-primary" onclick="sitzungWiederherstellen()">Noch einmal versuchen</button>
+      <button class="btn-ghost" style="margin-top:8px" onclick="abmelden()">Doch abmelden</button>`;
+    return true;
+  }
+  schuelerListe=(d.schueler)||[];eigeneListe=!!d.eigene;
+  viewSchueler();
+  try{history.pushState({fahrlehrer:1,view:"haupt"},"");}catch(e){}
+  return true;
+}
+async function login(){
+  const fl=document.getElementById("flSel").value, pw=document.getElementById("flPw").value;
+  const err=document.getElementById("flErr"), btn=document.getElementById("flBtn");
+  if(!fl){err.textContent="Bitte Fahrlehrer wählen.";return;}
+  if(!pw){err.textContent="Bitte Passwort eingeben.";return;}
+  err.textContent="";btn.disabled=true;btn.textContent="Meldet an …";
+  const d=await jpost("fahrlehrer/anmelden",{fl,passwort:pw});
+  btn.disabled=false;btn.textContent="Anmelden";
+  if(!d||!d.ok||!d.token){err.textContent=FEHLERTEXT||"Name oder Passwort stimmt nicht.";return;}
+  FL=fl;TOKEN=d.token;PIN=null;FLNAME=d.name||"";IS_MASTER=!!d.master;schuelerListe=[];aktNummer="";katalog=null;stand={};
+  sitzungMerken();
+  setKopf();
+  await ladeSchuelerListe();
+  viewSchueler();
+  // Puffer im Browser-Verlauf: Zurück bleibt im Hauptmenü, statt die Seite zu verlassen.
+  try{history.pushState({fahrlehrer:1,view:"haupt"},"");}catch(e){}
+}
+function abmelden(){
+  const t=TOKEN;
+  try{localStorage.removeItem(SPEICHER);}catch(e){}
+  if(t)jpost("fahrlehrer/abmelden",{token:t});   // Kennzeichen auch serverseitig ungültig machen
+  FL=null;PIN=null;TOKEN=null;FLNAME="";IS_MASTER=false;katalog=null;stand={};aktNummer="";FEHLERTEXT="";init();
+}
+// In einen Unterbereich wechseln (mit Verlaufs-Eintrag, damit Zurück ins Hauptmenü führt).
+function navSub(view){
+  try{history.pushState({fahrlehrer:1,view},"");}catch(e){}
+  if(view==="kalender")viewKalender();
+  else if(view==="woche")viewWoche();
+  else if(view==="konto")viewKonto();
+  else if(view==="buchen")viewBuchen();
+  else if(view==="autos")viewFahrzeuge();
+}
+// Handy-/Browser-Zurück: solange angemeldet, immer zurück ins Hauptmenü (kein Rausfliegen).
+window.addEventListener("popstate",function(){
+  if(!FL)return;                       // nicht angemeldet -> normal (verlässt die Seite)
+  try{history.pushState({fahrlehrer:1,view:"haupt"},"");}catch(e){}
+  viewSchueler();
+});
+
+// ---------------- Schüler & Ausbildungsstand ----------------
+let LISTE_FEHLER="";
+async function ladeSchuelerListe(){
+  const d=await jpost("ausbildung/schueler",{fl:FL});
+  // Ohne Antwort NICHT so tun, als hätte der Fahrlehrer keine Schüler -
+  // genau daran ist früher niemandem aufgefallen, dass der Server weg war.
+  if(!d){LISTE_FEHLER=FEHLERTEXT||"Die Schülerliste konnte nicht geladen werden.";return;}
+  LISTE_FEHLER="";
+  schuelerListe=(d.schueler)||[];
+  eigeneListe=!!d.eigene;
+}
+function matchSchueler(s,q){
+  q=(q||"").trim().toLowerCase();if(!q)return true;
+  // Gesucht wird in beiden Schreibweisen: "anna" findet "Mustermann, Anna"
+  // genauso wie "mustermann".
+  if((s.name||"").toLowerCase().includes(q))return true;
+  if((s.anzeige||"").toLowerCase().includes(q))return true;
+  const geb=(s.geb||"");
+  if(geb.toLowerCase().includes(q))return true;
+  const qd=q.replace(/\D/g,""),gd=geb.replace(/\D/g,"");
+  if(qd&&gd&&gd.includes(qd))return true;
+  return false;
+}
+function schuelerOptions(q){
+  const qq=(q||"").trim();
+  // Bei vielen Schülern (Leitungszugang) erst ab 2 Zeichen filtern/anzeigen –
+  // sonst würden Tausende Einträge auf einmal gerendert.
+  if(schuelerListe.length>500 && qq.length<2){
+    return `<option value="">— zum Suchen Name oder Geburtstag tippen (${schuelerListe.length} Schüler) —</option>`;
+  }
+  // Sortiert wird auch hier noch einmal - der Server tut es zwar, aber die
+  // Liste kann aus mehreren Quellen kommen, und eine Auswahl, die nicht
+  // alphabetisch ist, sucht man sich krumm.
+  const liste=schuelerListe.filter(s=>matchSchueler(s,qq))
+    .sort((a,b)=>String(a.anzeige||a.name||"").localeCompare(String(b.anzeige||b.name||""),"de"));
+  const kopf=`<option value="">${liste.length?("— Schüler wählen ("+liste.length+") —"):"— kein Treffer —"}</option>`;
+  // Angezeigt wird "Nachname, Vorname" - dann passt die Reihenfolge der
+  // Liste zu dem, was man liest.
+  return kopf+liste.slice(0,300).map(s=>`<option value="${esc(s.nummer)}">${esc(s.anzeige||s.name)}${s.geb?" · "+esc(s.geb):" ("+esc((s.nummer||"").slice(-4))+")"}</option>`).join("");
+}
+function viewSchueler(){
+  const hint=IS_MASTER
+    ? "Leitungs-Zugang: Zugriff auf alle Schüler. Schüler wählen oder Handynummer eingeben – Stufe antippen speichert sofort."
+    : (eigeneListe
+      ? "Deine Schüler aus den Fahrstunden der letzten 12 Monate. Wähle einen – die passende Karte (Pkw/Motorrad) lädt automatisch."
+      : "Wähle einen Schüler oder gib eine Handynummer ein. Stufe antippen = sofort gespeichert, der Schüler sieht es direkt in seiner App.");
+  main().innerHTML=`
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>Hallo, ${esc(FLNAME.split(" ")[0]||FLNAME)}</h1></div>
+    <div class="card klick zeile" onclick="navSub('woche')">
+      <div class="nr" style="background:#FDEBDD">🗓</div>
+      <div class="info"><div class="titel">Wochenplan</div><div class="sub">Woche im Überblick · Fahrstunden selbst einplanen</div></div>
+      <div class="play">›</div>
+    </div>
+    <div class="card klick zeile" onclick="navSub('kalender')">
+      <div class="nr done">📅</div>
+      <div class="info"><div class="titel">Terminplaner</div><div class="sub">${IS_MASTER?"Fahrstunden aller Fahrlehrer":"Deine kommenden Fahrstunden"}</div></div>
+      <div class="play">›</div>
+    </div>
+    <div class="card klick zeile" onclick="navSub('konto')">
+      <div class="nr" style="background:#E9F6EE">💶</div>
+      <div class="info"><div class="titel">Schülerkonto</div><div class="sub">Guthaben oder offenen Betrag ansehen</div></div>
+      <div class="play">›</div>
+    </div>
+    ${IS_MASTER?"":`<div class="card klick zeile" onclick="navSub('buchen')">
+      <div class="nr" style="background:#FBEAD9">✍️</div>
+      <div class="info"><div class="titel">Fahrstunde eintragen</div><div class="sub">mit Unterschrift des Schülers</div></div>
+      <div class="play">›</div>
+    </div>`}
+    <div><div class="eyebrow">Ausbildung</div><div class="secttitel">Schüler &amp; Ausbildungsstand</div></div>
+    ${LISTE_FEHLER?`<div class="card" style="border-left:5px solid #C0392B">
+      <div style="font-weight:800;margin-bottom:3px">Schülerliste nicht geladen</div>
+      <div style="font-size:13.5px">${esc(LISTE_FEHLER)}</div>
+      <div class="meta" style="font-size:12px;margin-top:6px">Die Liste unten ist deshalb unvollständig – bitte nicht als „keine Schüler" lesen.</div>
+    </div>`:""}
+    <div class="hint">${hint}</div>
+    <input id="suche" class="app-input" style="text-align:left" placeholder="🔍 Suche: Vorname, Nachname oder Geburtstag">
+    <select id="schueler" class="app-select">${schuelerOptions("")}</select>
+    <div id="karte"></div>`;
+  const sel=document.getElementById("schueler");
+  if(aktNummer)sel.value=aktNummer;
+  document.getElementById("suche").oninput=e=>{sel.innerHTML=schuelerOptions(e.target.value);if(aktNummer)sel.value=aktNummer;};
+  sel.onchange=e=>{if(e.target.value){ladeStand(e.target.value);}};
+  if(aktNummer&&katalog)zeichne();
+}
+// Unterscheidet: "fuer diese Klasse gibt es keine Karte" (404) und "ich
+// komme gerade nicht an den Server". Das eine ist normal, das andere nicht.
+let KATALOG_FEHLER="";
+async function ladeKatalog(kl){
+  KATALOG_FEHLER="";
+  if(kataloge[kl])return kataloge[kl];
+  const d=await jget("ausbildung/katalog?klasse="+kl);
+  if(!d){KATALOG_FEHLER=FEHLERTEXT||"";return null;}
+  kataloge[kl]=d.katalog;return kataloge[kl];
+}
+// ---------------- Infos des Bueros (nur lesen) ----------------
+let AKT_INFOS=[];
+let INFO_FEHLER="";
+async function ladeInfos(nummer){
+  AKT_INFOS=[];INFO_FEHLER="";
+  const d=await jpost("fahrlehrer/infos",{fl:FL,nummer});
+  // Wichtig: keine Infos und "Infos nicht abrufbar" sind zwei verschiedene
+  // Dinge. Im Zweifel koennte ein Hinweis vom Büro fehlen.
+  if(!d)INFO_FEHLER=FEHLERTEXT||"Die Infos vom Büro konnten nicht geladen werden.";
+  else AKT_INFOS=d.infos||[];
+  const k=document.getElementById("infoBox");
+  if(k)k.outerHTML=infoBoxHtml();
+}
+function infoBoxHtml(){
+  if(INFO_FEHLER)return `<div id="infoBox" class="card" style="border-left:5px solid #C0392B">
+    <div style="font-weight:800;margin-bottom:3px">Infos vom Büro nicht abrufbar</div>
+    <div style="font-size:13px">${esc(INFO_FEHLER)} Falls das Büro etwas hinterlegt hat, siehst du es hier gerade nicht.</div>
+  </div>`;
+  if(!AKT_INFOS.length)return '<div id="infoBox"></div>';
+  return `<div id="infoBox" class="card" style="border-left:5px solid var(--orange,#E8600B);display:block">
+    <div style="font-weight:800;margin-bottom:4px">🗒 Infos vom Büro</div>
+    ${AKT_INFOS.map(i=>`<div style="border-top:1px solid var(--line);padding:6px 0">
+      <div style="font-size:14px;white-space:pre-wrap">${esc(i.text)}</div>
+      <div class="meta" style="font-size:11px">${esc((i.erstellt||"").slice(0,16))}${i.autor?" · "+esc(i.autor):""}</div>
+    </div>`).join("")}
+  </div>`;
+}
+
+async function ladeStand(nummer){
+  aktNummer=nummer;aktFahrstunden=null;
+  const k=document.getElementById("karte");if(k)k.innerHTML='<div id="infoBox"></div><div class="meta">Lädt …</div>';
+  const [d0,fs]=await Promise.all([
+    jpost("ausbildung/stand",{fl:FL,nummer}),
+    jpost("fahrlehrer/fahrstunden",{fl:FL,nummer})
+  ]);
+  // Kein Stand vom Server = Fehler, NICHT "alles auf Anfang". Sonst sieht
+  // die Karte aus wie bei einem Schüler ohne jede Bewertung.
+  if(!d0){ if(k)k.innerHTML=fehlerKasten("Der Ausbildungsstand konnte nicht geladen werden.");
+    stand={};katalog=null;return; }
+  const d=d0;
+  aktFahrstunden=(fs&&fs.fahrstunden)||null;
+  aktKlasse=d.klasse||"B";aktKlasseEcht=d.klasse_echt||aktKlasse;stand=d.stand||{};
+  aktZuletzt=(d.zuletzt_von)?{von:d.zuletzt_von,text:d.zuletzt_text||""}:null;
+  offeneSekt=new Set();   // neue Schülerkarte startet zugeklappt
+  ladeInfos(nummer);
+  katalog=await ladeKatalog(aktKlasse);
+  if(!katalog){
+    if(k)k.innerHTML=fahrstundenHtml()+(KATALOG_FEHLER
+      ? fehlerKasten("Die Ausbildungskarte konnte nicht geladen werden.")
+      : '<div class="card">Für diesen Schüler gilt Klasse <b>'+esc(aktKlasse)+'</b> – dafür ist noch keine Ausbildungskarte hinterlegt.</div>');
+    return;}
+  zeichne();
+}
+function toggleSekt(i){if(offeneSekt.has(i))offeneSekt.delete(i);else offeneSekt.add(i);zeichne();}
+function alleSekt(auf){offeneSekt=new Set();if(auf&&katalog){katalog.sektionen.forEach((s,i)=>offeneSekt.add(i));}zeichne();}
+function fahrstundenHtml(){
+  const f=aktFahrstunden;
+  if(!f||!f.gefunden)return"";
+  const arten=(f.nach_art||[]).map(a=>`${esc(a.art)} <b>${a.anzahl}</b>`).join(" · ");
+  const letzte=(f.letzte&&f.letzte.length)?f.letzte[f.letzte.length-1]:"";
+  const fehl=f.fehlstunden?`<span style="color:#D64545"> · ${f.fehlstunden} Fehlstunde${f.fehlstunden>1?"n":""}</span>`:"";
+  return `<div class="card" style="margin-bottom:12px">
+    <div class="zeile">
+      <div class="nr done">🚗</div>
+      <div class="info"><div class="titel">Gefahrene Fahrstunden</div><div class="sub">insgesamt <b>${f.gesamt}</b> Stunde${f.gesamt===1?"":"n"}${fehl}</div></div>
+    </div>
+    ${arten?`<div style="margin-top:11px;font-size:13px;line-height:1.7">${arten}</div>`:""}
+    ${letzte?`<div class="meta" style="margin-top:6px;font-size:12px">zuletzt: ${esc(letzte)}</div>`:""}
+  </div>`;
+}
+async function setWert(key,wert){
+  const vorher=stand[key];   // fuer den Fall, dass das Speichern scheitert
+  stand[key]=wert>0?wert:undefined;if(wert<=0)delete stand[key];zeichne();
+  const r=await jpost("ausbildung/set",{fl:FL,nummer:aktNummer,klasse:aktKlasse,key,wert});
+  if(!r||!r.ok){
+    // Zurueck auf den alten Stand - die App darf nichts anzeigen, was nicht
+    // wirklich gespeichert ist.
+    if(vorher===undefined)delete stand[key];else stand[key]=vorher;
+    zeichne();
+    toast(FEHLERTEXT||"Nicht gespeichert – bitte noch einmal antippen");
+    return;
+  }
+  toast("gespeichert ✓");
+  // Erste Bewertung zu einer Fahrstunde -> Stunde als "Karte gepflegt" markieren (grüner Haken)
+  if(r&&r.ok&&AKT_KARTE_STUNDE&&!KARTE_MARKIERT){
+    KARTE_MARKIERT=true;
+    jpost("fahrlehrer/karte-gepflegt",{fl:FL,stunde_id:AKT_KARTE_STUNDE});
+  }
+}
+function zeichne(){
+  const el=document.getElementById("karte");if(!el)return;
+  if(!katalog||!aktNummer){el.innerHTML="";return;}
+  const stufen=katalog.stufen;
+  let h=infoBoxHtml()+fahrstundenHtml();
+  const titelEcht=(aktKlasseEcht&&katalog.klasse&&aktKlasseEcht!==katalog.klasse&&katalog.titel)
+    ? katalog.titel.replace('Klasse '+katalog.klasse,'Klasse '+aktKlasseEcht)
+    : (katalog.titel||('Klasse '+(aktKlasseEcht||aktKlasse)));
+  h+=`<div class="secttitel" style="font-size:16px;margin-top:8px">${esc(titelEcht)}</div>`;
+  if(aktZuletzt)h+=`<div class="meta" style="margin:2px 0 6px">zuletzt bewertet von ${esc(aktZuletzt.von)}${aktZuletzt.text?(" · "+esc(aktZuletzt.text)):""}</div>`;
+  if(katalog.hinweis_fahrlehrer)h+=`<div class="kompf" style="margin-bottom:8px">⚠️ ${esc(katalog.hinweis_fahrlehrer)}</div>`;
+  const anzAuf=offeneSekt.size, anzGes=katalog.sektionen.length;
+  h+=`<div style="display:flex;justify-content:flex-end;margin-bottom:2px"><button class="btn-ghost" style="padding:6px 12px;font-size:12px" onclick="alleSekt(${anzAuf<anzGes?'true':'false'})">${anzAuf<anzGes?"Alle aufklappen":"Alle zuklappen"}</button></div>`;
+  katalog.sektionen.forEach((s,i)=>{
+    const total=s.items.length;
+    const bewertet=s.items.filter(it=>(stand[it.key]||0)>0).length;
+    const offen=offeneSekt.has(i);
+    const badge=`<span class="sektzahl">${bewertet}/${total}</span>`;
+    h+=`<div class="sekt">
+      <button class="sekthead" style="background:${s.farbe}" onclick="toggleSekt(${i})">
+        <span class="sekttitel-t">${esc(s.titel)}</span>
+        <span class="sekthead-r">${badge}<span class="chev">${offen?"▾":"▸"}</span></span>
+      </button>`;
+    if(offen){
+      for(const it of s.items){
+        const cur=stand[it.key]||0;
+        h+=`<div class="item"><div class="lab">${esc(it.label)}</div>`+(it.detail?`<div class="det">${esc(it.detail)}</div>`:"")+`<div class="stufen">`;
+        for(const st of stufen){const an=cur===st.wert;h+=`<button class="${an?'an':''}" style="${an?'background:'+st.farbe:''}" onclick="setWert('${it.key}',${st.wert})">${esc(st.name)}</button>`;}
+        h+=`</div></div>`;
+      }
+    }
+    h+=`</div>`;
+  });
+  el.innerHTML=h;
+}
+
+// ---------------- Schülerkonto (Guthaben / offener Betrag) ----------------
+// ---------------- Autos: wann ist welches frei? ----------------
+// Der Schaltwagen wird geteilt. Damit man das nicht erst an der Fehlermeldung
+// beim Einplanen merkt, kann man hier vorher nachsehen.
+let FZ_LISTE=[], FZ_WAHL=null, FZ_VON=null, FZ_SUCHE="";
+
+function fzMontag(iso){
+  const d=iso?new Date(iso+"T12:00:00"):new Date();
+  const tag=(d.getDay()+6)%7;
+  d.setDate(d.getDate()-tag);
+  return d.toISOString().slice(0,10);
+}
+function fzPlusTage(iso,n){
+  const d=new Date(iso+"T12:00:00"); d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+
+async function viewFahrzeuge(){
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>🚗 Autos</h1></div>
+    <div class="hint">Wähle ein Auto und sieh nach, wann es belegt ist – und wann noch Platz ist.
+      Angezeigt wird der ganze Betrieb, nicht nur deine eigenen Fahrstunden.</div>
+    <div class="meta">Lädt …</div>`;
+  if(!FZ_LISTE.length){
+    const d=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
+    if(!d||!d.ok){fehlerKasten("Fahrzeuge konnten nicht geladen werden.");return;}
+    FZ_LISTE=d.fahrzeuge||[];
+    FZ_WAHL=FZ_WAHL||d.mein||(FZ_LISTE[0]||{}).id||null;
+  }
+  FZ_VON=FZ_VON||fzMontag();
+  fahrzeugMaske();
+}
+
+function fahrzeugMaske(){
+  const suche=FZ_SUCHE.toLowerCase();
+  const treffer=FZ_LISTE.filter(f=>!suche
+    ||(f.bezeichnung||"").toLowerCase().includes(suche)
+    ||(f.kennzeichen||"").toLowerCase().includes(suche));
+  const opts=treffer.map(f=>`<option value="${f.id}"${Number(f.id)===Number(FZ_WAHL)?" selected":""}>`
+    +`${esc(f.bezeichnung)}${f.kennzeichen?" · "+esc(f.kennzeichen):""}`
+    +`${f.getriebe?" · "+(f.getriebe==="automatik"?"Automatik":"Schalter"):""}</option>`).join("");
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>🚗 Autos</h1></div>
+    <input id="fzSuche" class="app-input" placeholder="🔍 Auto suchen (Name oder Kennzeichen)" value="${esc(FZ_SUCHE)}">
+    <select id="fzSel" class="app-select" style="margin-top:8px">${opts||'<option value="">— kein Treffer —</option>'}</select>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <button class="btn-ghost" style="margin:0;padding:8px 16px" id="fzZurueck">‹</button>
+      <div style="flex:1;text-align:center;font-weight:700" id="fzWoche">…</div>
+      <button class="btn-ghost" style="margin:0;padding:8px 16px" id="fzVor">›</button>
+    </div>
+    <div id="fzPlan"><div class="meta">Lädt …</div></div>`;
+  const s=document.getElementById("fzSuche");
+  s.addEventListener("input",()=>{FZ_SUCHE=s.value;const stand=s.selectionStart;fahrzeugMaske();
+    const n=document.getElementById("fzSuche");if(n){n.focus();try{n.setSelectionRange(stand,stand);}catch(e){}}});
+  document.getElementById("fzSel").onchange=e=>{FZ_WAHL=Number(e.target.value);fahrzeugPlanLaden();};
+  document.getElementById("fzZurueck").onclick=()=>{FZ_VON=fzPlusTage(FZ_VON,-7);fahrzeugPlanLaden();};
+  document.getElementById("fzVor").onclick=()=>{FZ_VON=fzPlusTage(FZ_VON,7);fahrzeugPlanLaden();};
+  if(treffer.length&&!treffer.some(f=>Number(f.id)===Number(FZ_WAHL)))FZ_WAHL=treffer[0].id;
+  fahrzeugPlanLaden();
+}
+
+async function fahrzeugPlanLaden(){
+  const ziel=document.getElementById("fzPlan");
+  if(!ziel||!FZ_WAHL)return;
+  ziel.innerHTML=`<div class="meta">Lädt …</div>`;
+  const d=await jpost("fahrlehrer/fahrzeug-plan",{fl:FL,fahrzeug_id:FZ_WAHL,von:FZ_VON,tage:7});
+  if(!d||!d.ok){ziel.innerHTML=`<div class="fehler">${esc((d&&d.fehler)||"Belegung gerade nicht abrufbar.")}</div>`;return;}
+  const w=document.getElementById("fzWoche");
+  if(w)w.textContent=`${d.tage[0].datum_text} – ${d.tage[d.tage.length-1].datum_text}`;
+  let html="";
+  for(const t of d.tage){
+    const leer=t.belegt.length===0&&t.gesperrt.length===0;
+    html+=`<div class="card" style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <div style="font-weight:800">${esc(t.wochentag)} ${esc(t.datum_text)}</div>
+        <div class="meta">${leer?"ganzer Tag frei":(t.frei.length?Math.round(t.belegt_minuten/60*10)/10+" Std. belegt":"nichts mehr frei")}</div>
+      </div>`;
+    for(const s of t.gesperrt)
+      html+=`<div class="sub" style="color:#8A4B10;margin-top:6px">🔧 ${esc(s.von)}–${esc(s.bis)} · ${esc(s.grund)}</div>`;
+    for(const b of t.belegt)
+      html+=`<div class="sub" style="margin-top:6px"><b>${esc(b.von)}–${esc(b.bis)}</b> · ${esc(b.fahrlehrer)}`
+        +`${b.eigene?' <span style="color:#2f6b3a">(du)</span>':""}`
+        +`<span class="meta"> · ${esc(b.art_text)}${b.gebucht?" ✓":""}</span></div>`;
+    if(t.frei.length){
+      html+=`<div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:6px">`
+        +t.frei.map(f=>`<span style="background:#e9f3ea;color:#2f6b3a;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:700">`
+          +`frei ${esc(f.von)}–${esc(f.bis)}</span>`).join("")+`</div>`;
+    }else{
+      html+=`<div class="meta" style="margin-top:8px">Kein freies Fenster von mindestens 45 Minuten.</div>`;
+    }
+    html+=`</div>`;
+  }
+  ziel.innerHTML=html;
+}
+
+function viewKonto(){
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>💶 Schülerkonto</h1></div>
+    <div class="hint">Schüler suchen oder Handynummer eingeben – der Kontostand wird live aus dem Fahrschulmanager gelesen (nur zur Ansicht).</div>
+    <input id="kontoSuche" class="app-input" style="text-align:left" placeholder="🔍 Suche: Vorname, Nachname oder Geburtstag">
+    <select id="kontoSel" class="app-select">${schuelerOptions("")}</select>
+    <div id="kontoKarte"></div>`;
+  const sel=document.getElementById("kontoSel");
+  document.getElementById("kontoSuche").oninput=e=>{sel.innerHTML=schuelerOptions(e.target.value);};
+  sel.onchange=e=>{if(e.target.value){ladeKonto(e.target.value);}};
+}
+async function ladeKonto(nummer){
+  const el=document.getElementById("kontoKarte");if(el)el.innerHTML='<div class="meta">Lädt …</div>';
+  const d=await jpost("fahrlehrer/konto",{fl:FL,nummer});
+  if(!el)return;
+  const k=d&&d.konto;
+  if(!k||!k.gefunden){el.innerHTML='<div class="leer">'+(k&&k.mehrdeutig?"Zu dieser Nummer gibt es mehrere Karteien – bitte im Fahrschulmanager nachsehen.":"Kein Schülerkonto zu dieser Nummer gefunden.")+'</div>';return;}
+  const farbe=k.status==="guthaben"?"var(--green)":(k.status==="offen"?"#D64545":"var(--gray)");
+  const vorz=k.status==="offen"?"−":(k.status==="guthaben"?"+":"");
+  el.innerHTML=`
+    <div class="card">
+      <div class="titel" style="font-size:16px">${esc(k.name)}</div>
+      <div class="sub">Kartei ${esc(k.schuelernummer)}${k.klasse?" · Klasse "+esc(k.klasse):""}</div>
+      <div style="text-align:center;margin:16px 0 8px">
+        <div class="eyebrow" style="color:${farbe}">${esc(k.status_text)}</div>
+        <div style="font-size:32px;font-weight:800;color:${farbe};margin-top:2px">${vorz}${esc(k.betrag_text)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px;font-size:13.5px"><span class="meta">Zu zahlen gesamt</span><b>${esc(k.zuzahlen_text)}</b></div>
+      <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-top:5px"><span class="meta">Bereits gezahlt</span><b>${esc(k.gezahlt_text)}</b></div>
+    </div>
+    <div class="meta" style="font-size:11.5px">Live aus dem Fahrschulmanager · nur zur Ansicht, keine Buchung.</div>`;
+}
+
+// ---------------- Fahrstunde eintragen (mit Unterschrift, schreibt nach FUCHS) ----
+let sigCanvas=null, sigCtx=null, sigLeer=true;
+let FUCHS_TERMINE={}, AKT_STUNDE=null, AKT_KARTE_STUNDE=null, KARTE_MARKIERT=false;
+const ART_WAHL=[["uebung","Übungsstunde"],["ueberland","Überlandfahrt"],["autobahn","Autobahnfahrt"],["nacht","Nachtfahrt"],["pruefungsvorbereitung","Prüfungsvorbereitung"],["testfahrt","Testfahrt Schaltkompetenz (B197)"],["praktische_pruefung","Prüfungsfahrt (Prüfung)"],["sonstiges","Sonstige"]];
+function viewBuchen(){
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>✍️ Fahrstunde eintragen</h1></div>
+    <div id="buchInhalt"><div class="meta">Lädt …</div></div>`;
+  ladeBuchen();
+}
+async function ladeBuchen(){
+  const d=await jpost("fahrlehrer/fuchs-schueler",{fl:FL});
+  const el=document.getElementById("buchInhalt");if(!el)return;
+  if(!d||!d.ok){el.innerHTML=`<div class="leer">${esc((d&&d.fehler)||FEHLERTEXT||"FUCHS ist gerade nicht verbunden.")}</div>`;return;}
+  const opts=(d.schueler||[]).map(s=>`<option value="${s.id}">${esc(s.name)}${s.geb?" · "+esc(s.geb):""}</option>`).join("");
+  const arten=(d.arten||[]).map(a=>`<option value="${esc(a[0])}">${esc(a[1])}</option>`).join("");
+  const jetzt=new Date();
+  const heute=jetzt.getFullYear()+"-"+String(jetzt.getMonth()+1).padStart(2,"0")+"-"+String(jetzt.getDate()).padStart(2,"0");
+  const zeit=String(jetzt.getHours()).padStart(2,"0")+":"+String(jetzt.getMinutes()).padStart(2,"0");
+  el.innerHTML=`
+    <div class="hint">Trage die gegebene Fahrstunde ein. Der Schüler bestätigt mit seiner Unterschrift – sie wird direkt in FUCHS hinter der Stunde gespeichert.</div>
+    ${(d.schueler||[]).length?"":'<div class="leer" style="margin-bottom:12px">Für dich sind in FUCHS aktuell keine aktiven Schüler hinterlegt.</div>'}
+    <select id="bSchueler" class="app-select"><option value="">— Schüler wählen —</option>${opts}</select>
+    <div class="row">
+      <input id="bDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${heute}">
+      <input id="bZeit" type="time" class="app-input" style="text-align:left;width:120px" value="${zeit}">
+    </div>
+    <div class="row">
+      <select id="bArt" class="app-select" style="flex:1">${arten}</select>
+      <input id="bDauer" type="number" class="app-input" inputmode="numeric" min="5" max="600" step="5"
+        style="width:120px;text-align:center" value="80">
+    </div>
+    <div class="meta" id="bDauerInfo" style="margin-top:-4px">Dauer in Minuten.</div>
+    <label style="display:flex;gap:10px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer">
+      <input type="checkbox" id="bBerechnen" checked style="width:19px;height:19px;flex:none">
+      <span style="font-size:14px;font-weight:600"><span id="bPreisLabel">Fahrstunde jetzt berechnen: </span><b id="bPreis">…</b></span>
+    </label>
+    <div class="meta" id="bPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
+    <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
+    <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
+    <canvas id="bSig" width="640" height="220" style="width:100%;height:250px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;display:block"></canvas>
+    <button class="btn-ghost" onclick="sigLoeschen()">Unterschrift löschen</button>
+    <button class="btn-primary" id="bSpeichern">Fahrstunde speichern</button>
+    <div class="meta" id="bFehler" style="color:#D64545;min-height:16px"></div>`;
+  sigInit(document.getElementById("bSig"));
+  const bArt=document.getElementById("bArt"), bDauer=document.getElementById("bDauer");
+  let dauerBeruehrt=false;
+  const bZeit=document.getElementById("bZeit");
+  const bZeigen=(grund)=>dauerZeigen("bDauerInfo",bZeit?bZeit.value:"",bDauer.value,grund);
+  bDauer.addEventListener("input",()=>{dauerBeruehrt=true;bZeigen("");});
+  if(bZeit)bZeit.addEventListener("input",()=>bZeigen(""));
+  bArt.addEventListener("change",()=>{
+    if(dauerBeruehrt){bZeigen("");return;}
+    const neu=dauerVorgabe(bArt.value);
+    const anders=String(bDauer.value)!==String(neu);
+    bDauer.value=neu;
+    if(anders)dauerBlinken("bDauer");
+    bZeigen(anders?("Vorgabe für "+dArtText(bArt)):"");
+  });
+  bDauer.value=dauerVorgabe(bArt.value);
+  bZeigen("");
+  const bPreisNeu=preisLader("b",()=>({
+    schueler_id:document.getElementById("bSchueler").value,
+    art:bArt.value, dauer:bDauer.value}));
+  document.getElementById("bSchueler").addEventListener("change",bPreisNeu);
+  bArt.addEventListener("change",bPreisNeu);
+  bDauer.addEventListener("input",bPreisNeu);
+  bPreisNeu();
+  document.getElementById("bSpeichern").onclick=buchungSpeichern;
+}
+// ── Dauer sichtbar machen ────────────────────────────────────
+// Eine nackte Minutenzahl in einem schmalen Feld liest niemand nach. Die
+// Endzeit dagegen faellt sofort auf, wenn sie nicht stimmt.
+function dEnde(beginn, dauer){
+  const teile=String(beginn||"").split(":");
+  if(teile.length<2)return "";
+  const h=Number(teile[0]), m=Number(teile[1]), d=Number(dauer)||0;
+  if(!Number.isFinite(h)||!Number.isFinite(m))return "";
+  let ges=((h*60+m+d)%1440+1440)%1440;
+  return String(Math.floor(ges/60)).padStart(2,"0")+":"+String(ges%60).padStart(2,"0");
+}
+function dauerZeigen(infoId, beginn, dauer, grund){
+  const el=document.getElementById(infoId); if(!el)return;
+  const bis=dEnde(beginn,dauer), min=Number(dauer)||0;
+  el.innerHTML=(bis?`<b>${esc(String(beginn).slice(0,5))}–${esc(bis)} Uhr</b> · `:"")
+    +`${min} Minuten`
+    +(grund?` · <span style="color:#B26A00;font-weight:700">${esc(grund)}</span>`:"");
+}
+// Kurz aufleuchten lassen, wenn die App die Zahl selbst geaendert hat.
+function dauerBlinken(feldId){
+  const f=document.getElementById(feldId); if(!f)return;
+  f.style.transition="background-color .3s";
+  f.style.backgroundColor="#FFE2C2";
+  setTimeout(()=>{f.style.backgroundColor="";},1100);
+}
+function dArtText(sel){
+  const o=sel&&sel.selectedOptions&&sel.selectedOptions[0];
+  return o?String(o.text||"").trim():"";
+}
+
+// Zeitvorgaben je Fahrtart und Klasse - identisch mit dem Fahrschulmanager.
+function dauerVorgabe(art,klasse){
+  const k=klasse||"B", istA=/^A/.test(k)||k==="MO", istBE=k==="BE";
+  if(art==="uebung")return istA?120:80;
+  if(art==="pruefungsvorbereitung")return 40;
+  if(art==="ueberland")return istBE?135:225;
+  if(art==="autobahn")return istBE?45:180;
+  if(art==="nacht")return istBE?45:135;
+  if(art==="praktische_pruefung")return 55;
+  if(art==="theorie")return 90;
+  if(art==="testfahrt")return 15;
+  if(["urlaub","krank","feiertag"].includes(art))return 480;
+  if(["taetigkeit","privat"].includes(art))return 60;
+  return 45;
+}
+function sigInit(c){
+  sigCanvas=c; sigLeer=true;
+  // Zeichenflaeche auf die tatsaechlich angezeigte Groesse bringen: nichts wird
+  // gestaucht, die Unterschrift bleibt so, wie sie geschrieben wurde.
+  const rr=c.getBoundingClientRect(), sf=Math.min(2,window.devicePixelRatio||1);
+  if(rr.width>0&&rr.height>0){ c.width=Math.round(rr.width*sf); c.height=Math.round(rr.height*sf); }
+  sigCtx=c.getContext("2d");
+  sigCtx.lineWidth=1.7*sf; sigCtx.lineCap="round"; sigCtx.lineJoin="round"; sigCtx.strokeStyle="#1A1A1A";
+  let malt=false;
+  const pos=e=>{const r=c.getBoundingClientRect();const t=e.touches&&e.touches[0]?e.touches[0]:e;
+    return {x:(t.clientX-r.left)*(c.width/r.width), y:(t.clientY-r.top)*(c.height/r.height)};};
+  const start=e=>{e.preventDefault();malt=true;const p=pos(e);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y);};
+  const move=e=>{if(!malt)return;e.preventDefault();const p=pos(e);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();sigLeer=false;};
+  const end=()=>{malt=false;};
+  c.addEventListener("mousedown",start);c.addEventListener("mousemove",move);window.addEventListener("mouseup",end);
+  c.addEventListener("touchstart",start,{passive:false});c.addEventListener("touchmove",move,{passive:false});c.addEventListener("touchend",end);
+}
+function sigLoeschen(){if(sigCtx&&sigCanvas){sigCtx.clearRect(0,0,sigCanvas.width,sigCanvas.height);sigLeer=true;}}
+async function buchungSpeichern(){
+  const err=document.getElementById("bFehler");err.textContent="";
+  const schueler_id=document.getElementById("bSchueler").value;
+  const datum=document.getElementById("bDatum").value;
+  const beginn=document.getElementById("bZeit").value;
+  const art=document.getElementById("bArt").value;
+  const dauer=document.getElementById("bDauer").value;
+  if(!schueler_id){err.textContent="Bitte einen Schüler wählen.";return;}
+  if(!datum||!beginn){err.textContent="Bitte Datum und Uhrzeit angeben.";return;}
+  if(sigLeer){err.textContent="Bitte lass den Schüler unterschreiben.";return;}
+  const unterschrift=sigCanvas.toDataURL("image/png");
+  const btn=document.getElementById("bSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
+  const berechnen=!!(document.getElementById("bBerechnen")||{}).checked;
+  const d=await jpost("fahrlehrer/buchen",{fl:FL,schueler_id,datum,beginn,dauer,art,unterschrift,berechnen});
+  btn.textContent=alt;btn.disabled=false;
+  if(d&&d.ok){
+    // Hat etwas beim Berechnen geklemmt, MUSS der Fahrlehrer das sehen -
+    // sonst bleibt Geld unbemerkt liegen.
+    if(d.hinweis){err.style.color="#B26A00";err.textContent="Gebucht – "+d.hinweis;return;}
+    toast("Fahrstunde gespeichert ✓"+(d.betrag_text?" · "+d.betrag_text+" berechnet":""));
+    history.back();}
+  else{err.textContent=(d&&d.fehler)||FEHLERTEXT||"Speichern fehlgeschlagen.";}
+}
+
+// ---------------- Terminplaner (Kalender) ----------------
+async function viewKalender(){
+  WOCHE_AKTIV=false;
+  if(IS_MASTER){await viewKalenderMaster();return;}
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>📅 Terminplaner</h1></div>
+    <div class="hint">Tippe einen Termin an, um die Fahrstunde vom Schüler unterschreiben zu lassen – sie wird direkt in FUCHS gebucht.</div>
+    <div id="kalliste"><div class="meta">Lädt …</div></div>`;
+  const d=await jpost("fahrlehrer/fuchs-kalender",{fl:FL});
+  const liste=document.getElementById("kalliste");if(!liste)return;
+  if(!d||!d.ok){liste.innerHTML=`<div class="leer">${esc((d&&d.fehler)||FEHLERTEXT||"FUCHS ist gerade nicht verbunden.")}</div>`;return;}
+  zeichneFuchsTermine((d.termine)||[]);
+}
+
+// ---------------- Wochenplan ----------------
+let WOCHE_START=null, WOCHE_DATEN=[], FAHRZEUGE=null, FZ_MEIN=null, W_SCHUELER=[];
+// Zwei freiwillige Filter im Wochenplan: Fahrlehrer und Fahrzeug.
+let W_FL=null, W_FZ=null, W_FLLISTE=null;
+const WTAGE=["Mo","Di","Mi","Do","Fr","Sa","So"];
+const WVON=6, WBIS=22, WPX=54;
+const ART_FARBE={uebung:"#2e5e3f", ueberland:"#f2c200", autobahn:"#e0740b", nacht:"#1a56a0",
+  pruefungsvorbereitung:"#c22a20", praktische_pruefung:"#c22a20", testfahrt:"#0e7a6d",
+  theorie:"#e0559f", taetigkeit:"#8a8f8a", privat:"#7a4a2b",
+  urlaub:"#1c1c1c", krank:"#1c1c1c", feiertag:"#1c1c1c", sonstiges:"#667"};
+const ART_NAME={uebung:"Übung", ueberland:"Überland", autobahn:"Autobahn", nacht:"Nachtfahrt",
+  pruefungsvorbereitung:"Prüfung/Vorbereitung", praktische_pruefung:"Prüfung/Vorbereitung",
+  testfahrt:"Testfahrt (B197)", theorie:"Theorie", taetigkeit:"Tätigkeit", privat:"Privat",
+  urlaub:"Urlaub/Krank/Feiertag", krank:"Urlaub/Krank/Feiertag", feiertag:"Urlaub/Krank/Feiertag",
+  sonstiges:"Sonstiges"};
+const FEHL_MUSTER="repeating-linear-gradient(45deg,#b3261e,#b3261e 4px,#7e1712 4px,#7e1712 8px)";
+const AUS_MUSTER="repeating-linear-gradient(45deg,#a8afb2,#a8afb2 4px,#cdd3d5 4px,#cdd3d5 8px)";
+function wIso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function wPlus(iso,n){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return wIso(d);}
+function wMontag(iso){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return wIso(d);}
+function wKurz(iso){const d=new Date(iso+"T12:00:00");return String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0")+".";}
+function wKW(iso){const d=new Date(iso+"T12:00:00");const t=new Date(d);t.setDate(d.getDate()+3-((d.getDay()+6)%7));
+  const j=new Date(t.getFullYear(),0,4);return 1+Math.round(((t-j)/86400000-3+((j.getDay()+6)%7))/7);}
+function wHeute(){return wIso(new Date());}
+function dauerVorgabeW(art){
+  if(art==="theorie")return 90;
+  if(["urlaub","krank","feiertag"].includes(art))return 480;
+  if(["taetigkeit","privat"].includes(art))return 60;
+  if(art==="uebung")return 80;
+  if(art==="pruefungsvorbereitung")return 40;
+  if(art==="ueberland")return 225;
+  if(art==="autobahn")return 180;
+  if(art==="nacht")return 135;
+  if(art==="praktische_pruefung")return 55;
+  if(art==="testfahrt")return 15;
+  return 45;
+}
+
+// Wo war ich? Verschieben, Absagen und Unterschreiben sollen dorthin
+// zurueckfuehren, wo sie aufgerufen wurden.
+let WOCHE_AKTIV=false;
+function wZurueck(){return WOCHE_AKTIV?`viewWoche('${WOCHE_START||wMontag(wHeute())}')`:"viewKalender()";}
+function wZurueckGehen(){if(WOCHE_AKTIV)viewWoche(WOCHE_START||wMontag(wHeute()));else viewKalender();}
+
+async function viewWoche(start){
+  WOCHE_AKTIV=true;
+  // Der Masterzugang darf mitlesen (Planen und Unterschreiben bleibt dem
+  // persönlichen Zugang vorbehalten - das prüft der Server ohnehin).
+  const basis=wMontag(wHeute());
+  WOCHE_START=start||basis;
+  let opts="";
+  for(let i=-1;i<=7;i++){const s=wPlus(basis,i*7);
+    opts+=`<option value="${s}"${s===WOCHE_START?" selected":""}>KW ${wKW(s)} · ${wKurz(s)}–${wKurz(wPlus(s,6))}${i===0?" · diese Woche":""}</option>`;}
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>🗓 Wochenplan</h1></div>
+    <div class="row" style="display:flex;gap:9px;align-items:center">
+      <button class="wnav" onclick="viewWoche('${wPlus(WOCHE_START,-7)}')">‹</button>
+      <select id="wSel" class="app-select" style="flex:1">${opts}</select>
+      <button class="wnav" onclick="viewWoche('${wPlus(WOCHE_START,7)}')">›</button>
+    </div>
+    <div class="row" style="display:flex;gap:9px;align-items:center;margin-top:8px">
+      <button class="wknopf" onclick="viewWoche('${basis}')"${WOCHE_START===basis?' disabled':''}
+        >⌖ Heute</button>
+      <button class="wknopf" onclick="viewBuchen()">✍️ Fahrstunde eintragen</button>
+    </div>
+    <div id="wFilter" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
+    <div class="meta" id="wHinweis">Auf eine freie Stelle tippen, um eine Fahrstunde einzuplanen.</div>
+    <div id="wGitter"><div class="meta">Lädt …</div></div>`;
+  document.getElementById("wSel").onchange=e=>viewWoche(e.target.value);
+  await wFilterAufbauen();
+  await wLaden();
+}
+
+// Die beiden Auswahlfelder. Das Fahrzeugfeld sieht jeder - das braucht man
+// zum Planen. Einen anderen Fahrlehrer darf nur der Masterzugang waehlen.
+async function wFilterAufbauen(){
+  const box=document.getElementById("wFilter"); if(!box)return;
+  if(!FAHRZEUGE){
+    const d=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
+    FAHRZEUGE=(d&&d.fahrzeuge)||[]; FZ_MEIN=(d&&d.mein)||null;
+  }
+  if(IS_MASTER&&!W_FLLISTE){
+    try{const d=await jget("ausbildung/fahrlehrer");
+      W_FLLISTE=((d&&d.fahrlehrer)||[]).filter(f=>!f.master&&f.fl!==FL);}catch(e){W_FLLISTE=[];}
+  }
+  const sortiert=[...FAHRZEUGE].sort((a,b)=>
+    (String(b.id)===String(FZ_MEIN)?1:0)-(String(a.id)===String(FZ_MEIN)?1:0)
+    ||String(a.bezeichnung||"").localeCompare(String(b.bezeichnung||"")));
+  let html="";
+  if(IS_MASTER){
+    html+=`<select id="wFl" class="app-select" style="flex:1 1 46%;min-width:150px">
+      <option value="">👤 Fahrlehrer wählen</option>`
+      +(W_FLLISTE||[]).map(f=>`<option value="${esc(f.fl)}">👤 ${esc(f.name)}</option>`).join("")
+      +`</select>`;
+  }
+  html+=`<select id="wFz" class="app-select" style="flex:1 1 46%;min-width:150px">
+    <option value="">🚗 Alle Fahrzeuge</option>`
+    +sortiert.map(f=>`<option value="${f.id}">🚗 ${esc(f.bezeichnung)}`
+      +`${f.kennzeichen?" · "+esc(f.kennzeichen):""}`
+      +`${String(f.id)===String(FZ_MEIN)?" · dein Auto":""}</option>`).join("")
+    +`</select>`;
+  box.innerHTML=html;
+  const fl=document.getElementById("wFl");
+  if(fl){fl.value=W_FL||""; fl.onchange=e=>{W_FL=e.target.value||null;wLaden();};}
+  const fz=document.getElementById("wFz");
+  fz.value=W_FZ?String(W_FZ):""; fz.onchange=e=>{W_FZ=e.target.value?Number(e.target.value):null;wLaden();};
+}
+
+// nur Fahrzeug  -> Belegung des Autos im ganzen Betrieb
+// sonst         -> Plan des gewaehlten (oder des eigenen) Fahrlehrers,
+//                  bei zusaetzlicher Fahrzeugwahl auf dieses Auto gefiltert
+async function wLaden(){
+  const el=document.getElementById("wGitter"); if(!el)return;
+  const hinweis=document.getElementById("wHinweis");
+  el.innerHTML=`<div class="meta">Lädt …</div>`;
+  const fzName=()=>{const f=(FAHRZEUGE||[]).find(x=>String(x.id)===String(W_FZ));
+    return f?(f.bezeichnung+(f.kennzeichen?" ("+f.kennzeichen+")":"")):"dieses Auto";};
+
+  if(W_FZ&&!W_FL){
+    const d=await jpost("fahrlehrer/fahrzeug-plan",{fl:FL,fahrzeug_id:W_FZ,von:WOCHE_START,tage:7});
+    if(!d||!d.ok){el.innerHTML=`<div class="leer">${esc((d&&d.fehler)||"Belegung gerade nicht abrufbar.")}</div>`;return;}
+    const liste=[];
+    for(const t of d.tage){
+      for(const b of t.belegt)
+        liste.push({id:b.id, datum_iso:t.datum, uhrzeit:b.von, dauer:b.dauer, art:b.art,
+          status:b.status, signiert:b.gebucht, schueler:b.fahrlehrer, art_text:b.art_text, fremd:!b.eigene});
+      for(const s of t.gesperrt){
+        const m=x=>Number(x.slice(0,2))*60+Number(x.slice(3));
+        liste.push({id:null, datum_iso:t.datum, uhrzeit:s.von, dauer:Math.max(30,m(s.bis)-m(s.von)),
+          art:"werkstatt", status:"gesperrt", signiert:false,
+          schueler:"🔧 "+(s.grund||"Werkstatt"), art_text:s.grund||"Werkstatt", fremd:true});
+      }
+    }
+    WOCHE_DATEN=liste;
+    if(hinweis)hinweis.textContent=`Belegung von ${fzName()} im ganzen Betrieb.`;
+    zeichneWoche();
+    return;
+  }
+
+  const d=await jpost("fahrlehrer/fuchs-kalender",
+    {fl:FL, ziel_fl:W_FL||undefined, von:WOCHE_START, bis:wPlus(WOCHE_START,6)});
+  if(!d||!d.ok){el.innerHTML=`<div class="leer">${esc((d&&d.fehler)||FEHLERTEXT||"FUCHS ist gerade nicht verbunden.")}</div>`;return;}
+  let liste=(d.termine)||[];
+  if(W_FZ) liste=liste.filter(x=>String(x.fahrzeug_id||"")===String(W_FZ));
+  if(d.nur_ansicht) for(const e of liste) e.fremd=true;
+  else for(const e of liste) FUCHS_TERMINE[e.id]=e;
+  WOCHE_DATEN=liste;
+  if(hinweis){
+    const wer=((W_FLLISTE||[]).find(f=>f.fl===W_FL)||{}).name||"";
+    hinweis.textContent=W_FL
+      ? `Plan von ${wer}${W_FZ?" mit "+fzName():""} – nur zur Ansicht.`
+      : (IS_MASTER?"Bitte oben einen Fahrlehrer oder ein Fahrzeug wählen."
+        :(W_FZ?`Deine Fahrstunden mit ${fzName()}.`
+              :"Auf eine freie Stelle tippen, um eine Fahrstunde einzuplanen."));
+  }
+  zeichneWoche();
+}
+
+
+// ---------------------------------------------------------------------------
+// Arbeitszeit im Wochenplan (Angabe in Minuten).
+//   praktischer Unterricht ....... hoechstens 495 Minuten am Tag
+//   Gesamtarbeitszeit ............ hoechstens 600 Minuten am Tag
+// Zur Gesamtarbeitszeit zaehlen zusaetzlich Theorieunterricht und
+// Taetigkeiten fuer die Firma. Privat, Urlaub, Krankheit und Feiertage
+// sind keine Arbeitszeit; ausgefallene Stunden und Fehlstunden ebenfalls nicht.
+// ---------------------------------------------------------------------------
+const AZ_PRAXIS_MAX = 495;
+const AZ_GESAMT_MAX = 600;
+const AZ_PRAXIS_ARTEN = ["uebung", "ueberland", "autobahn", "nacht",
+  "pruefungsvorbereitung", "praktische_pruefung", "testfahrt", "sonstiges"];
+const AZ_WEITERE_ARBEIT = ["theorie", "taetigkeit"];
+
+function azMinuten(liste) {
+  let praxis = 0, weitere = 0;
+  for (const e of (liste || [])) {
+    if (["ausgefallen", "fehlstunde"].includes(e.status)) continue;
+    const dauer = Number(e.dauer) || 0;
+    if (!dauer) continue;
+    const art = String(e.art || "");
+    if (AZ_PRAXIS_ARTEN.includes(art)) praxis += dauer;
+    else if (AZ_WEITERE_ARBEIT.includes(art)) weitere += dauer;
+  }
+  return { praxis: praxis, gesamt: praxis + weitere };
+}
+
+function azKopf(liste) {
+  const m = azMinuten(liste);
+  if (!m.gesamt) return "";
+  const rot = "#b3261e";
+  const pStil = m.praxis > AZ_PRAXIS_MAX ? ` style="color:${rot};font-weight:800"` : "";
+  const gStil = m.gesamt > AZ_GESAMT_MAX ? ` style="color:${rot};font-weight:800"` : "";
+  const hinweis = `Praktischer Unterricht ${m.praxis} von höchstens ${AZ_PRAXIS_MAX} Minuten`
+    + ` · Gesamtarbeitszeit ${m.gesamt} von höchstens ${AZ_GESAMT_MAX} Minuten`
+    + (m.praxis > AZ_PRAXIS_MAX || m.gesamt > AZ_GESAMT_MAX ? " · Grenze überschritten!" : "");
+  return `<i title="${hinweis}"><span${pStil}>${m.praxis}</span>`
+    + `<span style="opacity:.55">/</span><span${gStil}>${m.gesamt}</span>`
+    + `<span style="opacity:.55"> min</span></i>`;
+}
+
+function zeichneWoche(){
+  const el=document.getElementById("wGitter"); if(!el)return;
+  const heute=wHeute();
+  let kopf=`<div class="wkopf"><div class="wecke"></div>`;
+  for(let i=0;i<7;i++){const iso=wPlus(WOCHE_START,i);
+    const summe=azKopf(WOCHE_DATEN.filter(x=>x.datum_iso===iso));
+    kopf+=`<div class="wtag${iso===heute?" heute":""}"><b>${WTAGE[i]}</b><span>${wKurz(iso)}</span>${summe}</div>`;}
+  kopf+=`</div>`;
+  let leiste=`<div class="wleiste">`;
+  for(let s=WVON;s<WBIS;s++) leiste+=`<div class="wstd" style="height:${WPX}px">${String(s).padStart(2,"0")}</div>`;
+  leiste+=`</div>`;
+  let raster="";
+  for(let s=WVON+1;s<WBIS;s++) raster+=`<div class="wlinie" style="top:${(s-WVON)*WPX}px"></div>`;
+  let spalten="";
+  for(let i=0;i<7;i++){
+    const iso=wPlus(WOCHE_START,i);
+    let blocks="";
+    for(const e of WOCHE_DATEN.filter(x=>x.datum_iso===iso)){
+      const t=String(e.uhrzeit||"").split(":");
+      if(t.length<2)continue;
+      const min=(Number(t[0])-WVON)*60+Number(t[1]);
+      const oben=Math.max(min/60*WPX,0);
+      const hoehe=Math.max((Number(e.dauer)||45)/60*WPX-3,20);
+      const fertig=e.signiert||e.status==="durchgefuehrt";
+      const farbe=ART_FARBE[e.art]||"#667";
+      let grund=farbe, schrift="#fff";
+      if(e.status==="fehlstunde"){grund=FEHL_MUSTER;}
+      else if(e.status==="ausgefallen"){grund=AUS_MUSTER;schrift="#2b3033";}
+      else if(farbe==="#f2c200"){schrift="#332800";}
+      // Frueher stand hier nur der Vorname. Bei zwei Annas in derselben Woche
+      // half das nicht weiter - jetzt steht der ganze Name da.
+      const wer=String(e.schueler||e.art_text||"Termin").trim()||"Termin";
+      // Fremde Termine (Auto-Ansicht oder Plan einer Kollegin) sind nur zum
+      // Ansehen - antippen laesst sich nur der eigene Termin.
+      const tippbar=e.id&&!e.fremd;
+      blocks+=`<div class="wblock" title="${esc(wer)} · ${esc((e.uhrzeit||"").slice(0,5))} · ${esc(e.art_text||"")}"
+        style="top:${oben}px;height:${hoehe}px;background:${grund};color:${schrift}${e.fremd?";opacity:.85":""}"
+        ${tippbar?`onclick="event.stopPropagation();wBlock(${e.id})"`:'onclick="event.stopPropagation()"'}
+        ><b>${fertig?"🔑 ":""}${esc((e.uhrzeit||"").slice(0,5))}</b>${esc(wer)}</div>`;
+    }
+    spalten+=`<div class="wspalte" data-tag="${iso}" style="height:${(WBIS-WVON)*WPX}px">${raster}${blocks}</div>`;
+  }
+  const arten=[...new Set(WOCHE_DATEN.map(x=>x.art))].filter(a=>ART_NAME[a]);
+  const gesehen=new Set(); let leg="";
+  for(const a of arten){const n=ART_NAME[a]; if(gesehen.has(n))continue; gesehen.add(n);
+    leg+=`<span><i style="background:${ART_FARBE[a]}"></i>${esc(n)}</span>`;}
+  if(WOCHE_DATEN.some(x=>x.status==="fehlstunde")) leg+=`<span><i style="background:${FEHL_MUSTER}"></i>Fehlstunde</span>`;
+  if(WOCHE_DATEN.some(x=>x.status==="ausgefallen")) leg+=`<span><i style="background:${AUS_MUSTER}"></i>ausgefallen</span>`;
+  if(WOCHE_DATEN.some(x=>x.signiert||x.status==="durchgefuehrt")) leg+=`<span>🔑 gebucht</span>`;
+  leg+=`<span class="wzeit">Minuten je Tag: <b>Praxis</b>/<b>gesamt</b> · erlaubt ${AZ_PRAXIS_MAX}/${AZ_GESAMT_MAX}</span>`;
+  el.innerHTML=`${leg?`<div class="wlegende">${leg}</div>`:""}<div class="wrahmen"><div style="min-width:100%">${kopf}<div class="wkoerper">${leiste}${spalten}</div></div></div>`;
+  el.querySelectorAll(".wspalte").forEach(sp=>{
+    sp.onclick=(ev)=>{
+      const r=sp.getBoundingClientRect();
+      const y=(ev.touches&&ev.touches[0]?ev.touches[0].clientY:ev.clientY)-r.top;
+      let m=Math.round((y/WPX*60)/15)*15;
+      m=Math.max(0,Math.min(m,(WBIS-WVON)*60-15));
+      viewPlanen(sp.dataset.tag,String(WVON+Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0"));
+    };
+  });
+  const rahmen=el.querySelector(".wrahmen");
+  let frueh=8*60;
+  for(const e of WOCHE_DATEN){const t=String(e.uhrzeit||"").split(":");
+    if(t.length>1) frueh=Math.min(frueh,Number(t[0])*60+Number(t[1]));}
+  if(rahmen) rahmen.scrollTop=Math.max(0,(frueh-WVON*60)/60*WPX-30);
+}
+
+// Geblockte Zeiten sind keine Fahrstunden. Sie lassen sich ansehen und
+// wieder wegnehmen - aber niemals unterschreiben.
+const BLOCKER_ARTEN=["theorie","taetigkeit","privat","krank","urlaub","feiertag"];
+const BLOCKER_NAME={theorie:"Theorieunterricht",taetigkeit:"Tätigkeit (Firma)",
+  privat:"Privat",krank:"Krankheit",urlaub:"Urlaub",feiertag:"Feiertag"};
+function istBlocker(e){return !!e&&BLOCKER_ARTEN.indexOf(String(e.art||""))>=0
+  &&!e.schueler_id&&!String(e.schueler||"").trim();}
+
+
+// ── Fahrschueler erreichen ───────────────────────────────────
+// Die Handynummer haengt am Termin. Sie hier anzubieten spart den Umweg ueber
+// das Telefonbuch - und der haeufigste Fall ist eine kurze Nachricht kurz vor
+// der Fahrstunde.
+
+// Nur Ziffern mit Landesvorwahl - so versteht WhatsApp die Nummer. Der Server
+// liefert sie meistens schon so; von Hand eingetragene Nummern nicht.
+function telZiffern(roh) {
+  let z = String(roh || "").trim().replace(/[^\d+]/g, "");
+  if (z.startsWith("+")) z = z.slice(1);
+  else if (z.startsWith("00")) z = z.slice(2);
+  else if (z.startsWith("0")) z = "49" + z.slice(1);
+  z = z.replace(/\D/g, "");
+  return z.length >= 10 ? z : "";
+}
+
+// Ist das ein Handy? Nur dann fuehrt WhatsApp irgendwohin. Deutsche
+// Mobilfunknummern beginnen nach der Landesvorwahl mit 15, 16 oder 17.
+function istHandy(roh) {
+  const z = telZiffern(roh);
+  return !!z && /^49(15|16|17)/.test(z);
+}
+
+// "491701234567" liest sich niemand durch. Fuer die Anzeige wieder aufbrechen.
+function telSchoen(roh) {
+  const z = telZiffern(roh);
+  if (!z) return "";
+  if (/^49(15|16|17)/.test(z)) return "+49 " + z.slice(2, 5) + " " + z.slice(5);
+  if (z.startsWith("49")) return "+49 " + z.slice(2);
+  return "+" + z;
+}
+
+const WA_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>';
+const RUF_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.6 1.5C11.6 19.9 4.1 12.4 3.5 5.1A1.5 1.5 0 0 1 5 3.5z"/></svg>';
+
+// Die vorbereitete Nachricht. Der Fahrlehrer kann sie vor dem Abschicken
+// noch aendern - sie nimmt ihm nur das Tippen der immer gleichen Anrede ab.
+function kontaktText(name, anlass) {
+  const vorname = String(name || "").trim().split(" ")[0];
+  const ich = (typeof FLNAME === "string" ? FLNAME.trim() : "");
+  let t = "Hallo" + (vorname ? " " + vorname : "") + ", hier ist "
+    + (ich ? ich : "deine Fahrschule") + " von der Fahrschule Fuchs.";
+  if (anlass) t += " " + anlass;
+  return t;
+}
+
+// Die Karte mit Nummer, WhatsApp und Anruf. Ohne Nummer gibt es sie nicht -
+// ein Knopf, der nichts tut, ist schlimmer als kein Knopf.
+function kontaktKarteHTML(name, nummer, anlass) {
+  const z = telZiffern(nummer);
+  if (!z) return "";
+  const wa = istHandy(nummer);
+  const text = encodeURIComponent(kontaktText(name, anlass));
+  return `<div class="card" style="cursor:default; display:block">
+      <div class="eyebrow">Erreichen</div>
+      <div class="knummer" style="margin:3px 0 10px">${esc(telSchoen(nummer))}${
+        wa ? "" : " · Festnetz, kein WhatsApp"}</div>
+      <div style="display:flex; gap:8px">
+        ${wa ? `<a class="kbtn wa" target="_blank" rel="noopener"
+          href="https://wa.me/${z}?text=${text}">${WA_ZEICHEN}WhatsApp</a>` : ""}
+        <a class="kbtn ruf" href="tel:+${z}">${RUF_ZEICHEN}Anrufen</a>
+      </div>
+    </div>`;
+}
+
+// Antippen im Wochenplan oeffnet das Terminmenue. Frueher fuehrte jeder Tipp
+// sofort zur Unterschrift - Verschieben und Loeschen waren von hier aus gar
+// nicht erreichbar.
+function wBlock(id){ terminMenue(id); }
+
+// Liegt der Termin noch in der Zukunft? Nur dann darf eine Fahrstunde als
+// Planungsfehler geloescht werden. Was vorbei ist, wird abgesagt oder als
+// Fehlstunde gebucht - sonst verschwindet eine kurzfristige Absage spurlos.
+function terminKuenftig(e){
+  const iso=String((e&&e.datum_iso)||"");
+  if(!iso)return false;
+  const heute=wHeute();
+  if(iso>heute)return true;
+  if(iso<heute)return false;
+  const t=String(e.uhrzeit||"00:00").split(":");
+  const jetzt=new Date();
+  return (Number(t[0])*60+Number(t[1])) > (jetzt.getHours()*60+jetzt.getMinutes());
+}
+
+function tmKnopf(text, ruf, stil){
+  return `<button class="btn-${stil||"ghost"}" style="width:100%;text-align:left;margin-top:8px"
+    onclick="${ruf}">${text}</button>`;
+}
+
+function terminMenue(id){
+  const e=FUCHS_TERMINE[id]; if(!e){toast("Termin nicht gefunden");return;}
+  const fertig=e.signiert||e.status==="durchgefuehrt";
+  const abgesagt=e.status==="ausgefallen"||e.status==="fehlstunde";
+  const blocker=istBlocker(e);
+  const name=blocker?(BLOCKER_NAME[e.art]||e.art_text||"Geblockte Zeit"):(e.schueler||"Fahrstunde");
+  let stand="";
+  if(e.status==="fehlstunde")stand=`<div class="klbadge" style="background:#FBECEC;color:#C23">Fehlstunde</div>`;
+  else if(e.status==="ausgefallen")stand=`<div class="klbadge" style="background:#FBECEC;color:#C23">ausgefallen</div>`;
+  else if(fertig)stand=`<div class="klbadge" style="background:#E7F5EC;color:#1B7A43">✓ gebucht</div>`;
+  else if(e.klasse)stand=`<div class="klbadge">${esc(e.klasse)}</div>`;
+
+  let knoepfe="";
+  if(!fertig&&!abgesagt&&!blocker){
+    knoepfe+=tmKnopf("✍️ Unterschreiben & buchen","signStunde("+id+")","primary");
+  }
+  if(fertig&&e.art==="praktische_pruefung"&&!pruefErg(e)){
+    knoepfe+=tmKnopf("🎓 Prüfungsergebnis eintragen","pruefungErgebnis("+id+")","primary");
+  }
+  if(!fertig&&!abgesagt){
+    knoepfe+=tmKnopf("🕒 Termin verschieben","verschiebenPanel("+id+")");
+  }
+  if(!fertig&&!abgesagt&&!blocker){
+    knoepfe+=tmKnopf("✕ Termin absagen / ausgefallen","viewAusfall("+id+")");
+  }
+  if(fertig&&e.nummer){
+    knoepfe+=tmKnopf("📋 Ausbildungskarte pflegen","karteVonStunde("+id+")");
+  }
+  // Loeschen: geblockte Zeiten immer, Fahrstunden nur, solange sie noch
+  // bevorstehen und niemand unterschrieben hat.
+  if(!fertig&&(blocker||(!abgesagt&&terminKuenftig(e)))){
+    knoepfe+=`<button class="btn-primary" style="width:100%;text-align:left;margin-top:8px;background:#C23"
+      onclick="terminLoeschen(${id})">🗑 Termin löschen</button>`;
+  }
+  if(!knoepfe){
+    knoepfe=`<div class="hint">Für diesen Termin gibt es hier nichts mehr zu tun.</div>`;
+  }
+
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
+    <div><div class="eyebrow">${blocker?"Geblockte Zeit":"Termin"}</div><h1>${esc(name)}</h1></div>
+    <div class="card zeile" style="cursor:default">
+      <div class="zeit">${esc((e.uhrzeit||"").slice(0,5))}${e.bis?"–"+esc(e.bis):""}</div>
+      <div class="info"><div class="titel">${esc(e.datum||"")}</div>
+      <div class="sub">${esc(blocker?(BLOCKER_NAME[e.art]||e.art_text||""):(e.art_text||""))}${e.dauer?" · "+esc(String(e.dauer))+" Min.":""}</div></div>
+      ${stand}
+    </div>
+    ${e.bemerkung?`<div class="card" style="cursor:default"><div class="sub">${esc(e.bemerkung)}</div></div>`:""}
+    ${blocker?`<div class="hint">Hier ist keine Fahrstunde eingetragen – die Zeit ist nur geblockt.
+       Das Büro sieht den Eintrag genauso in deinem Plan.</div>`:""}
+    ${blocker?"":kontaktKarteHTML(e.schueler, e.nummer,
+        "Es geht um deine Fahrstunde am " + String(e.datum||"")
+        + (e.uhrzeit?(" um " + String(e.uhrzeit).slice(0,5) + " Uhr"):"") + ".")}
+    ${knoepfe}
+    <div class="meta" id="tmFehler" style="color:#D64545;min-height:16px"></div>`;
+  main().scrollTop=0;
+}
+
+async function terminLoeschen(id){
+  const e=FUCHS_TERMINE[id]; if(!e)return;
+  const mitSchueler=!!(e.schueler_id||String(e.schueler||"").trim());
+  const frage=mitSchueler
+    ? "Diesen Termin wirklich löschen?\n\nNur für einen Planungsfehler gedacht. Hat der Schüler abgesagt, "
+      + "trag ihn bitte stattdessen als „ausgefallen“ oder als Fehlstunde ein – sonst fehlt der Vorgang im Büro."
+    : "Diesen Eintrag wirklich löschen?";
+  if(!confirm(frage))return;
+  const err=document.getElementById("tmFehler"); if(err)err.textContent="";
+  const d=await jpost("fahrlehrer/termin-loeschen",{fl:FL,stunde_id:id});
+  if(d&&d.ok){toast("Termin gelöscht ✓"); delete FUCHS_TERMINE[id]; wZurueckGehen(); return;}
+  if(err)err.textContent=(d&&d.fehler)||FEHLERTEXT||"Löschen fehlgeschlagen.";
+}
+
+async function viewPlanen(datum,zeit){
+  // Ohne Fahrzeug- und Schülerliste darf die Maske gar nicht erst
+  // aufgehen - sonst plant jemand einen Termin ohne Auto, weil die Auswahl
+  // "leer" aussah.
+  const zurueckW=WOCHE_START||wMontag(wHeute());
+  if(!FAHRZEUGE){
+    const d=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
+    if(!d){main().innerHTML=`<button class="btn-ghost" onclick="viewWoche('${zurueckW}')">← Zurück zum Wochenplan</button>`
+      +fehlerKasten("Die Fahrzeugliste konnte nicht geladen werden.");return;}
+    FAHRZEUGE=d.fahrzeuge||[];FZ_MEIN=d.mein;}
+  if(!W_SCHUELER.length){
+    const d=await jpost("fahrlehrer/fuchs-schueler",{fl:FL});
+    if(!d){main().innerHTML=`<button class="btn-ghost" onclick="viewWoche('${zurueckW}')">← Zurück zum Wochenplan</button>`
+      +fehlerKasten("Die Schülerliste konnte nicht geladen werden.");return;}
+    W_SCHUELER=d.schueler||[]; W_ARTEN=d.arten||[["uebung","Übungsstunde"]];
+    if(d.blocker&&d.blocker.length)W_BLOCKER=d.blocker;}
+  const zurueck=WOCHE_START||wMontag(wHeute());
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="viewWoche('${zurueck}')">← Zurück zum Wochenplan</button>
+    <div><div class="eyebrow">Fahrstunde planen</div><h1>🗓 Neuer Termin</h1></div>
+    <div class="hint" id="pHinweis">Der Termin wird nur eingeplant. Gebucht und berechnet wird er später wie gewohnt mit der Unterschrift.</div>
+    <div id="pSchuelerFeld">
+      <input id="pSuche" class="app-input" style="text-align:left" placeholder="🔍 Schüler suchen">
+      <select id="pSchueler" class="app-select" style="margin-top:9px"></select>
+    </div>
+    <div class="row" style="display:flex;gap:9px">
+      <input id="pDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${datum}">
+      <input id="pZeit" type="time" class="app-input" style="text-align:left;width:120px" value="${zeit}">
+    </div>
+    <div class="row" style="display:flex;gap:9px">
+      <select id="pArt" class="app-select" style="flex:1">
+        <optgroup label="Mit Schüler">${W_ARTEN.map(a=>`<option value="${a[0]}">${esc(a[1])}</option>`).join("")}</optgroup>
+        <optgroup label="Ohne Schüler – Zeit blocken">${W_BLOCKER.map(a=>`<option value="${a[0]}">${esc(a[1])}</option>`).join("")}</optgroup>
+      </select>
+      <input id="pDauer" type="number" inputmode="numeric" min="5" max="600" step="5" class="app-input" style="width:120px;text-align:center" value="80">
+    </div>
+    <div class="meta" id="pDauerInfo" style="margin-top:-4px">Dauer in Minuten.</div>
+    <select id="pFz" class="app-select"><option value="">— Fahrzeug wie üblich —</option>${
+      FAHRZEUGE.map(f=>`<option value="${f.id}"${String(f.id)===String(W_FZ||FZ_MEIN||"")?" selected":""}>${esc(f.bezeichnung)}${f.kennzeichen?" · "+esc(f.kennzeichen):""}</option>`).join("")}</select>
+    <input id="pBem" class="app-input" style="text-align:left" placeholder="Bemerkung (freiwillig)">
+    <button class="btn-primary" id="pSpeichern">🗓 Termin einplanen</button>
+    <div class="meta" id="pErr" style="color:#D64545;min-height:16px"></div>`;
+  const fuellen=(q)=>{
+    const l=q?W_SCHUELER.filter(s=>String(s.name||"").toLowerCase().includes(q.toLowerCase())):W_SCHUELER;
+    document.getElementById("pSchueler").innerHTML=
+      `<option value="">— Schüler wählen (${l.length}) —</option>`+
+      l.slice(0,300).map(s=>`<option value="${s.id}">${esc(s.name)}${s.geb?" · "+esc(s.geb):""}</option>`).join("");
+  };
+  fuellen("");
+  document.getElementById("pSuche").oninput=e=>fuellen(e.target.value.trim());
+  const pArt=document.getElementById("pArt"), pDauer=document.getElementById("pDauer"),
+        pFeld=document.getElementById("pSchuelerFeld"), pFz=document.getElementById("pFz"),
+        pHin=document.getElementById("pHinweis");
+  let beruehrt=false;
+  const pZeit=document.getElementById("pZeit");
+  const pZeigen=(grund)=>dauerZeigen("pDauerInfo",pZeit?pZeit.value:"",pDauer.value,grund);
+  pDauer.addEventListener("input",()=>{beruehrt=true;pZeigen("");});
+  if(pZeit)pZeit.addEventListener("input",()=>pZeigen(""));
+  const nachfuehren=()=>{
+    const blocker=W_BLOCKER.some(a=>a[0]===pArt.value);
+    pFeld.style.display=blocker?"none":"block";
+    pFz.style.display=blocker?"none":"block";
+    if(pHin)pHin.textContent=blocker
+      ? "Die Zeit wird im Plan geblockt – ohne Schüler, ohne Berechnung. Das Büro sieht den Eintrag sofort."
+      : "Der Termin wird nur eingeplant. Gebucht und berechnet wird er später wie gewohnt mit der Unterschrift.";
+    // Die Vorgabe greift weiter - aber nicht mehr im Stillen. Wechselt die
+    // Fahrtart und springt die Dauer dabei um, leuchtet das Feld kurz auf
+    // und daneben steht, woher die neue Zahl kommt.
+    if(!beruehrt){
+      const neu=dauerVorgabeW(pArt.value);
+      const anders=String(pDauer.value)!==String(neu);
+      pDauer.value=neu;
+      if(anders)dauerBlinken("pDauer");
+      pZeigen(anders?("Vorgabe für "+dArtText(pArt)):"");
+    }else pZeigen("");
+  };
+  pArt.addEventListener("change",nachfuehren);
+  nachfuehren();
+  document.getElementById("pSpeichern").onclick=()=>planenSpeichern(false);
+}
+let W_ARTEN=[["uebung","Übungsstunde"]];
+let W_BLOCKER=[["theorie","Theorieunterricht"],["taetigkeit","Tätigkeit (Firma)"],
+  ["privat","Privat"],["krank","Krankheit"],["urlaub","Urlaub"],["feiertag","Feiertag"]];
+
+async function planenSpeichern(trotzdem){
+  const err=document.getElementById("pErr");err.textContent="";
+  const art=document.getElementById("pArt").value;
+  const blocker=W_BLOCKER.some(a=>a[0]===art);
+  const schueler_id=blocker?"":document.getElementById("pSchueler").value;
+  if(!blocker&&!schueler_id){err.textContent="Bitte einen Schüler wählen.";return;}
+  const btn=document.getElementById("pSpeichern");btn.disabled=true;btn.textContent="Speichert …";
+  const datum=document.getElementById("pDatum").value;
+  const d=await jpost("fahrlehrer/termin-neu",{fl:FL,schueler_id,
+    datum, beginn:document.getElementById("pZeit").value,
+    art, dauer:document.getElementById("pDauer").value,
+    fahrzeug_id:blocker?null:(document.getElementById("pFz").value||null),
+    bemerkung:document.getElementById("pBem").value, trotzdem});
+  btn.disabled=false;btn.textContent="🗓 Termin einplanen";
+  if(d&&d.ok){toast("Termin eingeplant ✓");viewWoche(wMontag(datum));return;}
+  if(d&&d.konflikt&&!trotzdem){
+    err.innerHTML=esc(d.fehler||"Zeitlicher Konflikt.")+
+      `<br><button class="btn-ghost" style="margin-top:8px" onclick="planenSpeichern(true)">Trotzdem einplanen</button>`;
+    return;
+  }
+  err.textContent=(d&&d.fehler)||FEHLERTEXT||"Einplanen fehlgeschlagen.";
+}
+
+function pruefErg(e){const p=(e.pruefung_ergebnis||"");return p==="bestanden"||p==="nicht_bestanden"?p:"";}
+
+// ---------------------------------------------------------------------------
+// Terminplaner: Der Fahrlehrer soll beim Oeffnen sofort beim heutigen Tag
+// stehen. Vergangene Tage sind deshalb eingeklappt - bis auf die Stunden,
+// die noch nicht unterschrieben sind: die gehoeren nach oben, damit nichts
+// liegen bleibt.
+// ---------------------------------------------------------------------------
+function kalHeuteIso(){
+  try{ if(typeof ICH!=="undefined" && ICH && ICH.heute) return String(ICH.heute); }catch(e){}
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function kalIstAlt(e){
+  const iso=String((e&&e.datum_iso)||"");
+  return iso ? iso < kalHeuteIso() : false;
+}
+function kalOffen(e){
+  if(e.signiert||e.status==="durchgefuehrt"||e.status==="ausgefallen"||e.status==="fehlstunde")return false;
+  if(e.ohne_schueler)return false;
+  try{ if(typeof istBlocker==="function"&&istBlocker(e))return false; }catch(x){}
+  return true;
+}
+function kalAufteilen(t){
+  const alt=(t||[]).filter(kalIstAlt);
+  return {
+    offenAlt: alt.filter(kalOffen),
+    restAlt:  alt.filter(e=>!kalOffen(e)),
+    abHeute:  (t||[]).filter(e=>!kalIstAlt(e)),
+  };
+}
+function kalFrueherAuf(btn){
+  const box=document.getElementById("kalFrueher");
+  if(box){box.style.display="block";}
+  if(btn){btn.style.display="none";}
+}
+
+function zeichneFuchsTermine(t){
+  const liste=document.getElementById("kalliste");if(!liste)return;
+  FUCHS_TERMINE={};
+  if(!t.length){liste.innerHTML='<div class="leer">Keine Termine im Zeitraum gefunden.<br>Sobald in FUCHS Fahrstunden eingetragen sind, erscheinen sie hier.</div>';return;}
+  let h="",letzterTag="";
+  // Oben ein roter Banner, falls gefahrene Prüfungen ohne Ergebnis offen sind (Zwang)
+  const offen=t.filter(e=>e.art==="praktische_pruefung"&&(e.signiert||e.status==="durchgefuehrt")&&!pruefErg(e));
+  if(offen.length){
+    h+=`<div style="background:#FDE8E8;border:1.5px solid #E9A6A6;border-radius:14px;padding:12px 14px;margin-bottom:12px">
+      <div style="font-weight:800;color:#B02B2B">🎓 Prüfungsergebnis fehlt</div>
+      <div style="font-size:13px;color:#8A3030;margin:3px 0 9px">Trag das Ergebnis der praktischen Prüfung ein – erst dann ist die Prüfung abgeschlossen.</div>`;
+    for(const e of offen){
+      h+=`<button onclick="pruefungErgebnis(${e.id})" style="display:block;width:100%;text-align:left;background:#fff;border:1.5px solid #E9A6A6;border-radius:10px;padding:9px 12px;margin-top:6px;font-family:inherit;font-size:13.5px;font-weight:700;color:#B02B2B;cursor:pointer">${esc(e.schueler||"Schüler")} · ${esc(e.datum)} → Ergebnis eintragen</button>`;
+    }
+    h+=`</div>`;
+  }
+  const kalZeile=(e)=>{
+    let h="";
+    FUCHS_TERMINE[e.id]=e;
+    if(e.datum!==letzterTag){
+      const heute=String(e.datum_iso||"")===kalHeuteIso();
+      h+=`<div class="kaltag">${esc(e.datum)}${heute?' <span style="color:#1B7A43">· heute</span>':""}</div>`;
+      letzterTag=e.datum;}
+    const zeit=e.uhrzeit?(esc(e.uhrzeit)+(e.bis?("–"+esc(e.bis)):"")):"—";
+    const fertig=e.signiert||e.status==="durchgefuehrt";
+    const aus=e.status==="ausgefallen";
+    const istPruef=e.art==="praktische_pruefung";
+    const erg=pruefErg(e);
+    let badge=`<div class="klbadge">${esc(e.klasse||"›")}</div>`;
+    if(fertig)badge='<div class="klbadge" style="background:#E7F5EC;color:#1B7A43">✓ gefahren</div>';
+    else if(aus)badge='<div class="klbadge" style="background:#FBECEC;color:#C23">ausgefallen</div>';
+    let attr='class="card zeile"', sub=esc(e.art_text), moveBtn='';
+    if(istPruef&&!fertig&&!aus)sub='🎓 '+esc(e.art_text);
+    if(fertig&&istPruef){
+      // Gefahrene Prüfung: Ergebnis hat Vorrang vor der Ausbildungskarte
+      if(erg==="bestanden"){
+        badge='<div class="klbadge" style="background:#DCF3E4;color:#1B7A43;font-weight:800">🏆 bestanden</div>';
+        sub='🎓 '+esc(e.art_text)+' · <b style="color:#1B7A43">bestanden</b>';
+        if(e.nummer)attr=`class="card zeile klick" onclick="karteVonStunde(${e.id})"`;
+      }else if(erg==="nicht_bestanden"){
+        badge='<div class="klbadge" style="background:#FBECEC;color:#C23;font-weight:800">✗ nicht bestanden</div>';
+        sub='🎓 '+esc(e.art_text)+' · <b style="color:#C23">nicht bestanden</b>';
+        if(e.nummer)attr=`class="card zeile klick" onclick="karteVonStunde(${e.id})"`;
+      }else{
+        // ZWANG: Ergebnis fehlt -> antippen führt zwingend zur Ergebnis-Eingabe
+        badge='<div class="klbadge" style="background:#FDE1E1;color:#B02B2B;font-weight:800">⚠️ Ergebnis!</div>';
+        attr=`class="card zeile klick" onclick="pruefungErgebnis(${e.id})"`;
+        sub='🎓 '+esc(e.art_text)+' · <b style="color:#B02B2B">Prüfungsergebnis eintragen</b>';
+      }
+    }else if(fertig){
+      if(e.karte_gepflegt){
+        // Ausbildungskarte gepflegt -> grüner Haken zur optischen Erkennung
+        badge='<div class="klbadge" style="background:#DCF3E4;color:#1B7A43;font-weight:800">✓ Karte gepflegt</div>';
+        if(e.nummer)attr=`class="card zeile klick" onclick="karteVonStunde(${e.id})"`;
+      }else if(e.nummer){
+        // gefahren, Karte noch offen -> zur Ausbildungskarte
+        attr=`class="card zeile klick" onclick="karteVonStunde(${e.id})"`;
+        sub+=' · <b style="color:var(--orange)">📋 Ausbildungskarte pflegen</b>';
+      }
+    }else if(istBlocker(e)){
+      // Geblockte Zeit: nur ansehen und gegebenenfalls wieder wegnehmen
+      attr=`class="card zeile klick" onclick="viewBlocker(${e.id})"`;
+      badge='<div class="klbadge" style="background:#EFEFEC;color:#6B6B63">geblockt</div>';
+      sub=esc(BLOCKER_NAME[e.art]||e.art_text||"Geblockte Zeit")
+        +' · <b style="color:var(--text-2)">antippen zum Ansehen</b>';
+    }else if(!aus){
+      // geplant -> unterschreiben & buchen, zusätzlich verschiebbar
+      attr=`class="card zeile klick" onclick="signStunde(${e.id})"`;
+      sub+=' · <b style="color:var(--orange)">antippen zum Unterschreiben</b>';
+      moveBtn=`<button onclick="event.stopPropagation();verschiebenPanel(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">🕒 Termin verschieben</button><button onclick="event.stopPropagation();viewAusfall(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">✕ ausgefallen</button><button onclick="event.stopPropagation();terminMenue(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">⋯ mehr</button>`;
+    }
+    h+=`<div ${attr}><div class="zeit">${zeit}</div><div class="info"><div class="titel">${esc(e.schueler||"—")}</div><div class="sub">${sub}</div>${moveBtn}</div>${badge}</div>`;
+    return h;
+  };
+
+  // Aufteilen: offene Stunden aus der Vergangenheit nach oben, dann ab heute,
+  // ganz unten der Zugang zu den frueheren Terminen.
+  const teile=kalAufteilen(t);
+  if(teile.offenAlt.length){
+    letzterTag="";
+    h+=`<div style="background:#FFF6EC;border:1.5px solid #F0C79A;border-radius:14px;padding:11px 12px;margin-bottom:12px">
+      <div style="font-weight:800;color:#9A5A12">⏳ Noch nicht gebucht</div>
+      <div style="font-size:13px;color:#8A5C2A;margin:3px 0 8px">Diese Fahrstunden liegen schon hinter dir und sind noch nicht unterschrieben.</div>`;
+    for(const e of teile.offenAlt) h+=kalZeile(e);
+    h+=`</div>`;
+  }
+  if(teile.restAlt.length){
+    letzterTag="";
+    let alt="";
+    for(const e of teile.restAlt) alt+=kalZeile(e);
+    h+=`<button class="btn-ghost" style="width:100%;margin-bottom:8px" onclick="kalFrueherAuf(this)">↑ Frühere Termine anzeigen (${teile.restAlt.length})</button>
+      <div id="kalFrueher" style="display:none">${alt}</div>`;
+  }
+  letzterTag="";
+  if(teile.abHeute.length){ for(const e of teile.abHeute) h+=kalZeile(e); }
+  else h+=`<div class="leer">Ab heute sind keine Fahrstunden eingetragen.</div>`;
+  liste.innerHTML=h;
+}
+// Geblockte Zeit ansehen - mit der Moeglichkeit, sie wieder wegzunehmen.
+function viewBlocker(id){
+  const e=FUCHS_TERMINE[id]; if(!e)return;
+  const zurueck=wZurueck();
+  const name=BLOCKER_NAME[e.art]||e.art_text||"Geblockte Zeit";
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="${zurueck}">← Zurück</button>
+    <div><div class="eyebrow">Geblockte Zeit</div><h1>⛔ ${esc(name)}</h1></div>
+    <div class="card zeile" style="cursor:default">
+      <div class="zeit">${esc(e.uhrzeit||"")}${e.bis?"–"+esc(e.bis):""}</div>
+      <div class="info"><div class="titel">${esc(e.datum||"")}</div>
+      <div class="sub">${esc(name)}${e.dauer?" · "+esc(String(e.dauer))+" Min.":""}</div></div>
+    </div>
+    ${e.bemerkung?`<div class="card" style="cursor:default"><div class="sub">${esc(e.bemerkung)}</div></div>`:""}
+    <div class="hint">Hier ist keine Fahrstunde eingetragen – die Zeit ist nur geblockt.
+      Das Büro sieht den Eintrag genauso in deinem Plan.</div>
+    <button class="btn-primary" id="blLoeschen" style="background:#C23">🗑 Eintrag löschen</button>
+    <div class="meta" id="blFehler" style="color:#D64545;min-height:16px"></div>`;
+  document.getElementById("blLoeschen").onclick=async()=>{
+    if(!confirm("Diesen Eintrag wirklich löschen?"))return;
+    const err=document.getElementById("blFehler"); if(err)err.textContent="";
+    const btn=document.getElementById("blLoeschen");
+    const alt=btn.textContent; btn.textContent="Löscht …"; btn.disabled=true;
+    const d=await jpost("fahrlehrer/termin-loeschen",{fl:FL,stunde_id:id});
+    btn.textContent=alt; btn.disabled=false;
+    if(d&&d.ok){toast("Eintrag gelöscht ✓"); delete FUCHS_TERMINE[id];
+      wZurueckGehen();}
+    else if(err)err.textContent=(d&&d.fehler)||"Löschen fehlgeschlagen.";
+  };
+}
+
+function signStunde(id){
+  const s=FUCHS_TERMINE[id];if(!s)return;
+  AKT_STUNDE=s;
+  const dauerWert=Number(s.dauer)||dauerVorgabe(s.art,s.klasse);
+  const artOpts=ART_WAHL.map(a=>`<option value="${a[0]}"${a[0]===s.art?" selected":""}>${esc(a[1])}</option>`).join("");
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
+    <div><div class="eyebrow">Fahrstunde bestätigen</div><h1>✍️ ${esc(s.schueler||"Fahrstunde")}</h1></div>
+    <div class="card zeile" style="cursor:default"><div class="zeit">${esc(s.uhrzeit||"")}${s.bis?"–"+esc(s.bis):""}</div><div class="info"><div class="titel">${esc(s.datum)}</div><div class="sub">${esc(s.art_text)}</div></div>${s.klasse?`<div class="klbadge">${esc(s.klasse)}</div>`:""}</div>
+    <div class="row">
+      <select id="sArt" class="app-select" style="flex:1">${artOpts}</select>
+      <input id="sDauer" type="number" class="app-input" inputmode="numeric" min="5" max="600" step="5"
+        style="width:120px;text-align:center" value="${dauerWert}">
+    </div>
+    <div class="meta" id="sDauerInfo" style="margin-top:-4px">Dauer in Minuten.</div>
+    <label style="display:flex;gap:10px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer">
+      <input type="checkbox" id="sBerechnen" checked style="width:19px;height:19px;flex:none">
+      <span style="font-size:14px;font-weight:600"><span id="sPreisLabel">Fahrstunde jetzt berechnen: </span><b id="sPreis">…</b></span>
+    </label>
+    <div class="meta" id="sPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
+    <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
+    <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
+    <canvas id="bSig" width="640" height="220" style="width:100%;height:250px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;display:block"></canvas>
+    <button class="btn-ghost" onclick="sigLoeschen()">Unterschrift löschen</button>
+    <button class="btn-primary" id="sSpeichern">Fahrstunde bestätigen</button>
+    <div class="meta" id="sFehler" style="color:#D64545;min-height:16px"></div>`;
+  sigInit(document.getElementById("bSig"));
+  const sPreisNeu=preisLader("s",()=>({schueler_id:s.schueler_id,
+    art:document.getElementById("sArt").value,
+    dauer:document.getElementById("sDauer").value,
+    // Das Auto des Termins entscheidet ueber das Getriebe und damit
+    // ueber den Preis - nicht das Stammfahrzeug des Fahrlehrers.
+    fahrzeug_id:s.fahrzeug_id||null}));
+  // Wird die Fahrtart hier noch geaendert, zieht die Dauer nach - die
+  // Testfahrt Schaltkompetenz dauert zum Beispiel immer 15 Minuten.
+  // Sobald der Fahrlehrer die Dauer selbst antippt, bleibt sie stehen.
+  let sDauerBeruehrt=false;
+  const sDauerFeld=document.getElementById("sDauer"), sArtFeld=document.getElementById("sArt");
+  // Hier haengt der Preis an der Dauer. Eine Zahl, die sich beim Wechsel der
+  // Fahrtart still aendert, waere hier besonders teuer.
+  const sZeigen=(grund)=>dauerZeigen("sDauerInfo",s.uhrzeit||"",sDauerFeld.value,grund);
+  sDauerFeld.addEventListener("input",()=>{sDauerBeruehrt=true;sZeigen("");});
+  sArtFeld.addEventListener("change",e=>{
+    if(sDauerBeruehrt){sZeigen("");return;}
+    const neu=dauerVorgabe(e.target.value,s.klasse);
+    const anders=String(sDauerFeld.value)!==String(neu);
+    sDauerFeld.value=neu;
+    if(anders)dauerBlinken("sDauer");
+    sZeigen(anders?("Vorgabe für "+dArtText(sArtFeld)):"");
+  });
+  sZeigen("");
+  document.getElementById("sArt").addEventListener("change",sPreisNeu);
+  document.getElementById("sDauer").addEventListener("input",sPreisNeu);
+  sPreisNeu();
+  document.getElementById("sSpeichern").onclick=stundeBestaetigen;
+}
+async function stundeBestaetigen(){
+  const err=document.getElementById("sFehler");if(err)err.textContent="";
+  if(!AKT_STUNDE){if(err)err.textContent="Keine Fahrstunde gewählt.";return;}
+  if(sigLeer){if(err)err.textContent="Bitte lass den Schüler unterschreiben.";return;}
+  const art=document.getElementById("sArt").value;
+  const dauer=document.getElementById("sDauer").value;
+  const unterschrift=sigCanvas.toDataURL("image/png");
+  const btn=document.getElementById("sSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
+  const berechnen=!!(document.getElementById("sBerechnen")||{}).checked;
+  const d=await jpost("fahrlehrer/stunde-buchen",{fl:FL,stunde_id:AKT_STUNDE.id,schueler_id:AKT_STUNDE.schueler_id,
+    datum:AKT_STUNDE.datum_iso,beginn:AKT_STUNDE.uhrzeit,dauer,art,unterschrift,berechnen,
+    fahrzeug_id:AKT_STUNDE.fahrzeug_id||null});
+  btn.textContent=alt;btn.disabled=false;
+  if(d&&d.ok){toast("Fahrstunde gebucht ✓");const s=AKT_STUNDE;AKT_STUNDE=null;
+    // Unterschrieben wird VOR der Fahrt - das Prüfungsergebnis steht erst danach
+    // fest. Deshalb wird es angeboten, aber nicht erzwungen (Befund 18.08.).
+    nachBuchung(s,d);}
+  else{if(err)err.textContent=(d&&d.fehler)||"Buchen fehlgeschlagen.";}
+}
+// Nach dem Buchen: direkt zur Ausbildungskarte auffordern (nach jeder Fahrstunde pflegen)
+function nachBuchung(s,d){
+  s=s||{}; d=d||{};
+  main().innerHTML=`
+    <div style="text-align:center;padding:10px 0 2px">
+      <div style="font-size:46px;line-height:1">✅</div>
+      <h1 style="margin:8px 0 2px">Fahrstunde gebucht</h1>
+      <div class="meta">${esc(s.schueler||"")}${s.datum?" · "+esc(s.datum):""}${s.art_text?" · "+esc(s.art_text):""}</div>
+      ${d.betrag_text?`<div class="meta" style="margin-top:5px">💶 Berechnet: <b>${esc(d.betrag_text)}</b>${d.saldo_neu!=null?" · Kontostand jetzt "+esc(eurTxt(d.saldo_neu)):""}</div>`:""}
+    </div>
+    ${d.hinweis?`<div class="hint" style="border-color:#E8C39A;background:#FFF6EA">⚠ ${esc(d.hinweis)}</div>`:""}
+    ${s.art==="praktische_pruefung"
+      ? `<div class="hint">Alles erledigt für die Fahrt. Das <b>Prüfungsergebnis</b> trägst du ein,
+           wenn ihr zurück seid – der Termin bleibt bis dahin rot markiert.</div>
+         <button class="btn-primary" onclick="pruefungErgebnis(${s.id})">🎓 Ergebnis jetzt eintragen</button>
+         <button class="btn-ghost" id="zurKarte">📋 Ausbildungskarte pflegen</button>`
+      : `<div class="hint">Bitte jetzt die <b>Ausbildungskarte</b> von ${esc((s.schueler||"dem Schüler").split(" ")[0])} weiterführen – trag den heutigen Fortschritt ein, der Schüler sieht es direkt in seiner App.</div>
+         <button class="btn-primary" id="zurKarte">📋 Ausbildungskarte pflegen</button>`}
+    <button class="btn-ghost" onclick="wZurueckGehen()">Später · zurück zum Plan</button>`;
+  const kKnopf=document.getElementById("zurKarte");
+  if(kKnopf)kKnopf.onclick=()=>{
+    if(s.nummer)viewKarte(s.nummer,s.schueler,s.id);
+    else viewKarteSuche(s.schueler);
+  };
+}
+// ---------------- Termin absagen: kostenfrei oder als Fehlstunde ----------------
+async function viewAusfall(id){
+  const s=FUCHS_TERMINE[id]; if(!s)return;
+  main().innerHTML=`<div class="meta">Einen Moment – ich prüfe die Absagefrist …</div>`;
+  const i=await jpost("fahrlehrer/ausfall-info",{fl:FL,stunde_id:id});
+  if(!i||!i.ok){toast((i&&i.fehler)||FEHLERTEXT||"Konnte nicht geladen werden");return wZurueckGehen();}
+  const kurz=i.kurzfristig&&i.betrag>0;
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
+    <div><div class="eyebrow">Termin absagen</div><h1>🚫 ${esc(i.schueler||"Termin")}</h1>
+      <div class="meta">${esc(i.art_text||"Fahrstunde")} · ${esc(i.datum||"")} · ${esc(i.beginn||"")} Uhr · ${i.dauer} Min.</div></div>
+    <div class="hint" style="${kurz?"background:#FDE8E8":""}">
+      ${kurz
+        ? `<b>⚠ Kurzfristige Absage.</b> Bis zum Termin ${i.tage===0?"ist kein voller Arbeitstag mehr":"sind es nur noch "+i.tage+" Arbeitstag"+(i.tage===1?"":"e")} – die Frist beträgt ${i.frist} Arbeitstage${i.sonderfahrt?" (Sonderfahrt)":""}. Laut AGB darf die Stunde mit <b>75 % des Entgelts</b> berechnet werden.`
+        : `Die Frist von ${i.frist} Arbeitstagen${i.sonderfahrt?" (Sonderfahrt)":""} ist eingehalten – die Absage ist kostenfrei. Berechnet werden kann sie trotzdem, wenn der Schüler nicht erschienen ist.`}
+    </div>
+    <input id="aGrund" class="app-input" style="text-align:left" placeholder="Grund (freiwillig) – z. B. krank, Auto defekt">
+    <button class="btn-primary" id="aFehl">🚫 Fehlstunde berechnen${i.betrag>0?" · "+esc(i.betrag_text):""}</button>
+    <button class="btn-ghost" id="aFrei">✕ Kostenfrei ausgefallen</button>
+    <div class="meta" id="aErr" style="color:#D64545;min-height:16px"></div>`;
+  document.getElementById("aFehl").onclick=()=>ausfallSpeichern(id,"fehlstunde");
+  document.getElementById("aFrei").onclick=()=>ausfallSpeichern(id,"ausgefallen");
+}
+async function ausfallSpeichern(id,als){
+  const err=document.getElementById("aErr"); err.textContent="";
+  if(als==="fehlstunde"&&!confirm("Als Fehlstunde eintragen und dem Schüler berechnen?"))return;
+  const b1=document.getElementById("aFehl"), b2=document.getElementById("aFrei");
+  b1.disabled=b2.disabled=true;
+  const grund=(document.getElementById("aGrund")||{}).value||"";
+  const d=await jpost("fahrlehrer/stunde-ausfall",{fl:FL,stunde_id:id,als,grund});
+  b1.disabled=b2.disabled=false;
+  if(d&&d.ok){
+    toast(d.fehlstunde?("Fehlstunde eingetragen"+(d.betrag_text?" · "+d.betrag_text:"")):"Als ausgefallen eingetragen");
+    wZurueckGehen();
+  }else err.textContent=(d&&d.fehler)||"Hat nicht geklappt.";
+}
+
+// --- Termin verschieben (Datum/Uhrzeit einer geplanten Fahrstunde ändern) ---
+
+// ---------------------------------------------------------------------------
+// Dauer beim Verschieben: Schnellwahl-Knoepfe und Zahlenfeld. Damit laesst sich
+// eine Fahrstunde beim Verschieben auch kuerzen oder verlaengern - zum Beispiel
+// von 135 auf 80 Minuten, wenn es sonst eine Ueberschneidung gaebe.
+// ---------------------------------------------------------------------------
+const VDAUER_WAHL = [40, 45, 80, 90, 135, 180, 225];
+
+function vDauerFeld(dauer) {
+  const d = Number(dauer) || 45;
+  const knoepfe = VDAUER_WAHL.map(m => `<button type="button" class="vdchip" data-min="${m}"
+      style="border:1.5px solid ${m === d ? "var(--gruen,#2e5e3f)" : "#ddd6cf"};
+      background:${m === d ? "var(--gruen,#2e5e3f)" : "#fff"};color:${m === d ? "#fff" : "#6b6b63"};
+      border-radius:999px;padding:7px 13px;font-size:13.5px;font-weight:700;cursor:pointer;
+      font-family:inherit">${m}</button>`).join("");
+  return `<div style="font-weight:700;font-size:14px;margin:12px 0 4px">Dauer in Minuten</div>
+    <div id="vDauerChips" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${knoepfe}</div>
+    <input id="vDauer" type="number" inputmode="numeric" min="5" max="600" step="5" value="${d}"
+      class="app-input app-select" style="width:100%;box-sizing:border-box;text-align:left">
+    <div class="meta" id="vDauerInfo" style="margin-top:4px">Bisher ${d} Minuten.</div>
+    <div class="meta" style="margin-top:2px">Kürzen oder verlängern ist möglich –
+      der Preis richtet sich später nach der tatsächlichen Dauer.</div>`;
+}
+
+function vDauerBinden() {
+  const feld = document.getElementById("vDauer");
+  const chips = document.querySelectorAll("#vDauerChips .vdchip");
+  const malen = () => {
+    const w = Number(feld && feld.value) || 0;
+    chips.forEach(c => {
+      const an = Number(c.dataset.min) === w;
+      c.style.background = an ? "var(--gruen,#2e5e3f)" : "#fff";
+      c.style.color = an ? "#fff" : "#6b6b63";
+      c.style.borderColor = an ? "var(--gruen,#2e5e3f)" : "#ddd6cf";
+    });
+  };
+  const zeit = document.getElementById("vDatum") ? document.getElementById("vZeit") : null;
+  const zeigen = () => dauerZeigen("vDauerInfo", zeit ? zeit.value : "", feld ? feld.value : 0, "");
+  chips.forEach(c => c.onclick = () => { if (feld) feld.value = c.dataset.min; malen(); zeigen(); });
+  if (feld) feld.oninput = () => { malen(); zeigen(); };
+  if (zeit) zeit.addEventListener("input", zeigen);
+  malen();
+  zeigen();
+}
+
+function vDauerWert(standard) {
+  const feld = document.getElementById("vDauer");
+  const n = Math.round(Number(feld && feld.value));
+  if (!Number.isFinite(n) || n <= 0) return Number(standard) || 45;
+  return Math.max(5, Math.min(600, n));
+}
+
+function verschiebenPanel(id){
+  const s=FUCHS_TERMINE[id];if(!s)return;
+  AKT_STUNDE=s;
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
+    <div><div class="eyebrow">Termin verschieben</div><h1>🕒 ${esc(s.schueler||"Fahrstunde")}</h1></div>
+    <div class="card zeile" style="cursor:default"><div class="zeit">${esc(s.uhrzeit||"")}${s.bis?"–"+esc(s.bis):""}</div><div class="info"><div class="titel">bisher: ${esc(s.datum)}</div><div class="sub">${esc(s.art_text)}</div></div>${s.klasse?`<div class="klbadge">${esc(s.klasse)}</div>`:""}</div>
+    <div class="hint">Neues Datum, neue Uhrzeit und – wenn nötig – eine andere Dauer wählen. Es bleibt dieselbe Fahrstunde.</div>
+    <div style="font-weight:700;font-size:14px;margin:6px 0 4px">Neues Datum</div>
+    <input id="vDatum" type="date" class="app-select" value="${esc(s.datum_iso||"")}" style="width:100%;box-sizing:border-box">
+    <div style="font-weight:700;font-size:14px;margin:12px 0 4px">Neue Uhrzeit</div>
+    <input id="vZeit" type="time" class="app-select" value="${esc(s.uhrzeit||"")}" style="width:100%;box-sizing:border-box">
+    ${vDauerFeld(s.dauer)}
+    <label style="display:flex;align-items:center;gap:10px;margin:16px 0 6px;font-size:14px;cursor:pointer">
+      <input id="vInfo" type="checkbox" style="width:20px;height:20px;flex:none"> Schüler per WhatsApp benachrichtigen
+    </label>
+    <button class="btn-primary" id="vSpeichern">Verschieben</button>
+    <div class="meta" id="vFehler" style="color:#D64545;min-height:16px"></div>`;
+  vDauerBinden();
+  document.getElementById("vSpeichern").onclick=()=>verschiebenSpeichern(false);
+}
+async function verschiebenSpeichern(trotzdem){
+  const err=document.getElementById("vFehler");if(err)err.innerHTML="";
+  if(!AKT_STUNDE){if(err)err.textContent="Kein Termin gewählt.";return;}
+  const neues_datum=document.getElementById("vDatum").value;
+  const neue_zeit=document.getElementById("vZeit").value;
+  if(!neues_datum||!neue_zeit){if(err)err.textContent="Bitte Datum und Uhrzeit angeben.";return;}
+  const benachrichtigen=document.getElementById("vInfo").checked;
+  const btn=document.getElementById("vSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
+  const s=AKT_STUNDE;
+  const d=await jpost("fahrlehrer/stunde-verschieben",{fl:FL,stunde_id:s.id,schueler_id:s.schueler_id,
+    dauer:vDauerWert(s.dauer),art:s.art,fahrzeug_id:s.fahrzeug_id,bemerkung:s.bemerkung,
+    neues_datum,neue_zeit,benachrichtigen,nummer:s.nummer,schueler:s.schueler,trotzdem});
+  btn.textContent=alt;btn.disabled=false;
+  if(d&&d.ok){
+    let msg="Termin verschoben ✓";
+    if(benachrichtigen)msg+=d.benachrichtigt?" · Schüler benachrichtigt":" · Schüler nicht erreichbar – bitte selbst anrufen";
+    toast(msg);AKT_STUNDE=null;wZurueckGehen();
+  }else if(d&&d.konflikt&&!trotzdem){
+    if(err)err.innerHTML=esc((d&&d.fehler)||"Zeitlicher Konflikt.")+`<br><button class="btn-ghost" style="margin-top:8px" onclick="verschiebenSpeichern(true)">Trotzdem verschieben</button>`;
+  }else{
+    if(err)err.textContent=(d&&d.fehler)||FEHLERTEXT||"Verschieben fehlgeschlagen.";
+  }
+}
+// --- Praktische Prüfung: Ergebnis eintragen (Pflicht nach der Prüfungsfahrt) ---
+function pruefungErgebnis(id){
+  const s=FUCHS_TERMINE[id];if(!s)return;
+  if(!s.schueler_id){toast("Kein Schüler an diesem Termin");wZurueckGehen();return;}
+  main().innerHTML=`
+    <div><div class="eyebrow">Praktische Prüfung</div><h1>🎓 ${esc(s.schueler||"Prüfung")}</h1></div>
+    <div class="card zeile" style="cursor:default"><div class="zeit">${esc(s.uhrzeit||"")}${s.bis?"–"+esc(s.bis):""}</div><div class="info"><div class="titel">${esc(s.datum)}</div><div class="sub">Prüfungsfahrt</div></div>${s.klasse?`<div class="klbadge">${esc(s.klasse)}</div>`:""}</div>
+    <div class="hint">Wie ist die praktische Prüfung ausgegangen? Bitte jetzt eintragen – das Ergebnis erscheint direkt beim Termin.</div>
+    <button class="btn-primary" id="pBest" style="background:#1B7A43">✅ Bestanden</button>
+    <button class="btn-primary" id="pNicht" style="background:#C23;margin-top:8px">❌ Nicht bestanden</button>
+    <div class="meta" id="pFehler" style="color:#D64545;min-height:16px"></div>
+    <button class="btn-ghost" onclick="wZurueckGehen()" style="margin-top:2px">später (Termin bleibt rot markiert)</button>`;
+  document.getElementById("pBest").onclick=()=>pruefungSpeichern(id,"bestanden");
+  document.getElementById("pNicht").onclick=()=>pruefungSpeichern(id,"nicht_bestanden");
+}
+async function pruefungSpeichern(id,ergebnis){
+  const s=FUCHS_TERMINE[id];if(!s)return;
+  const err=document.getElementById("pFehler");if(err)err.textContent="";
+  const bB=document.getElementById("pBest"),bN=document.getElementById("pNicht");
+  if(bB)bB.disabled=true;if(bN)bN.disabled=true;
+  const d=await jpost("fahrlehrer/pruefung-ergebnis",{fl:FL,stunde_id:s.id,schueler_id:s.schueler_id,datum:s.datum_iso,ergebnis});
+  if(d&&d.ok){
+    s.pruefung_ergebnis=ergebnis;
+    toast(ergebnis==="bestanden"?"🏆 Bestanden gespeichert":"Nicht bestanden gespeichert");
+    viewKalender();
+  }else{
+    if(bB)bB.disabled=false;if(bN)bN.disabled=false;
+    if(err)err.textContent=(d&&d.fehler)||FEHLERTEXT||"Speichern fehlgeschlagen.";
+  }
+}
+function karteVonStunde(id){const s=FUCHS_TERMINE[id];if(s&&s.nummer)viewKarte(s.nummer,s.schueler,s.id);}
+// Fokussierte Ausbildungskarte für genau einen Schüler
+async function viewKarte(nummer,name,stundeId){
+  aktNummer=nummer;katalog=null;AKT_KARTE_STUNDE=stundeId||null;KARTE_MARKIERT=false;
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="viewKalender()">← Zurück</button>
+    <div><div class="eyebrow">Ausbildungskarte</div><h1>📋 ${esc(name||"Schüler")}</h1></div>
+    <div class="hint">Trage nach der Fahrstunde den aktuellen Ausbildungsstand ein – Stufe antippen speichert sofort, der Schüler sieht es direkt in seiner App.</div>
+    ${kontaktKarteHTML(name, nummer, "")}
+    <div id="karte"><div class="meta">Lädt …</div></div>`;
+  await ladeStand(nummer);
+  if(katalog)alleSekt(true);   // Abschnitte offen -> sofort bewertbar
+}
+// Fallback ohne Handynummer: Ausbildungsbereich mit vorbelegter Suche öffnen
+function viewKarteSuche(name){
+  viewSchueler();
+  const s=document.getElementById("suche"),sel=document.getElementById("schueler");
+  if(s&&sel&&name){s.value=name;sel.innerHTML=schuelerOptions(name);}
+  toast("Bitte den Schüler in der Liste wählen.");
+}
+async function viewKalenderMaster(){
+  // Fahrlehrer-Liste holen (Master selbst rausfiltern)
+  let opts="";
+  try{const d=await jget("ausbildung/fahrlehrer");
+    opts=((d&&d.fahrlehrer)||[]).filter(f=>!f.master&&f.fl!==FL)
+      .map(f=>`<option value="${esc(f.fl)}">${esc(f.name)}</option>`).join("");}catch(e){}
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Masterzugang</div><h1>📅 Terminplaner</h1></div>
+    <div class="hint">Wähle einen Fahrlehrer – du siehst dann nur dessen kommende Fahrstunden (live aus dem Fahrschulmanager, nur zur Ansicht).</div>
+    <select id="flKalSel" class="app-select"><option value="">— Fahrlehrer wählen —</option>${opts}</select>
+    <div id="kalliste"></div>`;
+  document.getElementById("flKalSel").onchange=e=>ladeFLKalender(e.target.value);
+}
+async function ladeFLKalender(zielFl){
+  const liste=document.getElementById("kalliste");if(!liste)return;
+  if(!zielFl){liste.innerHTML="";return;}
+  liste.innerHTML='<div class="meta">Lädt …</div>';
+  const d=await jpost("fahrlehrer/kalender",{fl:FL,ziel_fl:zielFl});
+  zeichneTermine((d&&d.termine)||[]);
+}
+function zeichneTermine(t){
+  const liste=document.getElementById("kalliste");if(!liste)return;
+  if(!t.length){liste.innerHTML='<div class="leer">Keine kommenden Fahrstunden gefunden.<br>Sobald im Fahrschulmanager Termine eingetragen sind, erscheinen sie hier.</div>';return;}
+  let h="",letzterTag="";
+  const zeile=(e)=>{
+    let s="";
+    if(e.datum!==letzterTag){
+      const heute=String(e.datum_iso||"")===kalHeuteIso();
+      s+=`<div class="kaltag">${esc(e.datum)}${heute?' <span style="color:#1B7A43">· heute</span>':""}</div>`;
+      letzterTag=e.datum;}
+    const zeit=e.uhrzeit?(esc(e.uhrzeit)+(e.bis?("–"+esc(e.bis)):"")):"—";
+    const fl=e.fahrlehrer?`<div class="flname">${esc(e.fahrlehrer)}</div>`:"";
+    s+=`<div class="card zeile"><div class="zeit">${zeit}</div><div class="info"><div class="titel">${esc(e.schueler)}</div><div class="sub">${esc(e.art_text)}</div>${fl}</div>${e.klasse?`<div class="klbadge">${esc(e.klasse)}</div>`:""}</div>`;
+    return s;
+  };
+  const teile=kalAufteilen(t);
+  const alteAlle=teile.offenAlt.concat(teile.restAlt)
+    .sort((a,b)=>String(a.datum_iso||"").localeCompare(String(b.datum_iso||"")));
+  if(alteAlle.length){
+    letzterTag="";
+    let alt="";
+    for(const e of alteAlle) alt+=zeile(e);
+    h+=`<button class="btn-ghost" style="width:100%;margin-bottom:8px" onclick="kalFrueherAuf(this)">↑ Frühere Termine anzeigen (${alteAlle.length})</button>
+      <div id="kalFrueher" style="display:none">${alt}</div>`;
+  }
+  letzterTag="";
+  if(teile.abHeute.length){ for(const e of teile.abHeute) h+=zeile(e); }
+  else h+=`<div class="leer">Ab heute sind keine Fahrstunden eingetragen.</div>`;
+  liste.innerHTML=h;
+}
+
+sitzungWiederherstellen().then(ok=>{if(!ok)init();});
+</script><script>
+/* Fahrlehrer-App: Web-Push (Benachrichtigungen). Nutzt die Kürzel+PIN-Anmeldung (Globale FL/PIN). */
+(function () {
+  var VAPID = "BJYc8H02c4QqwL883jsXq-LMmnP6zr30rNoepYqtxEMBTmHK2pa6kBdxoq5iowdETozJHXmim487uj7o4m8_7YQ";
+  var support = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  var reg = null;
+  function b64u(s){var pad="=".repeat((4-s.length%4)%4);var b=(s+pad).replace(/-/g,"+").replace(/_/g,"/");var raw=atob(b),arr=new Uint8Array(raw.length);for(var i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);return arr;}
+  function angemeldet(){ try { return (typeof FL!=='undefined'&&FL)?{fl:FL,token:(typeof TOKEN!=='undefined'?TOKEN:null)}:null; } catch(e){ return null; } }
+  function istStandalone(){ try{return (window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches)||window.navigator.standalone===true;}catch(e){return false;} }
+  async function initSW(){ if(!support||reg)return reg; try{reg=await navigator.serviceWorker.register('sw.js');}catch(e){} return reg; }
+  async function abo(){ try{return reg?await reg.pushManager.getSubscription():null;}catch(e){return null;} }
+  function entferne(id){var e=document.getElementById(id);if(e)e.remove();}
+  async function anmelden(interaktiv){
+    var a=angemeldet();
+    if(!a){ if(interaktiv)alert("Bitte zuerst in der App anmelden."); return false; }
+    if(!support){ if(interaktiv)alert("Für Benachrichtigungen die App über das Home-Symbol öffnen."); return false; }
+    await initSW();
+    if(interaktiv && Notification.permission!=="granted"){ var p=await Notification.requestPermission(); if(p!=="granted"){alert("Benachrichtigungen nicht erlaubt.");return false;} }
+    if(Notification.permission!=="granted")return false;
+    try{
+      var s=await abo();
+      if(!s)s=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID)});
+      await fetch("/app/fl/push/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({fl:a.fl,token:a.token,subscription:s})});
+      return true;
+    }catch(e){ if(interaktiv)alert("Konnte Benachrichtigungen nicht aktivieren."); return false; }
+  }
+  function knopf(){
+    entferne("flPushHint");
+    if(document.getElementById("flPushBtn"))return;
+    var b=document.createElement("button");
+    b.id="flPushBtn"; b.textContent="🔔 Benachrichtigungen aktivieren";
+    b.style.cssText="position:fixed;left:12px;right:12px;bottom:14px;max-width:520px;margin:0 auto;z-index:9999;padding:12px 16px;border:none;border-radius:14px;background:#E8600B;color:#fff;font-size:15px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.22);cursor:pointer;display:block;";
+    b.onclick=function(){anmelden(true).then(function(ok){if(ok)b.remove();});};
+    document.body.appendChild(b);
+  }
+  function hinweisStumm(){
+    try { return Number(localStorage.getItem("fuchs_fl_push_weg")||0) > Date.now(); }
+    catch(e){ return false; }
+  }
+  function istIphone(){
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+      || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  }
+  function hinweis(t){
+    entferne("flPushBtn");
+    if(hinweisStumm()){ entferne("flPushHint"); return; }
+    var h=document.getElementById("flPushHint");
+    if(!h){h=document.createElement("div");h.id="flPushHint";h.style.cssText="position:fixed;left:12px;right:12px;bottom:14px;max-width:520px;margin:0 auto;z-index:9999;padding:10px 14px;border-radius:12px;background:#FFF3E9;border:1px solid #F3C79E;color:#8A4B10;font-size:13px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.12);";document.body.appendChild(h);}
+    h.style.paddingRight="34px"; h.style.textAlign="left"; h.style.position="fixed";
+    var wie = istIphone()
+      ? "Teilen-Symbol unten antippen, dann &bdquo;Zum Home-Bildschirm&ldquo;. Danach die App &uuml;ber das Fuchs-Symbol &ouml;ffnen."
+      : "Oben rechts die drei Punkte, dann &bdquo;Zum Startbildschirm hinzuf&uuml;gen&ldquo;. Danach die App &uuml;ber das Fuchs-Symbol &ouml;ffnen.";
+    h.innerHTML = "<div style=\"font-weight:700;margin-bottom:2px\">"+t+"</div>"
+      + "<div style=\"font-size:12.5px\">"+wie+"</div>"
+      + "<button id=\"flPushZu\" style=\"position:absolute;top:6px;right:8px;border:none;"
+      + "background:transparent;color:inherit;font-size:19px;line-height:1;padding:4px 6px;cursor:pointer\">&times;</button>";
+    var zu=document.getElementById("flPushZu");
+    if(zu)zu.onclick=function(){
+      try{localStorage.setItem("fuchs_fl_push_weg", String(Date.now()+14*86400000));}catch(e){}
+      entferne("flPushHint");
+    };
+  }
+  async function pruefe(){
+    var a=angemeldet();
+    if(!a){ entferne("flPushBtn"); entferne("flPushHint"); return; }
+    if(!support){ hinweis(istStandalone()?"🔔 Dein System unterstützt keine Web-Benachrichtigungen.":"🔔 Für Benachrichtigungen: App über das Fuchs-Symbol auf dem Home-Bildschirm öffnen."); return; }
+    await initSW();
+    var hat=!!(await abo());
+    if(Notification.permission==="granted"&&hat){ entferne("flPushBtn"); entferne("flPushHint"); return; }
+    if(Notification.permission==="granted"&&!hat){ if(await anmelden(false)){ entferne("flPushBtn"); entferne("flPushHint"); return; } }
+    knopf();
+  }
+  window.addEventListener("load",function(){ initSW().then(pruefe); setInterval(pruefe,4000); });
+})();
+</script>
+
+
+<script>
+// ── Neue Fassung selbst holen ────────────────────────────────────────
+// "__APP_STAND__" ersetzt der Server beim Ausliefern durch die Aenderungszeit
+// dieser Datei. Stimmt sie nicht mehr mit dem ueberein, was auf dem Server
+// liegt, laedt sich die App einmal unter neuer Adresse - denn eine zum
+// Home-Bildschirm hinzugefuegte App gibt sonst wochenlang die alte Seite aus.
+(function () {
+  var MEIN_STAND = "__APP_STAND__";
+  function neuLaden(stand) {
+    // Nur einmal je Sitzung, damit daraus niemals eine Schleife wird.
+    try {
+      if (sessionStorage.getItem("fuchs_neuladen") === String(stand)) return;
+      sessionStorage.setItem("fuchs_neuladen", String(stand));
+    } catch (e) { return; }
+    location.replace(location.pathname + "?v=" + encodeURIComponent(stand));
+  }
+  function pruefen() {
+    if (!MEIN_STAND || MEIN_STAND.indexOf("APP_STAND") >= 0) return;
+    fetch("/app/version?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var stand = d && d.stand_fl;
+        if (stand && String(stand) !== String(MEIN_STAND)) neuLaden(stand);
+      })
+      .catch(function () { /* offline - dann eben beim naechsten Mal */ });
+  }
+  window.addEventListener("load", pruefen);
+  // Auch beim Zurueckholen aus dem Hintergrund nachsehen: Eine App auf dem
+  // Home-Bildschirm wird oft wochenlang nicht wirklich neu gestartet.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) pruefen();
+  });
+})();
+</script>
+</body>
+</html>
