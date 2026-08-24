@@ -1009,13 +1009,20 @@ async function wLaden(){
   if(d.nur_ansicht) for(const e of liste) e.fremd=true;
   else for(const e of liste) FUCHS_TERMINE[e.id]=e;
   WOCHE_DATEN=liste;
+  // Urlaub, Theorie, Pruefungen, Buerodienst: die stehen in FUCHS neben den
+  // Fahrstunden in einer eigenen Liste. Ohne sie sah eine Urlaubswoche aus wie
+  // ein leerer Plan. Sie sind nur zum Ansehen - kein Antippen, kein Loeschen.
+  // Bei der Auto-Ansicht bleiben sie weg, dort geht es nur um das Fahrzeug.
+  if(!W_FZ) for(const t of (d.taetigkeiten||[])){
+    t.fremd=true; t.taetigkeit=true; t.id=null; WOCHE_DATEN.push(t);
+  }
   if(hinweis){
     const wer=((W_FLLISTE||[]).find(f=>f.fl===W_FL)||{}).name||"";
     hinweis.textContent=W_FL
       ? `Plan von ${wer}${W_FZ?" mit "+fzName():""} – nur zur Ansicht.`
       : (IS_MASTER?"Bitte oben einen Fahrlehrer oder ein Fahrzeug wählen."
         :(W_FZ?`Deine Fahrstunden mit ${fzName()}.`
-              :"Auf eine freie Stelle tippen, um eine Fahrstunde einzuplanen."));
+              :"Auf eine freie Stelle tippen, um eine Fahrstunde einzuplanen. Urlaub, Theorie und Termine aus dem Büro stehen mit im Plan."));
   }
   zeichneWoche();
 }
@@ -1039,6 +1046,9 @@ function azMinuten(liste) {
   let praxis = 0, weitere = 0;
   for (const e of (liste || [])) {
     if (["ausgefallen", "fehlstunde"].includes(e.status)) continue;
+    // Aus dem Buero uebernommene Kalendereintraege bleiben aussen vor - siehe
+    // Kommentar oben. Selbst eingetragene Zeiten zaehlen weiterhin mit.
+    if (e.taetigkeit) continue;
     const dauer = Number(e.dauer) || 0;
     if (!dauer) continue;
     const art = String(e.art || "");
