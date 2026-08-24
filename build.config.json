@@ -1,13 +1,10 @@
 {
   "_hinweis": "Zentrale Konfiguration des Build-Vorgangs. Nur diese Datei anpassen, nie die Skripte.",
-
   "quellordner": "quellen",
   "_quellordner_hinweis": "Hierhin die Originaldateien aus Dropbox 'Fuchs-App/app-phone/' kopieren: index.html, fahrlehrer_bereich.html, sw.js, alle *.png, *.webmanifest. Sie werden NICHT verändert - der Build erzeugt Kopien.",
-
   "server": {
     "origin": "https://app.fahrsyn.de"
   },
-
   "apps": [
     {
       "id": "schueler",
@@ -17,7 +14,10 @@
       "quelldatei": "index.html",
       "apiBasis": "https://app.fahrsyn.de/app/",
       "pushEndpunkt": "push/native",
-      "loginErkennung": ["login", "login-nummer"],
+      "loginErkennung": [
+        "login",
+        "login-nummer"
+      ],
       "icons": {
         "192": "icon-192.png",
         "512": "icon-512.png",
@@ -31,7 +31,7 @@
         "fuchs-icon.png"
       ],
       "ersetzungen": [
-                {
+        {
           "_zweck": "Push-Erkennung: in der nativen App gibt es keinen Service Worker und kein PushManager. Ohne diese Regel haelt die App sich faelschlich fuer eine Webseite.",
           "suchenRegex": "var support = \\('serviceWorker' in navigator\\) && \\('PushManager' in window\\) && \\('Notification' in window\\);",
           "ersetzen": "var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));",
@@ -65,7 +65,9 @@
       "quelldatei": "fahrlehrer_bereich.html",
       "apiBasis": "https://app.fahrsyn.de/app/fl/",
       "pushEndpunkt": "/app/fl/push/native",
-      "loginErkennung": ["ausbildung/fahrlehrer-login"],
+      "loginErkennung": [
+        "ausbildung/fahrlehrer-login"
+      ],
       "icons": {
         "192": "fl-icon-192.png",
         "512": "fl-icon-512.png",
@@ -80,9 +82,15 @@
       ],
       "ersetzungen": [
         {
-          "_zweck": "Push-Erkennung: in der nativen App gibt es keinen Service Worker und kein PushManager. Ohne diese Regel haelt die App sich faelschlich fuer eine Webseite und zeigt den Hinweis 'App ueber das Fuchs-Symbol auf dem Home-Bildschirm oeffnen'.",
+          "_zweck": "Benachrichtigungen in der Store-App abschalten: Android braucht dafuer Firebase (google-services.json). Das fehlt, deshalb stuerzte die App beim Antippen von 'Benachrichtigungen aktivieren' ab. Bis Push richtig eingebaut ist, gilt in der nativen App: support = false.",
           "suchenRegex": "var support = \\('serviceWorker' in navigator\\) && \\('PushManager' in window\\) && \\('Notification' in window\\);",
-          "ersetzen": "var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));",
+          "ersetzen": "var support = !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) && ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);",
+          "pflicht": true
+        },
+        {
+          "_zweck": "Kein Hinweisbalken in der Store-App: der Text 'App ueber das Fuchs-Symbol auf dem Home-Bildschirm oeffnen' ergibt in einer installierten App keinen Sinn.",
+          "suchen": "if(!support){ hinweis(istStandalone()?\"🔔 Dein System unterstützt keine Web-Benachrichtigungen.\":\"🔔 Für Benachrichtigungen: App über das Fuchs-Symbol auf dem Home-Bildschirm öffnen.\"); return; }",
+          "ersetzen": "if(!support){ entferne(\"flPushBtn\"); entferne(\"flPushHint\"); return; }",
           "pflicht": true
         },
         {
