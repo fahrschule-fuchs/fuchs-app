@@ -11,6 +11,11 @@ workflows:
     environment:
       vars:
         BUNDLE_ID: "de.fahrsyn.fuchs"
+        # Die Fassung, unter der die App im App Store erscheint. Fuer jedes
+        # Update hochzaehlen - Apple nimmt keine zweite Fassung mit derselben
+        # Nummer an. Aendern laesst sich das hier oder in der
+        # Codemagic-Oberflaeche unter "Environment variables".
+        APP_VERSION: "1.1"
         IOS_DIR: "apps/schueler/ios/App"
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
@@ -28,9 +33,31 @@ workflows:
         submit_to_testflight: true
 
     scripts:
-      - name: Web-Bundle bauen
+      - name: Web-Bundle bauen und pruefen
         script: |
           node scripts/build-www.mjs schueler
+          # Nachsehen, ob wirklich die AKTUELLE Oberflaeche im Paket liegt.
+          # Am 24.08. ging eine Fassung ohne Lernbereich in den Store, weil die
+          # Quelle im Repo aelter war als der Server. Das faellt jetzt hier auf.
+          python3 - <<'PY'
+          import io, sys
+          s = io.open("apps/schueler/www/index.html", encoding="utf-8").read()
+          noetig = {
+              "Lernbereich (Theorie lernen)": "renderLernbereich",
+              "Seite Rechtliches & Quellen": "renderRecht",
+              "Quellenangabe arge tp 21": "arge tp 21",
+              "Boot-Skript der App-Huelle": "fuchs-native.js",
+              "Anmeldecode ohne Foxy-Chat": "code-anfordern",
+              "Einladungs-Link vom Vertrag": "einladung/einloesen",
+          }
+          fehlt = [name for name, marke in noetig.items() if marke not in s]
+          print("Web-Bundle: %d Zeichen" % len(s))
+          for name in noetig:
+              print(("  ok   " if name not in fehlt else "  FEHLT ") + name)
+          if fehlt:
+              sys.exit("ABBRUCH: Im Paket fehlt: " + ", ".join(fehlt)
+                       + ". Vermutlich ist quellen/index.html aelter als der Server.")
+          PY
 
       - name: Verschluesselungs-Erklaerung ergaenzen
         script: |
@@ -101,10 +128,27 @@ workflows:
               open(p, 'w').write(s.replace(a, b))
           "
 
-      - name: Buildnummer setzen
+      - name: Versions- und Buildnummer setzen
         script: |
+          # Die Buildnummer zaehlt Codemagic hoch; die Fassung fuer den Store
+          # steht in APP_VERSION. Frueher stand sie fest im Xcode-Projekt -
+          # eine zweite Einreichung mit derselben Nummer weist Apple ab.
+          python3 - <<'PY'
+          import os, re, sys
+          pfad = os.path.join(os.environ["XCODE_PROJECT"], "project.pbxproj")
+          fassung = os.environ.get("APP_VERSION", "").strip()
+          if not fassung:
+              sys.exit("ABBRUCH: APP_VERSION ist leer.")
+          s = open(pfad, encoding="utf-8").read()
+          s, n = re.subn(r"MARKETING_VERSION = [^;]+;", "MARKETING_VERSION = %s;" % fassung, s)
+          if n == 0:
+              sys.exit("ABBRUCH: MARKETING_VERSION nicht gefunden.")
+          open(pfad, "w", encoding="utf-8").write(s)
+          print("Fassung fuer den Store: %s (an %d Stellen gesetzt)" % (fassung, n))
+          PY
           cd "$IOS_DIR"
           agvtool new-version -all "$BUILD_NUMBER" || true
+          echo "Buildnummer: $BUILD_NUMBER"
 
       - name: Altes Zertifikat und Profil entfernen
         script: |
