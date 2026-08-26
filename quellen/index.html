@@ -87,10 +87,144 @@
     flex-direction:column; align-items:center; gap:2px; color:var(--gray);
     font-family:inherit; font-weight:500;
   }
-  nav button .ic{font-size:20px; filter:grayscale(1) opacity(.55);}
+  nav button .ic{font-size:20px; opacity:.6;}
   nav button span{font-size:10.5px;}
   nav button.aktiv{color:var(--orange); font-weight:700;}
-  nav button.aktiv .ic{filter:none;}
+  nav button.aktiv .ic{opacity:1;}
+  /* ---- Rechtliches und Quellen ---- */
+  .rc-quelle{background:var(--orange-soft); border-radius:12px; padding:11px 14px;
+    font-size:13.5px; line-height:1.5; color:var(--dark); margin-top:8px;}
+  .rc-p{font-size:13.5px; line-height:1.55; color:var(--dark); margin-top:12px;}
+  .rc-p b{display:inline-block; margin-bottom:2px;}
+  .rc-liste{margin:6px 0 0 18px; padding:0;}
+  .rc-liste li{margin-bottom:5px;}
+  /* ---- Theorie lernen ---- */
+  .lb-knopfreihe{display:flex; gap:9px;}
+  .lb-knopf{flex:1; padding:13px 12px; border-radius:12px; border:1.5px solid var(--orange);
+    background:#fff; color:var(--orange); font-family:inherit; font-size:14.5px;
+    font-weight:700; cursor:pointer; text-align:center;}
+  .lb-knopf.voll{width:100%; display:block;}
+  .lb-knopf.stark{background:var(--orange); color:#fff; border-color:var(--orange);}
+  .lb-knopf.aus,.lb-knopf:disabled{border-color:var(--line); color:var(--gray); cursor:default;}
+  .lb-gebiet{display:flex; align-items:center; gap:11px; background:#fff;
+    border:1px solid var(--line); border-radius:14px; padding:12px 14px; cursor:pointer;}
+  .lb-gebiet b{font-size:15px; color:var(--dark);}
+  .lb-gebiet-meta{font-size:12.5px; color:var(--gray); margin-top:2px;}
+  .lb-balken{height:6px; background:var(--line); border-radius:999px; overflow:hidden; margin-top:6px;}
+  .lb-balken>div{height:100%; background:var(--orange); border-radius:999px;}
+  .lb-balken.duenn{height:4px; margin-top:0;}
+  .lb-zeile{display:flex; align-items:center; gap:10px; padding:9px 0;
+    border-bottom:1px solid var(--line); font-size:13.5px; color:var(--dark);}
+  .lb-zeile:last-child{border-bottom:none;}
+  .lb-fortschritt{display:flex; align-items:baseline; justify-content:space-between; margin-top:2px;}
+  .lb-zaehler{font-size:12px; font-weight:800; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--orange);}
+  .lb-punkte{font-size:12.5px; color:var(--gray);}
+  .lb-frage{font-size:18px; font-weight:700; color:var(--dark); line-height:1.35;}
+  .lb-medium{display:flex; flex-direction:column; gap:8px;}
+  .lb-medium img,.lb-medium video{width:100%; border-radius:14px; background:#000;
+    border:1px solid var(--line); display:block;}
+  .lb-antworten{display:flex; flex-direction:column; gap:9px;}
+  .lb-antworten.bilder{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px;}
+  .lb-antwort{display:flex; align-items:flex-start; gap:11px; background:#fff;
+    border:1.5px solid var(--line); border-radius:14px; padding:13px 14px;
+    font-size:14.5px; line-height:1.4; color:var(--dark); cursor:pointer;}
+  .lb-antwort.bild{flex-direction:column; align-items:center; padding:9px; gap:6px;}
+  .lb-antwort.bild img{width:100%; border-radius:9px; display:block;}
+  .lb-antwort.gewaehlt{border-color:var(--orange); background:var(--orange-soft);}
+  .lb-antwort.richtig{border-color:var(--green); background:#EAF6EF;}
+  .lb-antwort.falsch{border-color:#C0392B; background:#FBEDEB;}
+  .lb-haken{width:22px; height:22px; border-radius:7px; border:1.5px solid var(--line);
+    flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:14px; font-weight:800; color:#fff; background:#fff;}
+  .lb-antwort.gewaehlt .lb-haken{background:var(--orange); border-color:var(--orange);}
+  .lb-antwort.richtig .lb-haken{background:var(--green); border-color:var(--green);}
+  .lb-antwort.falsch .lb-haken{background:#C0392B; border-color:#C0392B;}
+  .lb-freitext{display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+    background:#fff; border:1.5px solid var(--line); border-radius:14px;
+    padding:14px; font-size:15px; color:var(--dark);}
+  .lb-freitext input{width:88px; padding:9px 10px; border:1.5px solid var(--orange);
+    border-radius:10px; font-family:inherit; font-size:16px; font-weight:700;
+    color:var(--dark); text-align:center; background:#fff;}
+  .lb-ergebnis{border-radius:12px; padding:11px 14px; font-size:13.5px; line-height:1.45;}
+  .lb-ergebnis.gut{background:#EAF6EF; color:#1E6B3E;}
+  .lb-ergebnis.schlecht{background:#FBEDEB; color:#8E2A1E;}
+  .lb-fuss{position:sticky; bottom:0; background:var(--bg); padding:10px 0 2px;
+    margin-top:2px; display:flex; flex-direction:column; gap:0;}
+  .lb-punktleiste{display:flex; flex-wrap:wrap; gap:5px;}
+  .lb-punkt{width:15px; height:15px; border-radius:5px; border:1.5px solid var(--line);
+    background:#fff; padding:0; cursor:pointer;}
+  .lb-punkt.voll{background:var(--orange); border-color:var(--orange);}
+  .lb-punkt.hier{outline:2px solid var(--dark); outline-offset:1px;}
+  /* ---- Startseite als Tagesueberblick ---- */
+  .sd-kopf{display:flex; align-items:center; gap:12px; padding:2px 0 6px;}
+  /* Der Bildkreis gilt ueberall, wo er benutzt wird - nicht nur in der
+     Kopfzeile. Vorher hingen diese Regeln an ".sd-kopf .sd-bild"; auf der
+     Profilseite steht derselbe Baustein in einer Karte und war damit voellig
+     ungestaltet - das Foto lief ueber die halbe Seite (Befund 21.08.2026). */
+  .sd-bild{border-radius:50%;overflow:hidden;flex-shrink:0;position:relative;
+    background:var(--orange-soft);display:flex;align-items:center;justify-content:center;
+    font-weight:800;color:var(--orange);cursor:pointer;}
+  .sd-bild img{width:100%;height:100%;object-fit:cover;display:block;}
+  .sd-kopf .sd-bild{width:44px;height:44px;font-size:18px;}
+  .sd-kopf h1{margin:0;font-size:23px;letter-spacing:-.02em;line-height:1.15;}
+  .sd-karte{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:12px;}
+  .sd-karte.betont{background:var(--orange-soft);border-color:#F3D9C2;}
+  .sd-eyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--orange);}
+  .sd-gross{font-size:19px;font-weight:800;color:var(--dark);margin-top:3px;line-height:1.25;}
+  .sd-meta{font-size:13px;color:var(--gray);margin-top:3px;}
+  .sd-knopfreihe{display:flex;gap:9px;margin-top:12px;}
+  .sd-knopf{flex:1;padding:11px;border-radius:11px;border:1.5px solid var(--orange);
+    background:#fff;color:var(--orange);font-weight:700;font-size:14px;font-family:inherit;
+    cursor:pointer;text-align:center;text-decoration:none;display:block;}
+  .sd-knopf.voll{background:var(--orange);color:#fff;border-color:var(--orange);}
+  .sd-aufgabe{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:14px;
+    margin-top:9px;cursor:pointer;background:#fff;border:1px solid var(--line);}
+  .sd-aufgabe.dringend{background:#FDECEC;border-color:#F3B4B4;}
+  .sd-aufgabe .sd-punkt{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;
+    align-items:center;justify-content:center;background:var(--orange-soft);color:var(--orange);
+    font-weight:800;font-size:14px;}
+  .sd-aufgabe.dringend .sd-punkt{background:#F7C9C9;color:#B3261E;}
+  .sd-aufgabe b{display:block;font-size:14.5px;color:var(--dark);}
+  .sd-aufgabe span{font-size:12.5px;color:var(--gray);}
+  .sd-pfeil{margin-left:auto;color:var(--gray);font-size:18px;flex-shrink:0;}
+  .sd-balken{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin:10px 0 12px;}
+  .sd-balken>div{height:100%;background:var(--orange);border-radius:999px;transition:width .4s;}
+  .sd-werte{display:flex;gap:2px;}
+  .sd-wert{flex:1;text-align:center;}
+  .sd-wert b{display:block;font-size:19px;font-weight:800;color:var(--dark);line-height:1.2;}
+  .sd-wert i{display:block;font-style:normal;font-size:11.5px;color:var(--gray);margin-top:2px;}
+  .sd-wert.fertig b{color:#1E7A43;}
+  .sd-zeile{display:flex;align-items:center;gap:11px;padding:12px 14px;border-radius:14px;
+    margin-top:12px;background:#fff;border:1px solid var(--line);cursor:pointer;}
+  .sd-zeile b{font-size:14.5px;color:var(--dark);}
+  .sd-raster{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+  .sd-feld{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px;
+    cursor:pointer;display:flex;align-items:center;gap:11px;}
+  .sd-feld.breit{grid-column:1 / -1;}
+  /* Knoepfe der Fahrstunden-Anfrage. Als Klasse statt als Stil an jedem
+     einzelnen Knopf - so laesst sich ein Tipp umfaerben, ohne die ganze
+     Seite neu zu bauen (und ohne dass sie nach oben springt). */
+  .fs-chip{border:1.5px solid var(--line); background:#fff; color:var(--gray);
+    border-radius:999px; font-weight:700; cursor:pointer; font-family:inherit;
+    transition:background-color .12s, color .12s, border-color .12s;}
+  .fs-chip.an{border-color:var(--orange); background:var(--orange); color:#fff;}
+  .fs-chip.fs-fil{padding:8px 14px; font-size:13px;}
+  .fs-chip.fs-anz{min-width:40px; padding:8px 12px; font-size:14px; font-weight:800;}
+  .fs-chip.fs-blk{padding:6px 10px; font-size:12px;}
+  .sd-feld .sd-sym{width:34px;height:34px;border-radius:10px;background:var(--orange-soft);
+    color:var(--orange);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .sd-feld .sd-sym svg{width:19px;height:19px;display:block;}
+  .sd-feld b{display:block;font-size:14px;color:var(--dark);}
+  .sd-feld span{font-size:12px;color:var(--gray);}
+  .sd-platzhalter{background:#fff;border:1px solid var(--line);border-radius:16px;
+    margin-top:12px;height:96px;position:relative;overflow:hidden;}
+  .sd-platzhalter::after{content:"";position:absolute;inset:0;
+    background:linear-gradient(90deg,transparent,rgba(0,0,0,.045),transparent);
+    animation:sdwisch 1.2s infinite;}
+  @keyframes sdwisch{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+  nav button .ic svg{width:23px;height:23px;display:block;}
   /* Zugangscode-Overlay */
   #gate{
     position:fixed; inset:0; background:var(--bg); z-index:20;
@@ -118,20 +252,32 @@
 
   <!-- Schritt 1: Handynummer -->
   <div id="schritt1" style="display:flex; flex-direction:column; gap:12px; align-items:center; width:100%;">
-    <div class="meta">Melde dich mit deiner Handynummer an –<br>der, die deine Fahrschule von dir kennt.</div>
+    <div class="meta">Melde dich mit deiner Handynummer an –<br>der, die deine Fahrschule von dir kennt.<br>
+      <span style="font-size:12px;">Den Code schicken wir dir per WhatsApp.</span></div>
     <input id="loginNummer" type="tel" placeholder="Deine Handynummer" autocomplete="tel">
     <button class="btn-primary" id="loginWeiter">Anmelde-Code holen</button>
     <div class="meta" style="font-size:12px;"><a href="#" id="teamLink" style="color:var(--gray);">Ich habe einen Team-Zugangscode</a></div>
   </div>
 
-  <!-- Schritt 2: Code aus WhatsApp -->
+  <!-- Schritt 2: Code eingeben. Der Code kommt seit 26.08.2026 von allein
+       per WhatsApp - der Schueler muss Foxy nicht mehr zuerst anschreiben. -->
   <div id="schritt2" style="display:none; flex-direction:column; gap:12px; align-items:center; width:100%;">
-    <div class="meta" style="line-height:1.5;">Schick jetzt <b>Foxy per WhatsApp</b> das Wort<br>
-      <span style="font-size:20px; font-weight:800; color:var(--dark);">App</span><br>
-      – von genau dieser Nummer. Du bekommst sofort einen 6-stelligen Code.</div>
-    <a id="waLink" class="btn-primary" style="display:none; text-decoration:none;" target="_blank" rel="noopener">WhatsApp öffnen 🦊</a>
+    <div class="meta" id="codeHinweis" style="line-height:1.5;">Wir haben dir einen Code geschickt.</div>
     <input id="loginPin" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6-stelliger Code" autocomplete="one-time-code">
     <button class="btn-primary" id="loginFertig">Anmelden</button>
+    <div class="meta" style="font-size:12px; line-height:1.7;">
+      <a href="#" id="codeNochmal" style="color:var(--orange); font-weight:700;">Code erneut senden</a><br>
+      <a href="#" id="codeHilfe" style="color:var(--gray);">Kein Code angekommen?</a>
+    </div>
+    <div id="codeWege" style="display:none; width:100%; max-width:300px; text-align:left;
+         background:var(--card,#fff); border:1px solid var(--line); border-radius:12px; padding:12px 14px;">
+      <div class="meta" style="font-size:12.5px; line-height:1.65;">
+        <b>Zwei andere Wege:</b><br>
+        1. Schick <b>Foxy</b> per WhatsApp das Wort <b>App</b> – von genau dieser Nummer.<br>
+        2. Ruf deine <b>Filiale</b> an. Wir geben dir den Code direkt durch – dafür brauchst du kein WhatsApp.
+      </div>
+      <a id="waLink" class="btn-primary" style="display:none; text-decoration:none; margin-top:10px; text-align:center;" target="_blank" rel="noopener">WhatsApp öffnen 🦊</a>
+    </div>
     <div class="meta" style="font-size:12px;"><a href="#" id="zurueckLink" style="color:var(--gray);">← Nummer ändern</a></div>
   </div>
 
@@ -145,9 +291,6 @@
 
   <div class="meta" id="gateFehler" style="color:#D64545; display:none;"></div>
 
-  <div class="meta" style="font-size:12px; margin-top:14px; border-top:1px solid var(--line); padding-top:12px; width:100%;">
-    <a href="/fl" style="color:var(--orange); font-weight:700; text-decoration:none;">Du bist Fahrlehrer? →</a>
-  </div>
 </div>
 
 <script>
@@ -189,6 +332,29 @@ let fortschritt = lade("fuchs_mediathek", {});
 let zugangscode = lade("fuchs_code", "");
 let chatNummer = lade("fuchs_nummer", "");
 let token = lade("fuchs_token", "");
+// Geraetekennung: bleibt auf diesem Handy gespeichert. Der Server laesst die
+// Anmeldung ohne WhatsApp-Code nur zu, wenn er dieses Geraet schon kennt.
+let geraet = lade("fuchs_geraet", "");
+if (!geraet) {
+  try {
+    geraet = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random().toString(36).slice(2))
+      .replace(/[^A-Za-z0-9_-]/g, "");
+  } catch (e) {
+    geraet = String(Date.now()) + "-" + Math.random().toString(36).slice(2);
+  }
+  speichere("fuchs_geraet", geraet);
+}
+// Anmeldung ueber einen Link (fuer Tests): ?anmelden=<Kennzeichen>
+try {
+  const _p = new URLSearchParams(window.location.search);
+  const _t = (_p.get("anmelden") || "").trim();
+  if (_t) {
+    token = _t; speichere("fuchs_token", _t);
+    _p.delete("anmelden");
+    const _rest = _p.toString();
+    history.replaceState({}, "", window.location.pathname + (_rest ? "?" + _rest : ""));
+  }
+} catch (e) {}
 let vorname = lade("fuchs_vorname", "");
 let profilbild = lade("fuchs_profilbild", "");
 let kontoDaten = null;   // Kontostand-Cache für die Startseite
@@ -248,6 +414,67 @@ function zeigeGate() {
     }
   }).catch(() => {});
 
+  // Fordert den Code beim Server an. Rueckgabe: true, wenn Schritt 2 gezeigt
+  // werden soll. Bei "unbekannt" bleiben wir auf Schritt 1 stehen, damit der
+  // Schueler die Nummer noch einmal ansehen kann.
+  async function codeAnfordern(n, erneut) {
+    try {
+      const r = await fetch("code-anfordern", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nummer: n }),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (d && d.ok) {
+        setzeCodeHinweis("Wir haben dir gerade einen <b>Code per WhatsApp</b> geschickt – "
+          + "an " + esc(n) + ". Er gilt 10 Minuten.");
+        return true;
+      }
+      if (d && d.unbekannt) { gateFehler(d.fehler); return false; }
+      if (d && d.gestoert) {
+        // WhatsApp stellt gerade nicht zu. Nicht so tun, als ginge es -
+        // stattdessen die anderen Wege sofort zeigen.
+        setzeCodeHinweis("<b>" + esc(d.fehler) + "</b>");
+        const k = document.getElementById("codeWege");
+        if (k) k.style.display = "block";
+        return true;
+      }
+      // Bremse oder Meta-Problem: Der Schueler soll trotzdem weiterkommen,
+      // denn einen Code aus der Filiale kann er hier eingeben.
+      setzeCodeHinweis((d && d.fehler ? esc(d.fehler) : "Der Code liess sich gerade nicht verschicken.")
+        + "<br>Du kannst ihn dir auch in deiner Filiale geben lassen.");
+      return true;
+    } catch (e) {
+      if (erneut) { gateFehler("Keine Verbindung – versuch es gleich nochmal."); return false; }
+      setzeCodeHinweis("Wir konnten den Server gerade nicht erreichen. "
+        + "Hol dir den Code über einen der Wege unten.");
+      return true;
+    }
+  }
+
+  function setzeCodeHinweis(html) {
+    const e = document.getElementById("codeHinweis");
+    if (e) e.innerHTML = html;
+  }
+
+  // Nach dem Senden 60 Sekunden Ruhe – so lange bremst auch der Server.
+  function sperreNochmal() {
+    const a = document.getElementById("codeNochmal");
+    if (!a) return;
+    let rest = 60;
+    a.style.pointerEvents = "none";
+    a.style.color = "var(--gray)";
+    const lauf = setInterval(() => {
+      rest -= 1;
+      a.textContent = rest > 0 ? ("Code erneut senden (" + rest + ")") : "Code erneut senden";
+      if (rest <= 0) {
+        clearInterval(lauf);
+        a.style.pointerEvents = "";
+        a.style.color = "var(--orange)";
+      }
+    }, 1000);
+    a.textContent = "Code erneut senden (60)";
+  }
+
   document.getElementById("loginWeiter").onclick = async () => {
     const n = document.getElementById("loginNummer").value.trim();
     if (n.replace(/\D/g, "").length < 8) { gateFehler("Das sieht noch nicht nach einer Handynummer aus."); return; }
@@ -258,12 +485,25 @@ function zeigeGate() {
     const alt = btn.textContent; btn.textContent = "Moment …"; btn.disabled = true;
     // Erst prüfen, ob die Nummer schon bekannt ist – dann ohne Code direkt rein.
     try {
-      const r = await fetch("login-nummer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nummer: n }) });
+      const r = await fetch("login-nummer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nummer: n, geraet }) });
       const d = await r.json();
       if (d && d.ok) { anmeldeErfolg(d); return; }
     } catch (e) {}
+    // Neue Nummer oder neues Gerät: Code anfordern und eingeben lassen.
+    const weiter = await codeAnfordern(n, false);
     btn.textContent = alt; btn.disabled = false;
-    zeigeSchritt("schritt2");   // Nummer noch nicht bestätigt -> einmalig Code holen
+    if (weiter) { zeigeSchritt("schritt2"); sperreNochmal(); }
+  };
+
+  document.getElementById("codeNochmal").onclick = async e => {
+    e.preventDefault();
+    gateFehler("");
+    if (await codeAnfordern(chatNummer, true)) sperreNochmal();
+  };
+  document.getElementById("codeHilfe").onclick = e => {
+    e.preventDefault();
+    const k = document.getElementById("codeWege");
+    k.style.display = (k.style.display === "none" ? "block" : "none");
   };
   document.getElementById("zurueckLink").onclick = e => { e.preventDefault(); zeigeSchritt("schritt1"); };
   document.getElementById("teamLink").onclick = e => { e.preventDefault(); zeigeSchritt("schrittTeam"); };
@@ -277,7 +517,7 @@ function zeigeGate() {
       const r = await fetch("login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nummer: chatNummer, pin }),
+        body: JSON.stringify({ nummer: chatNummer, pin, geraet }),
       });
       const d = await r.json();
       if (!d.ok) { gateFehler(d.fehler || "Anmeldung fehlgeschlagen – versuch es nochmal."); return; }
@@ -315,9 +555,49 @@ function anmeldeErfolg(d) {
   renderHome();
   ladeProfilbild();
 }
+// Einladung vom Vertrag: Der QR-Code fuehrt auf /app/?e=... . Wir loesen den
+// Schluessel ein und sind sofort drin - kein Code, kein WhatsApp noetig.
+// Der Schluessel gilt nur einmal; danach kennt der Server das Geraet.
+function einladungSchluessel() {
+  try { return (new URLSearchParams(window.location.search).get("e") || "").trim(); }
+  catch (e) { return ""; }
+}
+function urlAufraeumen() {
+  try { history.replaceState({}, "", window.location.pathname); } catch (e) {}
+}
+function einladungEinloesen(schluessel) {
+  const g = document.getElementById("gate");
+  if (g) {
+    g.style.display = "flex";
+    zeigeSchritt("schritt1");
+    gateFehler("");
+  }
+  fetch("einladung/einloesen", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ e: schluessel, geraet }),
+  })
+    .then(r => r.json())
+    .then(d => {
+      urlAufraeumen();
+      if (d && d.ok) {
+        if (d.nummer) { chatNummer = d.nummer; speichere("fuchs_nummer", d.nummer); }
+        anmeldeErfolg(d);
+        meldeAlles();
+        return;
+      }
+      zeigeGate();
+      gateFehler((d && d.fehler) || "Dieser Einladungs-Link geht nicht mehr.");
+    })
+    .catch(() => {
+      urlAufraeumen();
+      zeigeGate();
+      gateFehler("Keine Verbindung – melde dich bitte mit deiner Handynummer an.");
+    });
+}
+
 // Beim App-Start: bekannte Nummer -> automatisch anmelden (kein Code nötig).
 function autoLoginNummer(nr) {
-  fetch("login-nummer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nummer: nr }) })
+  fetch("login-nummer", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nummer: nr, geraet }) })
     .then(r => r.ok ? r.json() : null)
     .then(d => {
       if (d && d.ok) { chatNummer = nr; anmeldeErfolg(d); meldeAlles(); }
@@ -327,7 +607,9 @@ function autoLoginNummer(nr) {
 }
 
 // ── Start (Home) ─────────────────────────────────────────────
-function renderHome() {
+// Die bisherige Startseite bleibt als Rueckfall erhalten: Antwortet der
+// Server einmal nicht, sieht der Schueler lieber die alte Ansicht als nichts.
+function renderHomeAlt() {
   aktiv = null;
   const gesehen = LEKTIONEN.filter(l => fortschritt[l.nr]?.done).length;
   main.innerHTML = `
@@ -341,13 +623,14 @@ function renderHome() {
         ${token ? `<div style="position:absolute; right:-2px; bottom:-2px; width:28px; height:28px; border-radius:50%; background:var(--orange); color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; border:3px solid var(--bg);">📷</div>` : ""}
       </div>
       <div style="flex:1; min-width:0;">
-        <div style="font-size:15px; color:var(--gray);">Moin! 🦊</div>
+        <div style="font-size:15px; color:var(--gray);">${typeof sdGruss === "function" ? sdGruss() : "Hallo"} 🦊</div>
         <div style="font-size:30px; font-weight:800; color:var(--dark); letter-spacing:-.02em; line-height:1.08; overflow:hidden; text-overflow:ellipsis;">${vorname ? esc(vorname) : "Deine Fahrschule"}</div>
         <div class="meta" style="margin-top:3px;">${token ? "Angemeldet · <a href='#' onclick='abmelden();return false;' style='color:var(--gray);'>abmelden</a>" : "Testversion der Fuchs-App"}</div>
       </div>
     </div>
     <input type="file" id="bildInput" accept="image/*" style="display:none;">
     ${token ? `<div id="kontoSlot">${kontoKarteHTML()}</div>` : ""}
+    ${token ? `<div id="theorieSlot">${theorieKarteHTML()}</div>` : ""}
     <div class="card" onclick="waehleTab('mediathek','Videos')">
       <div class="eyebrow">Mediathek</div>
       <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">${gesehen} von ${LEKTIONEN.length} Lektionen angesehen</div>
@@ -369,6 +652,7 @@ function renderHome() {
       <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">Unterlagen senden & empfangen</div>
       <div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:8px;">DEKRA/TÜV-Schreiben hochladen · Post vom Büro →</div>
     </div>
+    ${token ? `<div id="kurseSlot">${kurseKachelHTML()}</div>` : ""}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
       <div class="card" style="background:var(--orange-soft); border:none;" onclick="waehleTab('chat','Chat')">
         <div style="font-size:22px;">💬</div>
@@ -384,8 +668,897 @@ function renderHome() {
     <div class="hint">ℹ️ Die Mediathek ist eine <b>Ergänzung</b> und ersetzt aktuell nicht den Pflicht-Theorieunterricht in deiner Filiale.</div>`;
   const bi = document.getElementById("bildInput");
   if (bi) bi.onchange = bildGewaehlt;
-  if (token) ladeKonto();
+  if (token) { ladeKonto(); ladeTheorie(); }
   main.scrollTop = 0;
+}
+
+// ── Theorieunterricht: nächste Termine (Quelle: Fahrschulmanager) ──
+// Der Plan stand früher nur als PDF auf der Website. Hier kommen die Termine
+// direkt aus dem Manager – dadurch immer aktuell, mit Thema und Uhrzeit.
+let theorieDaten = null;
+let theorieOffen = false;
+
+function theorieZeile(t, mitFiliale) {
+  return `<div style="display:flex; gap:10px; align-items:baseline; padding:7px 0; border-bottom:1px solid var(--line);">
+      <div style="font-weight:700; color:var(--dark); white-space:nowrap; font-size:14px;">${esc(t.wochentag)} ${esc(t.datum_de)}</div>
+      <div style="color:var(--orange); font-weight:700; white-space:nowrap; font-size:14px;">${esc(t.beginn)}${t.bis ? "\u2013" + esc(t.bis) : ""}</div>
+      <div style="flex:1; min-width:0; font-size:13px; color:var(--gray);">${mitFiliale ? "<b>" + esc(t.filiale) + "</b> · " : ""}${esc(t.thema)}</div>
+    </div>`;
+}
+
+function theorieUmschalten() {
+  theorieOffen = !theorieOffen;
+  const slot = document.getElementById("theorieSlot");
+  if (slot) slot.innerHTML = theorieKarteHTML();
+}
+
+function theorieKarteHTML() {
+  const d = theorieDaten;
+  if (!d) return `<div class="card"><div class="eyebrow">Theorieunterricht</div>
+      <div style="font-size:14px; color:var(--gray); margin-top:6px;">Lädt …</div></div>`;
+  const eigene = d.eigene || [], andere = d.andere || [];
+  if (!eigene.length && !andere.length) return "";
+  const nutze = eigene.length ? eigene : andere;
+  const fremd = !eigene.length;
+  const titel = fremd ? "Termine in anderen Filialen"
+                      : `Nächste Termine${d.filiale ? " in " + esc(d.filiale) : ""}`;
+  const n = nutze[0];
+  // Zugeklappt steht nur der nächste Termin da – das ist die Information,
+  // die fast immer gebraucht wird. Alles Weitere auf Tippen.
+  const vorschau = `<div style="font-size:14px; color:var(--dark); margin-top:6px;">
+      <b>${esc(n.wochentag)} ${esc(n.datum_de)}</b>
+      <span style="color:var(--orange); font-weight:700;">${esc(n.beginn)}${n.bis ? "\u2013" + esc(n.bis) : ""}</span>
+      <span style="color:var(--gray);"> · ${fremd ? esc(n.filiale) + " · " : ""}${esc(n.thema)}</span>
+    </div>`;
+  const inhalt = `${fremd && d.filiale ? `<div class="meta" style="margin-top:6px;">Für ${esc(d.filiale)} ist gerade kein Termin hinterlegt.</div>` : ""}
+      <div style="margin-top:8px;">${nutze.slice(0, 6).map(t => theorieZeile(t, fremd)).join("")}</div>
+      <div class="meta" style="margin-top:8px;">Keine Anmeldung nötig – einfach hinkommen und vor Ort in die Liste eintragen.</div>`;
+  return `<div class="card" onclick="theorieUmschalten()" style="cursor:pointer;">
+      <div style="display:flex; align-items:flex-start; gap:10px;">
+        <div style="flex:1; min-width:0;">
+          <div class="eyebrow">Theorieunterricht</div>
+          <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">${titel}</div>
+        </div>
+        <div style="color:var(--orange); font-size:18px; line-height:1.2; flex-shrink:0;">${theorieOffen ? "▾" : "▸"}</div>
+      </div>
+      ${theorieOffen ? inhalt : vorschau}
+      ${theorieOffen ? "" : `<div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:8px;">Alle Termine anzeigen →</div>`}
+    </div>`;
+}
+
+async function ladeTheorie() {
+  if (!token) return;
+  try {
+    const r = await fetch("theorie/termine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+    const d = await r.json();
+    theorieDaten = (d && d.ok) ? d : { eigene: [], andere: [] };
+  } catch (e) { theorieDaten = { eigene: [], andere: [] }; }
+  const slot = document.getElementById("theorieSlot");
+  if (slot) slot.innerHTML = theorieKarteHTML();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+//  Bezahlen (Guthaben aufladen)
+// ══════════════════════════════════════════════════════════════
+// Wichtig zum Verstaendnis: Es wird nie "diese eine Fahrstunde" bezahlt,
+// sondern das Schuelerkonto aufgeladen. Der Termin schlaegt nur den Betrag
+// vor. Faellt er spaeter aus, bleibt das Guthaben einfach stehen.
+let zahlInfo = null;
+
+function eur(cent) {
+  return (Number(cent || 0) / 100).toLocaleString("de-DE",
+    { style: "currency", currency: "EUR" });
+}
+
+async function ladeZahlInfo() {
+  if (!token) return null;
+  try {
+    const r = await fetch("zahlung/info", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+    if (!r.ok) return null;
+    const d = await r.json();
+    zahlInfo = (d && d.ok) ? d : null;
+  } catch (e) { zahlInfo = null; }
+  return zahlInfo;
+}
+
+function bezahlbar() {
+  return !!(zahlInfo && zahlInfo.moeglich);
+}
+
+// Startseite: Knopf unter dem Kontostand
+function zahlKnopfHTML() {
+  if (!bezahlbar()) return "";
+  const offen = Number(zahlInfo.offen_cent || 0);
+  const text = offen > 0 ? `Jetzt ${eur(offen)} bezahlen` : "Guthaben aufladen";
+  return `<button class="btn-primary" style="margin-top:12px; width:100%;"
+    onclick="renderBezahlen(${offen > 0 ? offen : 0})">💳 ${text}</button>`;
+}
+
+// Die Bezahlseite
+
+// Die Kachel erscheint erst, wenn die Kurse freigeschaltet sind. Das steht
+// in der Zahlungs-Auskunft, die die Startseite ohnehin holt - die trifft aber
+// erst nach dem ersten Zeichnen ein. Deshalb der Platzhalter "kurseSlot",
+// der danach noch einmal gefuellt wird.
+function kurseKachelHTML() {
+  if (!(zahlInfo && zahlInfo.kurse_aktiv)) return "";
+  return `<div class="card" style="margin-bottom:0;" onclick="renderKurse()">
+      <div class="eyebrow">Erste Hilfe</div>
+      <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">🚑 Erste-Hilfe-Kurs buchen</div>
+      <div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:8px;">Termin aussuchen, direkt bezahlen, fertig →</div>
+    </div>`;
+}
+
+// ── Erste-Hilfe-Kurse ────────────────────────────────────────────────
+// Die Kurse stehen auf erstehilfe-fuchs.de. Der Schueler soll deswegen
+// nicht die App verlassen muessen: Termin aussuchen, mit der schon
+// eingebauten Bezahlfunktion zahlen, fertig. Gebucht wird der Platz erst,
+// wenn die Zahlung bestaetigt ist - so entstehen keine Karteileichen.
+let kursDaten = null;
+const K_WT = ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"];
+
+function kDatum(iso) {
+  if (!iso || iso.length < 10) return iso || "";
+  const d = new Date(iso + "T12:00:00");
+  return K_WT[d.getDay()] + ", " + iso.slice(8, 10) + "." + iso.slice(5, 7) + "." + iso.slice(0, 4);
+}
+
+function kPreis(p) {
+  return (Number(p) || 0).toFixed(2).replace(".", ",") + " €";
+}
+
+function kPlaetze(k) {
+  const frei = Number(k.plaetze_frei) || 0;
+  if (frei <= 0) return `<span style="color:#B3261E; font-weight:700;">ausgebucht</span>`;
+  if (frei <= 3) return `<span style="color:#B3261E; font-weight:700;">nur noch ${frei} ${frei === 1 ? "Platz" : "Plätze"} frei</span>`;
+  return `<span style="color:#1E7A43; font-weight:700;">${frei} Plätze frei</span>`;
+}
+
+const K_FELDER = {
+  vorname: "Vorname", nachname: "Nachname", adresse: "Straße und Hausnummer",
+  plz: "Postleitzahl", wohnort: "Wohnort", geburtsdatum: "Geburtsdatum",
+  geburtsort: "Geburtsort", geschlecht: "Geschlecht",
+};
+
+function kFeldHTML(feld, wert, optionen) {
+  const label = K_FELDER[feld] || feld;
+  if (feld === "geschlecht") {
+    return `<div style="margin-top:10px;">
+      <div class="eyebrow">${label}</div>
+      <div id="kGeschlecht" style="display:flex; gap:7px; flex-wrap:wrap; margin-top:6px;">
+        ${(optionen || []).map(o => `<button type="button" class="kchip" data-wert="${esc(o)}"
+          style="padding:8px 14px; border:1.5px solid #E7D9CC; background:#fff; color:#6b6b63;
+                 border-radius:999px; font-size:14px; font-weight:700;">${esc(o)}</button>`).join("")}
+      </div></div>`;
+  }
+  const typ = feld === "geburtsdatum" ? "date" : "text";
+  return `<div style="margin-top:10px;">
+    <div class="eyebrow">${label}</div>
+    <input id="kf_${feld}" type="${typ}" value="${esc(wert || "")}"
+      style="width:100%; box-sizing:border-box; margin-top:5px; padding:11px 12px;
+             border:1px solid #E7D9CC; border-radius:12px; font-size:15px;
+             font-family:inherit; background:#fff; color:var(--dark);"></div>`;
+}
+
+function kAngabenHTML(d) {
+  const fehlt = d.fehlende_angaben || [];
+  if (!fehlt.length) return "";
+  return `<div class="card" id="kAngaben">
+    <div class="eyebrow">Noch kurz nötig</div>
+    <div style="font-size:14px; color:var(--gray); margin-top:4px;">
+      Für die Anmeldung zum Erste-Hilfe-Kurs ${fehlt.length === 1 ? "fehlt noch eine Angabe" : "fehlen noch ein paar Angaben"}.
+      Sie stehen so auf dem Anmeldeformular des Kursanbieters und werden nur dorthin übermittelt.</div>
+    ${fehlt.map(f => kFeldHTML(f, (d.stammdaten || {})[f], d.geschlecht_optionen)).join("")}
+  </div>`;
+}
+
+function kAngabenBinden() {
+  document.querySelectorAll("#kGeschlecht .kchip").forEach(c => {
+    c.onclick = () => {
+      document.querySelectorAll("#kGeschlecht .kchip").forEach(x => {
+        x.style.background = "#fff"; x.style.color = "#6b6b63"; x.style.borderColor = "#E7D9CC";
+      });
+      c.style.background = "var(--orange)"; c.style.color = "#fff"; c.style.borderColor = "var(--orange)";
+      c.dataset.gewaehlt = "1";
+    };
+  });
+}
+
+function kAngabenLesen() {
+  const a = {};
+  (kursDaten && kursDaten.fehlende_angaben || []).forEach(f => {
+    if (f === "geschlecht") {
+      const g = document.querySelector("#kGeschlecht .kchip[data-gewaehlt='1']");
+      a.geschlecht = g ? g.dataset.wert : "";
+    } else {
+      const el = document.getElementById("kf_" + f);
+      a[f] = el ? el.value.trim() : "";
+    }
+  });
+  return a;
+}
+
+function kSchonGebucht(d) {
+  const ids = {};
+  (d.meine || []).forEach(m => {
+    if (m.status === "gebucht" || m.status === "bezahlt") ids[String((m.kurs || {}).id)] = true;
+  });
+  return ids;
+}
+
+function kMeineHTML(d) {
+  const liste = (d.meine || []).filter(m => m.status === "gebucht" || m.status === "bezahlt");
+  if (!liste.length) return "";
+  return liste.map(m => `<div class="card" style="background:#E9F7EE; border:1px solid #A7DCBB;">
+    <div class="eyebrow" style="color:#1E7A43;">Dein Kurs</div>
+    <div style="font-size:16px; font-weight:700; color:#1E7A43; margin-top:3px;">
+      ${esc(kDatum((m.kurs || {}).datum_iso))} · ${esc((m.kurs || {}).uhrzeit || "")} Uhr</div>
+    <div style="font-size:13px; color:var(--gray); margin-top:3px;">${esc((m.kurs || {}).ort || "")}</div>
+    <div style="font-size:13px; color:#1E7A43; font-weight:600; margin-top:6px;">
+      ${m.status === "gebucht" ? "✅ gebucht und bezahlt" : "⏳ wird gerade gebucht …"}</div>
+  </div>`).join("");
+}
+
+async function renderKurse() {
+  aktiv = null;
+  main.innerHTML = `<button class="btn-ghost" onclick="renderHome()">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Erste-Hilfe-Kurs</h1>
+    <div class="card"><div class="meta">Termine werden geladen …</div></div>`;
+  main.scrollTop = 0;
+  let d = null;
+  try {
+    const r = await fetch("kurse/liste", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
+    d = await r.json();
+  } catch (e) { d = null; }
+  kursDaten = d;
+
+  if (!d || !d.ok) {
+    main.innerHTML = `<button class="btn-ghost" onclick="renderHome()">← Zurück</button>
+      <h1 style="margin-bottom:2px;">Erste-Hilfe-Kurs</h1>
+      <div class="card"><div style="font-size:14px; color:var(--gray);">
+        Die Kurstermine sind gerade nicht erreichbar. Bitte später noch einmal.</div></div>`;
+    return;
+  }
+
+  if (!d.moeglich) {
+    main.innerHTML = `<button class="btn-ghost" onclick="renderHome()">← Zurück</button>
+      <h1 style="margin-bottom:2px;">Erste-Hilfe-Kurs</h1>
+      <div class="card"><div style="font-size:14px; color:var(--gray);">
+        ${esc(d.hinweis || "Das Buchen in der App ist noch nicht freigeschaltet.")}</div>
+        ${d.kursseite ? `<a class="btn-primary" style="display:block; text-align:center; margin-top:12px; text-decoration:none;"
+          href="${esc(d.kursseite)}" target="_blank" rel="noopener">Zur Kursseite →</a>` : ""}
+      </div>`;
+    return;
+  }
+
+  const kurse = d.kurse || [];
+  const schon = kSchonGebucht(d);
+  main.innerHTML = `<button class="btn-ghost" onclick="renderHome()">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Erste-Hilfe-Kurs</h1>
+    <div class="hint">Den Kurs brauchst du für deinen Führerschein. Such dir einen Termin aus –
+      bezahlt wird gleich hier, den Platz buchen wir sofort danach für dich.</div>
+    ${kMeineHTML(d)}
+    ${kAngabenHTML(d)}
+    <div id="kFehler" style="color:#B3261E; font-size:13.5px; margin:8px 2px 0;"></div>
+    ${kurse.length ? kurse.map(k => `<div class="card">
+        <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+          <div style="font-size:16.5px; font-weight:800; color:var(--dark);">${esc(kDatum(k.datum_iso))}</div>
+          <div style="font-size:15px; font-weight:700; color:var(--orange);">${esc(k.uhrzeit)}${k.ende ? "–" + esc(k.ende) : ""} Uhr</div>
+        </div>
+        <div style="font-size:13px; color:var(--gray); margin-top:4px;">📍 ${esc(k.ort || "")}</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px;">
+          <div style="font-size:13.5px;">${schon[String(k.id)]
+            ? `<span style="color:#1E7A43; font-weight:700;">✅ Schon gebucht</span>` : kPlaetze(k)}</div>
+          <div style="font-size:19px; font-weight:800; color:var(--dark);">${kPreis(k.preis)}</div>
+        </div>
+        ${schon[String(k.id)]
+          ? `<div class="meta" style="margin-top:10px;">Du bist für diesen Termin angemeldet.</div>`
+          : `<button class="btn-primary" style="width:100%; margin-top:11px;" ${k.plaetze_frei > 0 ? "" : "disabled"}
+              onclick="kursBuchen(${Number(k.id)})">${k.plaetze_frei > 0 ? "Buchen und bezahlen" : "Ausgebucht"}</button>`}
+      </div>`).join("")
+    : `<div class="card"><div style="font-size:14px; color:var(--gray);">
+        Zurzeit sind keine Termine ausgeschrieben. Schau in ein paar Tagen noch einmal vorbei.</div></div>`}
+    <div class="hint" style="margin-top:2px;">Du bekommst die Bestätigung sofort in die App.
+      Bring bitte deinen Personalausweis mit. Wenn du doch nicht kannst, sag uns rechtzeitig Bescheid.</div>`;
+  kAngabenBinden();
+}
+
+async function kursBuchen(kursId) {
+  const fehler = document.getElementById("kFehler");
+  if (fehler) fehler.textContent = "";
+  const angaben = kAngabenLesen();
+  const offen = (kursDaten && kursDaten.fehlende_angaben || []).filter(f => !String(angaben[f] || "").trim());
+  if (offen.length) {
+    if (fehler) fehler.textContent = "Bitte noch ausfüllen: "
+      + offen.map(f => K_FELDER[f] || f).join(", ") + ".";
+    const el = document.getElementById("kAngaben");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  let d = null;
+  try {
+    const r = await fetch("kurse/buchen", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, kurs_id: kursId, angaben }) });
+    d = await r.json();
+  } catch (e) { d = null; }
+  if (!d || !d.ok || !d.url) {
+    if (fehler) fehler.textContent = (d && d.fehler)
+      || "Die Bezahlseite ließ sich nicht öffnen. Bitte später noch einmal.";
+    return;
+  }
+  try {
+    localStorage.setItem("fuchs_zahlung", d.id);
+    localStorage.setItem("fuchs_kurs", d.id);
+  } catch (e) {}
+  window.location.href = d.url;
+}
+
+// Rueckkehr von der Bezahlseite bei einer Kursbuchung: der Platz wird im
+// Hintergrund gebucht, das dauert einen Moment. Solange nachfragen.
+async function kursRueckkehr(sid) {
+  try { localStorage.removeItem("fuchs_kurs"); } catch (e) {}
+  for (let i = 0; i < 10; i++) {
+    let d = null;
+    try {
+      const r = await fetch("kurse/status", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id: sid }) });
+      d = await r.json();
+    } catch (e) {}
+    if (d && d.gefunden && d.status === "gebucht") {
+      const k = d.kurs || {};
+      await ladeKonto();
+      alert("Alles klar! 🦊\n\nDein Platz im Erste-Hilfe-Kurs ist gebucht:\n"
+        + kDatum(k.datum_iso) + " um " + (k.uhrzeit || "") + " Uhr\n" + (k.ort || "")
+        + "\n\nBring bitte deinen Personalausweis mit.");
+      return;
+    }
+    if (d && d.gefunden && d.status === "gescheitert") {
+      await ladeKonto();
+      alert("Deine Zahlung ist angekommen, aber der Platz konnte nicht gebucht werden.\n\n"
+        + (d.hinweis || "") + "\n\nDein Geld ist nicht weg – es liegt als Guthaben auf deinem "
+        + "Fahrschulkonto. Melde dich kurz im Büro, dann finden wir einen anderen Termin.");
+      return;
+    }
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  alert("Danke! Deine Zahlung ist angekommen. Der Kursplatz wird gerade gebucht – "
+    + "du bekommst die Bestätigung gleich als Nachricht. 🦊");
+}
+
+
+// ── Startseite als Tagesueberblick ───────────────────────────
+// Alles kommt in einer einzigen Auskunft vom Server (/app/start). Dadurch
+// wird die Seite in einem Zug fertig gezeichnet und springt nicht mehr,
+// waehrend man schon liest.
+let startDaten = null;
+
+async function holeStart() {
+  try {
+    const r = await fetch("start", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(token ? { token } : { code: zugangscode, nummer: chatNummer }) });
+    const d = await r.json();
+    if (d && d.ok) { startDaten = d; return d; }
+  } catch (e) {}
+  return null;
+}
+
+// Die Begruessung richtet sich nach der Uhrzeit auf dem Geraet des Schuelers.
+//   05-10 Uhr  Guten Morgen
+//   11-17 Uhr  Hallo
+//   18-22 Uhr  Guten Abend
+//   23-04 Uhr  Hallo   (nicht "Gute Nacht" - das ist ein Abschiedsgruss,
+//                       und wer die App oeffnet, kommt gerade an)
+function sdGruss(stunde) {
+  const h = typeof stunde === "number" ? stunde : new Date().getHours();
+  if (h >= 5 && h < 11) return "Guten Morgen";
+  if (h >= 11 && h < 18) return "Hallo";
+  if (h >= 18 && h < 23) return "Guten Abend";
+  return "Hallo";
+}
+
+function sdName(v) { return v ? esc(v) : ""; }
+
+function sdKopfHTML(d) {
+  const s = (d && d.schueler) || {};
+  const zeile2 = [s.klasse ? "Klasse " + esc(s.klasse) : "", esc(s.filiale || "")]
+    .filter(Boolean).join(" · ");
+  const bild = profilbild
+    ? `<img src="${profilbild}" alt="Profilbild">`
+    : (vorname ? esc(vorname.trim()[0].toUpperCase()) : "🦊");
+  return `<div class="sd-kopf">
+      <div style="flex:1; min-width:0;">
+        <h1>${sdGruss()}${sdName(s.vorname || vorname) ? ", " + sdName(s.vorname || vorname) : ""}</h1>
+        ${zeile2 ? `<div class="sd-meta" style="margin-top:1px;">${zeile2}</div>` : ""}
+      </div>
+      <div class="sd-bild" onclick="renderProfil()">${bild}</div>
+    </div>`;
+}
+
+function sdWann(t) {
+  if (!t) return "";
+  if (t.heute) return "Heute";
+  if (t.morgen) return "Morgen";
+  return esc(t.wochentag) + ", " + esc(t.datum_de);
+}
+
+function sdTerminHTML(d) {
+  const t = d && d.termin;
+  if (!t) {
+    return `<div class="sd-karte">
+        <div class="sd-eyebrow">Als Nächstes</div>
+        <div class="sd-gross">Noch keine Fahrstunde geplant</div>
+        <div class="sd-meta">Such dir einen Termin aus – dein Fahrlehrer bekommt die Anfrage sofort.</div>
+        <div class="sd-knopfreihe">
+          <button class="sd-knopf voll" onclick="waehleTab('fahrstunden','Fahrstunden')">Fahrstunde anfragen</button>
+        </div>
+      </div>`;
+  }
+  const zeit = t.beginn ? (esc(t.beginn) + (t.ende ? "–" + esc(t.ende) : "") + " Uhr") : "";
+  const ort = t.treffpunkt || "";
+  const route = ort
+    ? `<a class="sd-knopf" target="_blank" rel="noopener"
+         href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ort)}">Route</a>`
+    : "";
+  return `<div class="sd-karte betont">
+      <div class="sd-eyebrow">Als Nächstes</div>
+      <div class="sd-gross">${sdWann(t)}${zeit ? " · " + zeit : ""}</div>
+      <div class="sd-meta" style="font-size:14px; color:var(--dark); font-weight:600; margin-top:4px;">
+        ${esc(t.bezeichnung)}${t.fahrlehrer ? " · " + esc(t.fahrlehrer) : ""}</div>
+      ${ort ? `<div class="sd-meta">📍 ${esc(ort)}</div>` : ""}
+      <div class="sd-knopfreihe">
+        <button class="sd-knopf" onclick="waehleTab('fahrstunden','Fahrstunden')">Alle Termine</button>
+        ${route}
+      </div>
+    </div>`;
+}
+
+function sdAufgabenHTML(d) {
+  const liste = (d && d.aufgaben) || [];
+  if (!liste.length) {
+    if (d && d.phase === "fertig") {
+      return `<div class="sd-karte" style="background:#E9F7EE;border-color:#A7DCBB;">
+          <div class="sd-eyebrow" style="color:#1E7A43;">Geschafft</div>
+          <div class="sd-gross" style="color:#1E7A43;">Du hast alles bestanden 🎉</div>
+          <div class="sd-meta">Glückwunsch von uns allen – und immer gute Fahrt.</div>
+        </div>`;
+    }
+    return "";
+  }
+  return liste.map(a => `<div class="sd-aufgabe${a.dringend ? " dringend" : ""}"
+      onclick="sdAufgabe('${a.ziel}')">
+      <div class="sd-punkt">${a.dringend ? "!" : "•"}</div>
+      <div style="flex:1; min-width:0;"><b>${esc(a.text)}</b><span>${esc(a.hinweis || "")}</span></div>
+      <div class="sd-pfeil">›</div>
+    </div>`).join("");
+}
+
+function sdAufgabe(ziel) {
+  if (ziel === "bezahlen") renderBezahlen(Number((startDaten && startDaten.konto && startDaten.konto.saldo) || 0) * 100);
+  else if (ziel === "kurse") renderKurse();
+  else if (ziel === "dokumente") renderDokumente();
+  else waehleTab("home", "Start");
+}
+
+function sdWertHTML(zahl, ziel, name) {
+  const fertig = ziel && zahl >= ziel;
+  return `<div class="sd-wert${fertig ? " fertig" : ""}">
+      <b>${zahl}${ziel ? `<span style="font-size:13px;color:var(--gray);font-weight:600;">/${ziel}</span>` : ""}</b>
+      <i>${esc(name)}</i></div>`;
+}
+
+function sdFortschrittHTML(d) {
+  const f = d && d.fortschritt;
+  if (!f) return "";
+  const u = f.unterlagen || {};
+  const pruef = [];
+  if (f.pruefung_theorie === "bestanden") pruef.push("Theorie bestanden");
+  if (f.pruefung_praxis === "bestanden") pruef.push("Praxis bestanden");
+  return `<div class="sd-karte" onclick="waehleTab('ausbildung','Fortschritt')">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;">
+        <div class="sd-eyebrow">Dein Fortschritt</div>
+        <div style="font-size:13px;font-weight:800;color:var(--orange);">${f.prozent} %</div>
+      </div>
+      <div class="sd-balken"><div style="width:${Math.max(2, f.prozent)}%"></div></div>
+      <div class="sd-werte">
+        ${sdWertHTML(f.theorie.erledigt, f.theorie.ziel, "Theorie")}
+        ${sdWertHTML(f.sonderfahrten.erledigt, f.sonderfahrten.ziel, "Sonderfahrten")}
+        ${u.zeigen ? sdWertHTML(u.erledigt, u.ziel, "Unterlagen") : sdWertHTML(f.uebungsstunden, 0, "Fahrstunden")}
+      </div>
+      ${pruef.length ? `<div class="sd-meta" style="margin-top:10px;color:#1E7A43;font-weight:600;">✓ ${pruef.map(esc).join(" · ")}</div>` : ""}
+    </div>`;
+}
+
+function sdTheorieHTML(d) {
+  const th = d && d.theorie;
+  if (!th) return "";
+  // "heute" steht hier hinter einem Substantiv und ist ein Adverb - klein.
+  // Der Wochentag dagegen bleibt gross: "Theorieunterricht Mittwoch, 19.08.".
+  const wann = th.heute ? "heute" : (esc(th.wochentag) + ", " + esc(th.datum_de));
+  return `<div class="sd-zeile" onclick="renderTheorie()">
+      <div style="flex:1; min-width:0;">
+        <b>Theorieunterricht ${wann}</b>
+        <div class="sd-meta">${esc(th.beginn)}${th.bis ? "–" + esc(th.bis) : ""} Uhr${th.filiale ? " · " + esc(th.filiale) : ""}${th.thema ? " · " + esc(th.thema) : ""}</div>
+      </div>
+      <div class="sd-pfeil">›</div>
+    </div>`;
+}
+
+function sdKontoHTML(d) {
+  const k = (d && d.konto) || {};
+  if (!k.gefunden) return "";
+  // Ein offener Betrag steht schon ganz oben in den Aufgaben, mit Knopf.
+  // Ihn hier noch einmal gross zu wiederholen, macht die Seite nur laenger -
+  // und der Schueler weiss nicht, welche der beiden Stellen er antippen soll.
+  if (k.status === "offen") return "";
+  const gut = k.status === "guthaben";
+  return `<div class="sd-zeile" onclick="${d.bezahlen_moeglich ? "renderBezahlen(0)" : ""}">
+      <div style="width:22px;height:22px;border-radius:50%;background:#E9F7EE;color:#1E7A43;
+        display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">✓</div>
+      <div style="flex:1; min-width:0;">
+        <b>${gut ? "Dein Guthaben" : "Konto ausgeglichen"}</b></div>
+      <div style="font-weight:800;color:${gut ? "#1E7A43" : "var(--gray)"};font-size:15px;">${esc(k.betrag_text || "0,00 €")}</div>
+      <div class="sd-pfeil">›</div>
+    </div>`;
+}
+
+// Dieselben gezeichneten Symbole wie in der unteren Leiste - das Auge findet
+// die gesuchte Kachel schneller, wenn ueberall dieselbe Bildsprache gilt.
+const SD_SYM = {
+  dokumente: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a1.5 1.5 0 0 0-1.5 1.5v15A1.5 1.5 0 0 0 7 21h10a1.5 1.5 0 0 0 1.5-1.5V7.5z"/><path d="M14 3v4.5h4.5"/><path d="M9 13h6"/><path d="M9 16.5h4"/></svg>',
+  kontakt: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8.5" r="3.5"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
+  theorieplan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17"/><path d="M8 3.5v3"/><path d="M16 3.5v3"/><path d="M7.5 13h4"/></svg>',
+  lernen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5"/><path d="M12 6.5C13.5 5 16 4.5 20 5v13c-4-.5-6.5 0-8 1.5"/><path d="M12 6.5v13"/></svg>',
+  theorielernen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.4 2.4 0 1 1 2.9 2.6v1.3"/><path d="M12.5 16.6h.01"/></svg>',
+  erstehilfe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="17" height="12" rx="2.5"/><path d="M12 10v5"/><path d="M9.5 12.5h5"/></svg>',
+};
+
+function sdWeitereHTML(d) {
+  const felder = [
+    ["dokumente", "Dokumente", "senden & empfangen", "renderDokumente()"],
+    ["kontakt", "Kontakt", "Fahrlehrer & Büro", "renderKontakt()"],
+    ["theorieplan", "Theorieplan", "alle Termine", "renderTheorie()"],
+    ["theorielernen", "Theorie lernen", "Fragen üben", "renderLernbereich()"],
+    ["lernen", "Lernen", "Videos & Theorie", "waehleTab('mediathek','Lernen')"],
+  ];
+  if (d && d.kurse_aktiv) felder.push(["erstehilfe", "Erste-Hilfe-Kurs", "Termin buchen", "renderKurse()"]);
+  // Bleibt am Ende eine Kachel allein uebrig, nimmt sie die ganze Breite -
+  // eine halbe Kachel neben einer Luecke sieht aus wie ein Fehler.
+  const allein = felder.length % 2 === 1;
+  return `<div class="sd-raster">${felder.map((f, i) => `<div class="sd-feld${
+      allein && i === felder.length - 1 ? " breit" : ""}" onclick="${f[3]}">
+      <div class="sd-sym">${SD_SYM[f[0]] || ""}</div>
+      <div><b>${esc(f[1])}</b><span>${esc(f[2])}</span></div></div>`).join("")}</div>`;
+}
+
+function sdGeruestHTML() {
+  return sdKopfHTML(null)
+    + `<div class="sd-platzhalter"></div><div class="sd-platzhalter" style="height:64px"></div>
+       <div class="sd-platzhalter" style="height:120px"></div>`;
+}
+
+function sdSeiteHTML(d) {
+  return sdKopfHTML(d)
+    + sdTerminHTML(d)
+    + sdAufgabenHTML(d)
+    + sdFortschrittHTML(d)
+    + sdTheorieHTML(d)
+    + sdKontoHTML(d)
+    + sdWeitereHTML(d);
+  // Der Mediathek-Hinweis steht jetzt in der Mediathek selbst - dort, wo er
+  // gebraucht wird. Auf der Startseite stand er bei jedem Aufruf im Weg.
+}
+
+function renderProfil() {
+  aktiv = null;
+  const s = (startDaten && startDaten.schueler) || {};
+  main.innerHTML = `<button class="btn-ghost" onclick="waehleTab('home','Start')">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Dein Profil</h1>
+    <div class="sd-karte" style="text-align:center;">
+      <div class="sd-bild" style="width:104px;height:104px;font-size:36px;margin:4px auto 12px;
+        border:2px solid var(--orange-soft);${token ? "" : "cursor:default;"}"
+        onclick="${token ? "bildWaehlen()" : ""}">
+        ${profilbild ? `<img src="${profilbild}" alt="Profilbild">`
+                     : (vorname ? esc(vorname.trim()[0].toUpperCase()) : "🦊")}</div>
+      <div style="font-size:19px;font-weight:800;">${esc(s.vorname || vorname || "")}</div>
+      <div class="sd-meta">${[s.klasse ? "Klasse " + esc(s.klasse) : "", esc(s.filiale || "")].filter(Boolean).join(" · ")}</div>
+      ${s.fahrlehrer ? `<div class="sd-meta">Dein Fahrlehrer: ${esc(s.fahrlehrer)}</div>` : ""}
+      ${token ? `<button class="sd-knopf" style="margin-top:14px;" onclick="bildWaehlen()">Profilbild ändern</button>` : ""}
+    </div>
+    <input type="file" id="bildInput" accept="image/*" style="display:none;">
+    <div class="sd-karte">
+      <button class="sd-knopf" onclick="renderRecht()">Rechtliches &amp; Quellen</button>
+      <div class="sd-meta" style="text-align:center;">Woher die Theoriefragen kommen und
+        was du damit tun darfst</div>
+    </div>
+    ${token ? `<div class="sd-karte"><button class="sd-knopf" onclick="abmelden()">Abmelden</button></div>` : ""}`;
+  const bi = document.getElementById("bildInput");
+  if (bi) bi.onchange = bildGewaehlt;
+  main.scrollTop = 0;
+}
+
+
+// ── Theorieplan als eigene Seite ─────────────────────────────
+// Frueher war das eine aufklappbare Karte auf der Startseite. Als eigene Seite
+// ist mehr Platz: alle Termine der eigenen Filiale, darunter die der anderen.
+async function ladeTheoriePlan() {
+  try {
+    const r = await fetch("theorie/termine", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(token ? { token } : { code: zugangscode, nummer: chatNummer }) });
+    const d = await r.json();
+    theorieDaten = (d && d.ok) ? d : { eigene: [], andere: [] };
+  } catch (e) { theorieDaten = { eigene: [], andere: [] }; }
+  return theorieDaten;
+}
+
+function tpListe(liste, mitFiliale) {
+  return liste.map(t => `<div style="display:flex; gap:10px; align-items:baseline;
+      padding:10px 0; border-bottom:1px solid var(--line);">
+      <div style="font-weight:700; color:var(--dark); white-space:nowrap; font-size:14px; min-width:108px;">
+        ${esc(t.wochentag)} ${esc(t.datum_de)}</div>
+      <div style="color:var(--orange); font-weight:700; white-space:nowrap; font-size:14px;">
+        ${esc(t.beginn)}${t.bis ? "–" + esc(t.bis) : ""}</div>
+      <div style="flex:1; min-width:0; font-size:13px; color:var(--gray);">
+        ${mitFiliale ? "<b>" + esc(t.filiale) + "</b> · " : ""}${esc(t.thema)}</div>
+    </div>`).join("");
+}
+
+async function renderTheorie() {
+  aktiv = null;
+  const kopf = `<button class="btn-ghost" onclick="waehleTab('home','Start')">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Theorieunterricht</h1>`;
+  main.innerHTML = kopf + `<div class="sd-platzhalter"></div>`;
+  main.scrollTop = 0;
+
+  const d = await ladeTheoriePlan();
+  const eigene = (d && d.eigene) || [];
+  const andere = (d && d.andere) || [];
+
+  if (!eigene.length && !andere.length) {
+    main.innerHTML = kopf + `<div class="sd-karte">
+        <div style="font-size:14px; color:var(--gray);">Zurzeit sind keine Theorietermine
+        hinterlegt. Frag im Büro nach oder schau in ein paar Tagen noch einmal.</div>
+        ${d && d.plan_url ? `<a class="sd-knopf" style="margin-top:12px;" target="_blank"
+           rel="noopener" href="${esc(d.plan_url)}">Theorieplan auf der Webseite</a>` : ""}
+      </div>`;
+    return;
+  }
+
+  const eigenTitel = d.filiale ? "In " + esc(d.filiale) : "Deine Filiale";
+  main.innerHTML = kopf
+    + `<div class="hint">Keine Anmeldung nötig – einfach hinkommen und dich vor Ort
+        in die Liste eintragen.</div>`
+    + (eigene.length ? `<div class="sd-karte">
+        <div class="sd-eyebrow">${eigenTitel}</div>
+        <div style="margin-top:6px;">${tpListe(eigene, false)}</div>
+      </div>` : `<div class="sd-karte">
+        <div class="sd-eyebrow">${eigenTitel}</div>
+        <div class="sd-meta" style="margin-top:6px;">Hier ist gerade kein Termin hinterlegt.</div>
+      </div>`)
+    + (andere.length ? `<div class="sd-karte">
+        <div class="sd-eyebrow">Andere Filialen</div>
+        <div class="sd-meta" style="margin-top:2px;">Du darfst überall mitmachen.</div>
+        <div style="margin-top:6px;">${tpListe(andere, true)}</div>
+      </div>` : "")
+    + (d.plan_url ? `<a class="sd-knopf" style="margin-top:14px;" target="_blank"
+        rel="noopener" href="${esc(d.plan_url)}">Vollständiger Theorieplan →</a>` : "");
+  main.scrollTop = 0;
+}
+
+async function renderHome() {
+  aktiv = null;
+  if (!token && !zugangscode) { renderHomeAlt(); return; }
+  // Erst das Geruest, damit sofort etwas dasteht - dann die Inhalte am Stueck.
+  if (!startDaten) { main.innerHTML = sdGeruestHTML(); main.scrollTop = 0; }
+  const d = await holeStart();
+  if (!d) { renderHomeAlt(); return; }
+  if (d.bekannt === false) { renderHomeAlt(); return; }
+  main.innerHTML = sdSeiteHTML(d);
+  const bi = document.getElementById("bildInput");
+  if (bi) bi.onchange = bildGewaehlt;
+  main.scrollTop = 0;
+  if (window.fuchsPushPruefen) setTimeout(window.fuchsPushPruefen, 60);
+}
+
+// Nach einer Zahlung oder Buchung: Zahlen neu holen, wenn die Startseite zu sehen ist.
+async function startAuffrischen() {
+  startDaten = null;
+  const b = document.querySelector('nav button[data-tab="home"]');
+  if (b && b.classList.contains("aktiv")) await renderHome();
+}
+
+function renderBezahlen(vorschlagCent, zweck) {
+  aktiv = null;
+  const min = Number((zahlInfo && zahlInfo.min_cent) || 2000);
+  const max = Number((zahlInfo && zahlInfo.max_cent) || 200000);
+  const grenze = Number((zahlInfo && zahlInfo.karte_max_cent) || 25000);
+  const start = Math.min(Math.max(Number(vorschlagCent || 0) || 5000, min), max);
+  const schnell = [5000, 10000, 20000, 50000];
+  main.innerHTML = `
+    <button class="btn-ghost" onclick="renderHome()">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Bezahlen</h1>
+    <div class="hint">Der Betrag wird deinem Fahrschulkonto gutgeschrieben und mit deinen
+      Fahrstunden verrechnet. Fällt ein Termin aus, bleibt das Guthaben stehen.</div>
+    <div class="card">
+      <div class="eyebrow">Betrag</div>
+      <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+        <input id="zBetrag" type="number" inputmode="decimal" min="${(min/100)}" max="${(max/100)}"
+          step="1" value="${(start/100).toFixed(0)}"
+          style="flex:1; font-size:30px; font-weight:800; border:none; outline:none;
+                 background:transparent; color:var(--dark); width:100%;">
+        <span style="font-size:26px; font-weight:800; color:var(--gray);">€</span>
+      </div>
+      <div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:10px;">
+        ${schnell.map(c => `<button onclick="document.getElementById('zBetrag').value=${c/100};zHinweis();"
+          style="padding:7px 13px; border:1px solid #E7D9CC; background:#fff; color:#8A4B10;
+                 border-radius:999px; font-size:13px; font-weight:700;">${c/100} €</button>`).join("")}
+      </div>
+      <div id="zHinweis" class="meta" style="margin-top:10px;"></div>
+      <div id="zFehler" style="color:#B3261E; font-size:13px; margin-top:6px;"></div>
+      <button class="btn-primary" id="zWeiter" style="margin-top:12px; width:100%;"
+        onclick="zahlungStarten(${JSON.stringify(String(zweck || "")).replace(/"/g, "&quot;")})">Weiter zur Bezahlung</button>
+    </div>
+    <div class="hint" style="margin-top:2px;">
+      Bis ${grenze/100} € kannst du mit Apple&nbsp;Pay, Google&nbsp;Pay, PayPal oder Karte zahlen.
+      Bei größeren Beträgen läuft es über Lastschrift – das dauert ein paar Werktage,
+      bis das Geld da ist.
+    </div>`;
+  const feld = document.getElementById("zBetrag");
+  feld.addEventListener("input", zHinweis);
+  zHinweis();
+}
+
+function zHinweis() {
+  const el = document.getElementById("zHinweis");
+  if (!el) return;
+  const grenze = Number((zahlInfo && zahlInfo.karte_max_cent) || 25000);
+  const cent = Math.round(Number(document.getElementById("zBetrag").value || 0) * 100);
+  el.innerHTML = cent > grenze
+    ? "🏦 Über Lastschrift – dein Guthaben erscheint, sobald das Geld angekommen ist (2–5 Werktage)."
+    : "⚡ Apple Pay, Google Pay, PayPal oder Karte – das Guthaben ist sofort da.";
+}
+
+async function zahlungStarten(zweck) {
+  const fehler = document.getElementById("zFehler");
+  const knopf = document.getElementById("zWeiter");
+  fehler.textContent = "";
+  const cent = Math.round(Number(document.getElementById("zBetrag").value || 0) * 100);
+  if (!(cent > 0)) { fehler.textContent = "Bitte einen Betrag eingeben."; return; }
+  knopf.disabled = true; knopf.textContent = "Einen Moment …";
+  let d = null;
+  try {
+    const r = await fetch("zahlung/start", { method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, betrag_cent: cent, zweck: zweck || "" }) });
+    d = await r.json();
+  } catch (e) { d = null; }
+  knopf.disabled = false; knopf.textContent = "Weiter zur Bezahlung";
+  if (!d || !d.ok || !d.url) {
+    fehler.textContent = (d && d.fehler) || "Die Bezahlseite ließ sich nicht öffnen. Bitte später noch einmal.";
+    return;
+  }
+  try { localStorage.setItem("fuchs_zahlung", d.id); } catch (e) {}
+  window.location.href = d.url;
+}
+
+
+// ── Rueckkehr von der Bezahlseite, ohne Anmeldung ───────────────
+// Auf dem iPhone oeffnet die App eine fremde Adresse in einem eigenen
+// Browserfenster. Dieses Fenster kennt die Anmeldung der App nicht. Wer von
+// Stripe zurueckkommt, stand deshalb bisher vor der Anmeldeseite.
+//
+// Hier wird nichts vorgetaeuscht: Ob das Geld angekommen ist, weiss dieses
+// Fenster nicht - das meldet Stripe direkt an unseren Server, und der bucht
+// die Gutschrift. Die Seite sagt also nur, was wirklich feststeht.
+function zahlungSeiteOhneAnmeldung(ergebnis) {
+  try { if (gate) gate.style.display = "none"; } catch (e) {}
+  const n = document.getElementById("nav");
+  if (n) n.style.display = "none";
+  const gut = ergebnis === "ok";
+  main.innerHTML = `
+    <div style="text-align:center; padding:34px 6px 8px;">
+      <div style="font-size:52px; line-height:1;">${gut ? "✅" : "↩️"}</div>
+      <h1 style="margin:12px 0 6px;">${gut ? "Danke!" : "Bezahlung abgebrochen"}</h1>
+      <div class="meta" style="font-size:15px; line-height:1.55; max-width:30em; margin:0 auto;">
+        ${gut
+          ? "Deine Zahlung ist auf dem Weg zu uns. Sobald sie angekommen ist, "
+            + "wird sie automatisch deinem Fahrschulkonto gutgeschrieben – "
+            + "meist sofort, bei Lastschrift in zwei bis fünf Werktagen."
+          : "Es wurde nichts abgebucht. Du kannst den Vorgang jederzeit neu starten."}
+      </div>
+    </div>
+    <div class="hint" style="margin-top:22px;">
+      Du kannst dieses Fenster jetzt schließen und zurück in die Fuchs-App gehen.
+      Dein Guthaben siehst du dort auf der Startseite.
+    </div>
+    <button class="sd-knopf voll" style="display:block; flex:none; width:100%;
+      margin-top:16px; padding:14px;" onclick="location.href='/app/'">Zur Fuchs-App</button>`;
+  main.scrollTop = 0;
+}
+
+// Wartet im Hintergrund eine Zahlung auf ihre Bestaetigung? Dann sieht die
+// App beim Zurueckkommen aus dem Hintergrund selbst nach - so erfaehrt der
+// Schueler das Ergebnis dort, wo er angefangen hat.
+let zahlungPruefungLaeuft = false;
+async function zahlungNachschauen() {
+  if (zahlungPruefungLaeuft) return;
+  let sid = null;
+  try { sid = localStorage.getItem("fuchs_zahlung"); } catch (e) { return; }
+  if (!sid || !token) return;
+  zahlungPruefungLaeuft = true;
+  try {
+    let d = null;
+    try {
+      const r = await fetch("zahlung/status", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id: sid }) });
+      d = await r.json();
+    } catch (e) { d = null; }
+    if (!d || !d.gefunden) return;
+    if (d.status === "gebucht" || d.status === "bezahlt") {
+      try { localStorage.removeItem("fuchs_zahlung"); } catch (e) {}
+      await ladeZahlInfo(); await startAuffrischen(); await ladeKonto();
+      let kursSid = null;
+      try { kursSid = localStorage.getItem("fuchs_kurs"); } catch (e) {}
+      if (d.kurs || kursSid === sid) { await kursRueckkehr(sid); return; }
+      alert("Danke! " + eur(d.betrag_cent) + " sind auf deinem Fahrschulkonto gutgeschrieben. 🦊");
+    } else if (d.status === "unterwegs") {
+      try { localStorage.removeItem("fuchs_zahlung"); } catch (e) {}
+      await ladeZahlInfo(); await ladeKonto();
+      alert("Danke! Deine Lastschrift ist unterwegs. Sobald das Geld da ist – meist in "
+        + "2 bis 5 Werktagen – erscheint das Guthaben auf deinem Konto.");
+    }
+  } finally { zahlungPruefungLaeuft = false; }
+}
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden) { try { zahlungNachschauen(); } catch (e) {} }
+});
+
+// Rueckkehr von der Bezahlseite: NICHT der Adresse glauben, sondern den Server
+// fragen. Sonst koennte jemand einfach die Erfolgsseite aufrufen.
+async function zahlungRueckkehr() {
+  let sid = null;
+  try { sid = localStorage.getItem("fuchs_zahlung"); } catch (e) {}
+  const p = new URLSearchParams(window.location.search);
+  if (!p.get("zahlung") || !sid || !token) return;
+  try { history.replaceState({}, "", window.location.pathname); } catch (e) {}
+  if (p.get("zahlung") !== "ok") { try { localStorage.removeItem("fuchs_zahlung"); } catch (e) {} return; }
+  // Der Server braucht einen Moment, bis die Meldung von der Bank da ist.
+  for (let i = 0; i < 6; i++) {
+    let d = null;
+    try {
+      const r = await fetch("zahlung/status", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id: sid }) });
+      d = await r.json();
+    } catch (e) {}
+    if (d && d.gefunden && (d.status === "gebucht" || d.status === "bezahlt")) {
+      try { localStorage.removeItem("fuchs_zahlung"); } catch (e) {}
+      await ladeZahlInfo();
+      await startAuffrischen();
+      await ladeKonto();
+      // War das eine Kursbuchung? Dann gilt die Kursbestaetigung, nicht die
+      // allgemeine Gutschrift-Meldung - sonst waere von Guthaben die Rede,
+      // das gleich wieder fuer den Kurs draufgeht.
+      let kursSid = null;
+      try { kursSid = localStorage.getItem("fuchs_kurs"); } catch (e) {}
+      if (d.kurs || kursSid === sid) { await kursRueckkehr(sid); return; }
+      alert("Danke! " + eur(d.betrag_cent) + " sind auf deinem Fahrschulkonto gutgeschrieben. 🦊");
+      return;
+    }
+    if (d && d.gefunden && d.status === "unterwegs") {
+      try { localStorage.removeItem("fuchs_zahlung"); } catch (e) {}
+      alert("Danke! Deine Lastschrift ist unterwegs. Sobald das Geld da ist – meist in "
+        + "2 bis 5 Werktagen – erscheint das Guthaben auf deinem Konto.");
+      return;
+    }
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  alert("Deine Zahlung wird noch verarbeitet. Schau in ein paar Minuten noch einmal "
+    + "auf dein Guthaben – gebucht wird sie auf jeden Fall.");
 }
 
 // ── Kontostand-Karte (Guthaben / offener Betrag / ausgeglichen) ──
@@ -407,17 +1580,19 @@ function kontoKarteHTML() {
     bg = "#fff"; border = "1px solid #EDE6DF"; farbe = "var(--dark)";
     label = "Konto ausgeglichen"; betrag = k.betrag_text || "0,00 €"; sub = "Alles beglichen – top!"; icon = "✅";
   }
-  return `<div class="card" style="background:${bg}; border:${border}; display:flex; align-items:center; gap:14px;">
+  return `<div class="card" style="background:${bg}; border:${border}; display:flex; align-items:center; gap:14px; margin-bottom:0;">
     <div style="font-size:26px; line-height:1;">${icon}</div>
     <div style="flex:1; min-width:0;">
       <div class="eyebrow" style="color:${farbe};">${label}</div>
       <div style="font-size:26px; font-weight:800; color:${farbe}; letter-spacing:-.01em; margin-top:2px;">${esc(betrag)}</div>
       ${sub ? `<div style="font-size:12.5px; color:var(--gray); margin-top:3px;">${sub}</div>` : ""}
     </div>
-  </div>`;
+  </div>
+  ${zahlKnopfHTML()}`;
 }
 async function ladeKonto() {
   if (!token) return;
+  await ladeZahlInfo();
   try {
     const r = await fetch("konto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }) });
     const d = await r.json();
@@ -425,6 +1600,8 @@ async function ladeKonto() {
   } catch (e) { if (!kontoDaten) kontoDaten = { gefunden: false }; }
   const slot = document.getElementById("kontoSlot");
   if (slot) slot.innerHTML = kontoKarteHTML();
+  const kslot = document.getElementById("kurseSlot");
+  if (kslot) kslot.innerHTML = kurseKachelHTML();
 }
 
 // ── Kontakt (Fahrlehrer + Büro) ──────────────────────────────
@@ -648,7 +1825,18 @@ function renderListe() {
   const gruppen = [...new Set(LEKTIONEN.map(l => l.gruppe))];
   let html = `
     <h1>Mediathek</h1>
-    <div class="meta">${gesehen} von ${LEKTIONEN.length} Lektionen angesehen</div>`;
+    <div class="meta">${gesehen} von ${LEKTIONEN.length} Lektionen angesehen</div>
+    <div class="hint" style="margin-top:10px;">ℹ️ Die Mediathek ist eine <b>Ergänzung</b>
+      und ersetzt aktuell nicht den Pflicht-Theorieunterricht in deiner Filiale.</div>
+    <div class="sd-karte" style="border-color:var(--orange); cursor:pointer;"
+         onclick="renderLernbereich()">
+      <div class="sd-eyebrow">Theorie lernen</div>
+      <div class="sd-gross">Amtliche Prüfungsfragen üben</div>
+      <div class="sd-meta">Nach Sachgebiet üben, falsche Fragen wiederholen,
+        Prüfung simulieren – dein Stand wird gespeichert.</div>
+      <div style="font-size:13px; color:var(--orange); font-weight:700; margin-top:8px;">
+        Jetzt üben →</div>
+    </div>`;
   for (const g of gruppen) {
     html += `<div class="eyebrow">${esc(g)}</div>`;
     for (const l of LEKTIONEN.filter(x => x.gruppe === g)) {
@@ -713,6 +1901,548 @@ function renderPlayer(nr) {
     if (!gemeldetDone && fortschritt[nr]?.done) { gemeldetDone = true; meldeVideoStand(nr); }
   });
   v.addEventListener("pause", () => { speichere("fuchs_mediathek", fortschritt); meldeVideoStand(nr); });
+  main.scrollTop = 0;
+}
+
+// ── Rechtliches und Quellen ──────────────────────────────────
+// Zwei Dinge stehen als Pflicht im Lizenzvertrag mit der arge tp 21:
+// die Quellenangaben in fester Formulierung, und Nutzungsbedingungen, die
+// den Schuelern verbieten, die Inhalte ausserhalb der App zu verwenden.
+// Beides steht hier an einer Stelle, erreichbar aus dem Profil und aus dem
+// Lernbereich.
+function renderRecht() {
+  aktiv = null;
+  main.innerHTML = `
+    <button class="btn-ghost" onclick="renderProfil()">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Rechtliches &amp; Quellen</h1>
+    <div class="sd-meta" style="margin-top:0;">Woher die Theoriefragen kommen und was du
+      damit tun darfst.</div>
+
+    <div class="sd-karte">
+      <div class="sd-eyebrow">Quellenangaben</div>
+      <div class="rc-quelle">Quelle des deutschen Textes der Prüfungsaufgaben:<br>
+        <b>TÜV | DEKRA arge tp 21</b></div>
+      <div class="rc-quelle">Quelle der Verkehrszeichen und Verkehrseinrichtungen:<br>
+        <b>TÜV | DEKRA arge tp 21</b></div>
+      <div class="sd-meta">Die amtlichen Prüfungsaufgaben, Verkehrszeichen, Abbildungen und
+        Filme im Bereich „Theorie lernen“ werden mit Lizenz der
+        TÜV | DEKRA arge tp 21 GmbH, Dresden, verwendet. Der Fragenkatalog ist die
+        amtliche Ausgabe 2004 im Stand des Verkehrsblatts 19/2024.</div>
+    </div>
+
+    <div class="sd-karte">
+      <div class="sd-eyebrow">Nutzungsbedingungen für den Lernbereich</div>
+
+      <div class="rc-p"><b>1. Wozu dieser Bereich da ist</b><br>
+        Der Lernbereich gehört zu deiner Fahrausbildung bei uns. Du darfst ihn nutzen,
+        solange du bei uns in Ausbildung bist – für deine eigene Prüfungsvorbereitung.</div>
+
+      <div class="rc-p"><b>2. Die Inhalte gehören nicht uns</b><br>
+        Die Fragen, Verkehrszeichen, Bilder und Filme stammen aus dem amtlichen
+        Fragenkatalog. Die Rechte daran liegen bei der TÜV | DEKRA arge tp 21 GmbH.
+        Wir haben eine Lizenz, sie dir <b>in dieser App</b> zu zeigen – mehr nicht.</div>
+
+      <div class="rc-p"><b>3. Was du damit nicht tun darfst</b><br>
+        Die Inhalte des Lernbereichs dürfen ausschließlich innerhalb dieser App genutzt
+        werden. Nicht erlaubt ist insbesondere:
+        <ul class="rc-liste">
+          <li>sie zu kopieren, abzufotografieren, abzufilmen, mitzuschneiden oder auf
+            andere Weise zu speichern,</li>
+          <li>sie weiterzugeben, zu veröffentlichen oder anderen zugänglich zu machen –
+            auch nicht in Chatgruppen, Clouds oder sozialen Netzwerken,</li>
+          <li>sie zu verändern oder Urheber- und Quellenvermerke zu entfernen,</li>
+          <li>sie außerhalb der eigenen Prüfungsvorbereitung zu verwenden, insbesondere
+            nicht gewerblich.</li>
+        </ul></div>
+
+      <div class="rc-p"><b>4. Dein Zugang gilt nur für dich</b><br>
+        Gib deine Zugangsdaten nicht weiter. Über deinen Zugang darf niemand sonst auf
+        den Lernbereich zugreifen.</div>
+
+      <div class="rc-p"><b>5. Wenn sich jemand nicht daran hält</b><br>
+        Diese Regeln geben wir so weiter, wie sie in unserem Lizenzvertrag stehen. Wer
+        dagegen verstößt, kann den Zugang zum Lernbereich verlieren. Darüber hinaus
+        können Ansprüche der Rechteinhaberin entstehen.</div>
+
+      <div class="rc-p"><b>6. Ausbildung vor Ort bleibt Pflicht</b><br>
+        Der Lernbereich ist eine Ergänzung. Er ersetzt weder den vorgeschriebenen
+        Theorieunterricht noch die praktische Ausbildung.</div>
+    </div>
+
+    <div class="sd-karte">
+      <div class="sd-eyebrow">Anbieter dieser App</div>
+      <div class="rc-p" id="rcAnbieter">Lädt …</div>
+    </div>
+
+    <div class="hint" style="margin-top:6px;">Fragen dazu? Schreib uns im Chat oder ruf
+      im Büro an – wir erklären dir das gern.</div>`;
+  ladeAnbieter();
+  main.scrollTop = 0;
+}
+
+// Anschrift und Kontakt kommen vom Server, damit sie nur an einer Stelle gepflegt
+// werden muessen und in der Store-App nicht veralten.
+async function ladeAnbieter() {
+  const feld = document.getElementById("rcAnbieter");
+  if (!feld) return;
+  let d = null;
+  try {
+    const r = await fetch("anbieter");
+    d = await r.json();
+  } catch (e) { d = null; }
+  if (!d || !d.ok) { feld.innerHTML = "Die Angaben ließen sich gerade nicht laden."; return; }
+  feld.innerHTML = `<b>${esc(d.name || "")}</b><br>
+    ${esc(d.strasse || "")}<br>${esc(d.plz_ort || "")}<br><br>
+    ${d.telefon ? `Telefon: ${esc(d.telefon)}<br>` : ""}
+    ${d.email ? `E-Mail: ${esc(d.email)}<br>` : ""}
+    ${d.erlaubnisbehoerde ? `<br><span class="sd-meta">Fahrschulerlaubnis erteilt durch:
+      ${esc(d.erlaubnisbehoerde)}</span>` : ""}`;
+}
+
+// ── Theorie lernen ───────────────────────────────────────────
+// Die amtlichen Fragen der arge tp 21. Der Lernstand liegt auf dem SERVER,
+// nicht im Handy: nach einem Handywechsel ist er noch da, und im Büro kann
+// man sehen, wie weit jemand ist. Bilder und Filme kommen nur mit einem
+// Schlüssel, den ein angemeldeter Schüler bekommt (Vertragsauflage).
+let lbStand = null;         // Übersicht: Fortschritt und Sachgebiete
+let lbSchluessel = "";      // Schlüssel für Bilder und Filme (verfällt)
+let lbSitzung = null;       // laufende Übung oder Prüfung
+let lbSchonFrisch = false;  // Schlüssel schon einmal erneuert?
+
+function lbAdresse(p) {
+  // In der Store-App liegen die Dateien lokal - dort muss die Adresse absolut
+  // sein. Der native Vorbau bringt dafür eine Umrechnung mit.
+  try { if (window.FuchsNative && window.FuchsNative.absolut) return window.FuchsNative.absolut(p); } catch (e) {}
+  return p;
+}
+function lbMedien(pfad) { return lbAdresse("theorie/m/" + lbSchluessel + "/" + pfad); }
+
+async function lbRuf(weg, extra) {
+  const koerper = Object.assign(token ? { token } : { code: zugangscode, nummer: chatNummer }, extra || {});
+  try {
+    const r = await fetch("theorie/" + weg, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(koerper)
+    });
+    return await r.json();
+  } catch (e) { return { ok: false, fehler: "Keine Verbindung zum Server." }; }
+}
+
+// Ein Bild lädt nicht mehr? Dann ist meist der Schlüssel abgelaufen. Einmal
+// still erneuern und die Seite neu zeichnen - der Schüler merkt nichts davon.
+async function lbBildFehlt() {
+  if (lbSchonFrisch) return;
+  lbSchonFrisch = true;
+  const d = await lbRuf("uebersicht");
+  if (d && d.ok && d.medien_schluessel) {
+    lbSchluessel = d.medien_schluessel;
+    if (lbSitzung) lbFrageZeigen(); else renderLernbereich();
+  }
+}
+
+function lbKopf(titel, zurueck) {
+  return `<button class="btn-ghost" onclick="${zurueck}">← Zurück</button>
+    <h1 style="margin-bottom:2px;">${esc(titel)}</h1>`;
+}
+function lbWarten(kopf) {
+  main.innerHTML = kopf + `<div class="sd-platzhalter"></div>
+    <div class="sd-platzhalter" style="height:120px"></div>`;
+  main.scrollTop = 0;
+}
+
+// ── Übersicht ────────────────────────────────────────────────
+async function renderLernbereich() {
+  aktiv = null;
+  lbSitzung = null;
+  const kopf = lbKopf("Theorie lernen", "waehleTab('home','Start')");
+  if (!lbStand) lbWarten(kopf);
+  const d = await lbRuf("uebersicht");
+  if (!d || !d.ok) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">
+      ${esc((d && d.fehler) || "Der Lernbereich ist gerade nicht erreichbar. Versuch es später noch einmal.")}
+      </div></div>`;
+    main.scrollTop = 0;
+    return;
+  }
+  lbStand = d;
+  lbSchluessel = d.medien_schluessel || "";
+  lbSchonFrisch = false;
+
+  const gebiete = (d.gebiete || []).map(g => `
+    <div class="lb-gebiet" onclick="lbUeben('gebiet','${esc(g.gebiet)}','${esc(g.titel)}')">
+      <div style="flex:1; min-width:0;">
+        <b>${esc(g.titel)}</b>
+        <div class="lb-gebiet-meta">${g.sicher} von ${g.gesamt} sitzen${g.falsch ? " · " + g.falsch + " noch üben" : ""}</div>
+        <div class="lb-balken"><div style="width:${g.gesamt ? Math.round(g.sicher * 100 / g.gesamt) : 0}%"></div></div>
+      </div>
+      <div class="sd-pfeil">›</div>
+    </div>`).join("");
+
+  const pruefungen = (d.pruefungen || []).map(p => `
+    <div class="lb-zeile">
+      <div style="flex:1;">${esc(lbDatum(p.wann))}</div>
+      <div style="color:var(--gray);">${p.punkte} Fehlerpunkte</div>
+      <div style="font-weight:700; color:${p.bestanden ? "var(--green)" : "#C0392B"};">
+        ${p.bestanden ? "bestanden" : "nicht bestanden"}</div>
+    </div>`).join("");
+
+  main.innerHTML = kopf
+    + `<div class="sd-karte">
+        <div class="sd-eyebrow">Dein Stand · Klasse ${esc(d.klasse)}</div>
+        <div style="display:flex; align-items:baseline; gap:10px; margin-top:4px;">
+          <div style="font-size:34px; font-weight:800; color:var(--dark); line-height:1;">${d.prozent} %</div>
+          <div class="sd-meta" style="margin:0;">${d.sicher} von ${d.gesamt} Fragen sitzen sicher</div>
+        </div>
+        <div class="sd-balken" style="margin-top:10px;"><div style="width:${d.prozent}%"></div></div>
+        <div class="sd-meta">${d.offen} noch nie beantwortet · ${d.zu_ueben} noch nicht sicher</div>
+        <div class="sd-meta">Grundstoff ${d.grundstoff} Fragen · Zusatzstoff Klasse ${esc(d.klasse)} ${d.zusatzstoff} Fragen</div>
+      </div>`
+    + `<div class="lb-knopfreihe">
+        <button class="lb-knopf voll" onclick="lbUeben('alle','','Fragen üben')">Weiter üben</button>
+      </div>
+      <div class="lb-knopfreihe">
+        <button class="lb-knopf" onclick="lbUeben('neu','','Neue Fragen')">Neue Fragen</button>
+        <button class="lb-knopf${d.zu_ueben ? "" : " aus"}" ${d.zu_ueben ? "" : "disabled"}
+          onclick="lbUeben('falsch','','Falsche wiederholen')">Falsche wiederholen${d.zu_ueben ? " (" + d.zu_ueben + ")" : ""}</button>
+      </div>`
+    + `<div class="sd-karte" style="border-color:var(--orange);">
+        <div class="sd-eyebrow">Prüfungssimulation</div>
+        <div class="sd-meta" style="margin-top:3px;">${d.pruefung_fragen} Fragen wie im Amt.
+          Bestanden mit höchstens ${d.pruefung_grenze} Fehlerpunkten – und nicht zwei
+          Fünf-Punkte-Fragen falsch.</div>
+        <button class="lb-knopf voll" style="margin-top:12px;" onclick="lbPruefungStarten()">Prüfung starten</button>
+        ${pruefungen ? `<div class="sd-eyebrow" style="margin-top:16px;">Deine letzten Versuche</div>${pruefungen}` : ""}
+      </div>`
+    + `<div class="sd-eyebrow" style="margin-top:6px;">Nach Sachgebiet üben</div>`
+    + gebiete
+    + `<div class="hint" style="margin-top:6px;">ℹ️ Quelle des deutschen Textes der
+        Prüfungsaufgaben sowie der Verkehrszeichen und Verkehrseinrichtungen:
+        <b>TÜV | DEKRA arge tp 21</b>. Üben ersetzt nicht den Pflicht-Theorieunterricht.
+        <span style="display:block;margin-top:6px;font-weight:700;color:var(--orange);cursor:pointer;"
+          onclick="renderRecht()">Rechtliches &amp; Quellen ansehen →</span></div>`;
+  main.scrollTop = 0;
+}
+
+function lbDatum(sek) {
+  try {
+    const d = new Date(sek * 1000);
+    return ("0" + d.getDate()).slice(-2) + "." + ("0" + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear();
+  } catch (e) { return ""; }
+}
+
+// ── Üben ─────────────────────────────────────────────────────
+async function lbUeben(was, gebiet, titel) {
+  const kopf = lbKopf(titel, "renderLernbereich()");
+  lbWarten(kopf);
+  const d = await lbRuf("fragen", { was, gebiet: gebiet || "", anzahl: 20 });
+  if (!d || !d.ok || !(d.aufgaben || []).length) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">${
+      was === "falsch"
+        ? "Sehr gut – im Moment gibt es keine Frage, die du wiederholen müsstest."
+        : was === "neu"
+          ? "Du hast in diesem Bereich schon alle Fragen einmal gesehen. Nimm „Weiter üben“."
+          : esc((d && d.fehler) || "Hier ist gerade nichts zu üben.")
+      }</div>
+      <button class="lb-knopf voll" style="margin-top:12px;" onclick="renderLernbereich()">Zurück zur Übersicht</button></div>`;
+    main.scrollTop = 0;
+    return;
+  }
+  lbSchluessel = d.medien_schluessel || lbSchluessel;
+  lbSitzung = {
+    modus: "ueben", titel, was, gebiet: gebiet || "",
+    aufgaben: d.aufgaben, i: 0, gegeben: {}, geprueft: {}, richtig: 0, filme: {}
+  };
+  lbFrageZeigen();
+}
+
+// ── Prüfung ──────────────────────────────────────────────────
+async function lbPruefungStarten() {
+  const kopf = lbKopf("Prüfungssimulation", "renderLernbereich()");
+  lbWarten(kopf);
+  const d = await lbRuf("pruefung");
+  if (!d || !d.ok || !(d.aufgaben || []).length) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">
+      Die Prüfung lässt sich gerade nicht starten.</div>
+      <button class="lb-knopf voll" style="margin-top:12px;" onclick="renderLernbereich()">Zurück</button></div>`;
+    return;
+  }
+  lbSchluessel = d.medien_schluessel || lbSchluessel;
+  lbSitzung = {
+    modus: "pruefung", titel: "Prüfungssimulation", grenze: d.grenze,
+    aufgaben: d.aufgaben, i: 0, gegeben: {}, geprueft: {}, filme: {}
+  };
+  lbFrageZeigen();
+}
+
+// ── Eine Frage anzeigen ──────────────────────────────────────
+function lbFrageZeigen(halten) {
+  const s = lbSitzung;
+  if (!s) { renderLernbereich(); return; }
+  // Beim Auswaehlen und beim Pruefen wird nur neu gezeichnet - dann darf die
+  // Seite nicht nach oben springen, sonst sieht niemand die Rueckmeldung.
+  const stand = halten ? main.scrollTop : 0;
+  const a = s.aufgaben[s.i];
+  const pruefung = s.modus === "pruefung";
+  const e = s.geprueft[a.nummer];          // Ergebnis (nur beim Üben)
+  if (s.gegeben[a.nummer] === undefined) {
+    s.gegeben[a.nummer] = a.art === "freitext"
+      ? new Array(a.luecken || 1).fill("")
+      : [false, false, false];
+  }
+  const g = s.gegeben[a.nummer];
+
+  const kopf = `<button class="btn-ghost" onclick="lbAbbrechen()">← ${pruefung ? "Prüfung abbrechen" : "Zurück"}</button>
+    <div class="lb-fortschritt">
+      <div class="lb-zaehler">Frage ${s.i + 1} von ${s.aufgaben.length}</div>
+      <div class="lb-punkte">${a.fehlerpunkte} ${a.fehlerpunkte === 1 ? "Punkt" : "Punkte"}</div>
+    </div>
+    <div class="lb-balken duenn"><div style="width:${Math.round((s.i + 1) * 100 / s.aufgaben.length)}%"></div></div>`;
+
+  main.innerHTML = kopf
+    + (pruefung ? lbPunkteLeiste(s) : "")
+    + `<div class="lb-frage">${esc(a.frage)}</div>`
+    + (a.zusatz ? `<div class="sd-meta" style="margin-top:-6px;">${esc(a.zusatz)}</div>` : "")
+    + lbMedienHTML(a, s)
+    + lbAntwortenHTML(a, g, e)
+    + lbFussHTML(a, s, e);
+
+  lbFilmVorbereiten(a, s);
+  main.scrollTop = stand;
+}
+
+function lbPunkteLeiste(s) {
+  return `<div class="lb-punktleiste">` + s.aufgaben.map((a, i) => {
+    const g = s.gegeben[a.nummer];
+    const beantwortet = g && (a.art === "freitext"
+      ? g.some(x => String(x || "").trim())
+      : g.some(Boolean));
+    return `<button class="lb-punkt${beantwortet ? " voll" : ""}${i === s.i ? " hier" : ""}"
+      onclick="lbSpringe(${i})" aria-label="Frage ${i + 1}"></button>`;
+  }).join("") + `</div>`;
+}
+
+function lbMedienHTML(a, s) {
+  if (a.film) {
+    const grenze = s.modus === "pruefung" ? 2 : 0;   // 0 = unbegrenzt
+    const gesehen = s.filme[a.nummer] || 0;
+    const rest = grenze ? grenze - gesehen : 0;
+    return `<div class="lb-medium">
+      <video id="lbFilm" playsinline preload="metadata"
+        ${a.standbild ? `poster="${esc(lbMedien(a.standbild))}"` : ""}
+        src="${esc(lbMedien(a.film))}" onerror="lbBildFehlt()"></video>
+      <button class="lb-knopf voll" id="lbFilmKnopf" onclick="lbFilmStarten()"
+        ${grenze && rest <= 0 ? "disabled" : ""}>
+        ${grenze
+          ? (rest > 0 ? `▶ Film ansehen (noch ${rest}×)` : "Film schon zweimal gesehen")
+          : "▶ Film ansehen"}</button>
+      <div class="sd-meta">${grenze
+        ? "In der echten Prüfung darfst du den Film zweimal ansehen."
+        : "Beim Üben darfst du den Film so oft ansehen, wie du willst."}</div>
+    </div>`;
+  }
+  if (a.bild) {
+    return `<div class="lb-medium">
+      <img src="${esc(lbMedien(a.bild))}" alt="Bild zur Frage" onerror="lbBildFehlt()">
+      ${a.bildunter ? `<div class="sd-meta">${esc(a.bildunter)}</div>` : ""}
+    </div>`;
+  }
+  return "";
+}
+
+// Der Film läuft ohne Bedienleiste: in der Prüfung soll niemand zurückspulen.
+function lbFilmVorbereiten(a, s) {
+  const v = document.getElementById("lbFilm");
+  if (!v) return;
+  v.onended = function () {
+    s.filme[a.nummer] = (s.filme[a.nummer] || 0) + 1;
+    const k = document.getElementById("lbFilmKnopf");
+    if (!k) return;
+    if (s.modus === "pruefung") {
+      const rest = 2 - s.filme[a.nummer];
+      k.textContent = rest > 0 ? "▶ Film ansehen (noch " + rest + "×)" : "Film schon zweimal gesehen";
+      k.disabled = rest <= 0;
+    }
+  };
+}
+function lbFilmStarten() {
+  const v = document.getElementById("lbFilm");
+  if (v) { try { v.currentTime = 0; v.play(); } catch (e) {} }
+}
+
+// Bei manchen Fragen ist die Antwort die Fortsetzung des Fragesatzes
+// ("Darauf, dass ..."). Die Lieferung setzt davor einen Strich - der sieht in
+// der App wie ein Tippfehler aus und kommt deshalb weg.
+function lbAntwortText(x) {
+  return String(x || "").replace(/^\s*[-–—]\s*/, "");
+}
+
+function lbAntwortenHTML(a, g, e) {
+  if (a.art === "freitext") {
+    const t = a.textteile || [];
+    let h = `<div class="lb-freitext">`;
+    h += t[0] ? `<span>${esc(t[0])}</span>` : "";
+    for (let i = 0; i < (a.luecken || 1); i++) {
+      h += `<input type="text" inputmode="text" autocomplete="off" value="${esc(g[i] || "")}"
+        ${e ? "disabled" : ""} oninput="lbText(${i}, this.value)">`;
+      if (i === 0 && t[1]) h += `<span>${esc(t[1])}</span>`;
+    }
+    h += t[2] ? `<span>${esc(t[2])}</span>` : "";
+    h += `</div>`;
+    if (e) h += `<div class="lb-ergebnis ${e.richtig ? "gut" : "schlecht"}">${
+      e.richtig ? "✓ Richtig." : "✗ Leider falsch. Richtig ist: <b>" + esc((e.loesung || []).join(" / ")) + "</b>"}</div>`;
+    return h;
+  }
+  const bilder = a.art === "abbildungsauswahl";
+  const antworten = (a.antworten || []).map((x, i) => {
+    const gewaehlt = !!g[i];
+    let klasse = "lb-antwort" + (bilder ? " bild" : "") + (gewaehlt ? " gewaehlt" : "");
+    if (e) {
+      const soll = !!(e.loesung || [])[i];
+      if (soll) klasse += " richtig";
+      else if (gewaehlt) klasse += " falsch";
+    }
+    const inhalt = bilder
+      ? `<img src="${esc(lbMedien((a.antwortbilder || {})[String(i + 1)] || ""))}" alt="Antwort ${i + 1}" onerror="lbBildFehlt()">`
+      : `<span>${esc(lbAntwortText(x))}</span>`;
+    return `<div class="${klasse}" ${e ? "" : `onclick="lbWaehle(${i})"`}>
+      <div class="lb-haken">${e && (e.loesung || [])[i] ? "✓" : gewaehlt ? "✓" : ""}</div>
+      ${inhalt}</div>`;
+  }).join("");
+  let h = `<div class="lb-antworten${bilder ? " bilder" : ""}">${antworten}</div>`;
+  if (e) h += `<div class="lb-ergebnis ${e.richtig ? "gut" : "schlecht"}">${
+    e.richtig
+      ? (e.sitzt ? "✓ Richtig – die Frage sitzt." : "✓ Richtig.")
+      : "✗ Leider falsch. Die grün umrandeten Antworten wären richtig gewesen."}</div>`;
+  return h;
+}
+
+function lbFussHTML(a, s, e) {
+  const pruefung = s.modus === "pruefung";
+  const letzte = s.i >= s.aufgaben.length - 1;
+  if (pruefung) {
+    const offen = s.aufgaben.filter(x => {
+      const g = s.gegeben[x.nummer];
+      if (!g) return true;
+      return x.art === "freitext" ? !g.some(y => String(y || "").trim()) : !g.some(Boolean);
+    }).length;
+    return `<div class="lb-fuss">
+      <div class="lb-knopfreihe">
+        <button class="lb-knopf${s.i ? "" : " aus"}" ${s.i ? "" : "disabled"} onclick="lbSpringe(${s.i - 1})">←</button>
+        <button class="lb-knopf${letzte ? " aus" : ""}" ${letzte ? "disabled" : ""} onclick="lbSpringe(${s.i + 1})">Weiter →</button>
+      </div>
+      <button class="lb-knopf voll stark" style="margin-top:8px;" onclick="lbAbgeben()">Prüfung abgeben</button>
+      ${offen ? `<div class="sd-meta" style="text-align:center;">Noch ${offen} ${offen === 1 ? "Frage ist" : "Fragen sind"} unbeantwortet.</div>` : ""}
+    </div>`;
+  }
+  if (!e) {
+    return `<div class="lb-fuss">
+      <button class="lb-knopf voll stark" onclick="lbPruefen()">Antwort prüfen</button>
+    </div>`;
+  }
+  return `<div class="lb-fuss">
+    <button class="lb-knopf voll stark" onclick="lbWeiter()">${letzte ? "Auswertung ansehen" : "Weiter →"}</button>
+  </div>`;
+}
+
+// ── Eingaben ─────────────────────────────────────────────────
+function lbWaehle(i) {
+  const s = lbSitzung; if (!s) return;
+  const a = s.aufgaben[s.i];
+  if (s.geprueft[a.nummer]) return;
+  s.gegeben[a.nummer][i] = !s.gegeben[a.nummer][i];
+  lbFrageZeigen(true);
+}
+function lbText(i, wert) {
+  const s = lbSitzung; if (!s) return;
+  s.gegeben[s.aufgaben[s.i].nummer][i] = wert;
+}
+function lbSpringe(i) {
+  const s = lbSitzung; if (!s) return;
+  if (i < 0 || i >= s.aufgaben.length) return;
+  s.i = i;
+  lbFrageZeigen();
+}
+function lbWeiter() {
+  const s = lbSitzung; if (!s) return;
+  if (s.i >= s.aufgaben.length - 1) { lbUebungFertig(); return; }
+  s.i++;
+  lbFrageZeigen();
+}
+function lbAbbrechen() {
+  lbStand = null;          // Stand hat sich geändert - neu holen
+  renderLernbereich();
+}
+
+async function lbPruefen() {
+  const s = lbSitzung; if (!s) return;
+  const a = s.aufgaben[s.i];
+  const d = await lbRuf("antwort", { aufgabe: a.nummer, gegeben: s.gegeben[a.nummer] });
+  if (!d || !d.ok) return;
+  s.geprueft[a.nummer] = d;
+  if (d.richtig) s.richtig = (s.richtig || 0) + 1;
+  lbFrageZeigen(true);
+}
+
+function lbUebungFertig() {
+  const s = lbSitzung;
+  const geprueft = Object.keys(s.geprueft).length;
+  const richtig = s.richtig || 0;
+  lbStand = null;
+  main.innerHTML = lbKopf("Geschafft", "renderLernbereich()")
+    + `<div class="sd-karte">
+        <div class="sd-eyebrow">${esc(s.titel)}</div>
+        <div style="font-size:30px; font-weight:800; color:var(--dark); margin-top:6px;">
+          ${richtig} von ${geprueft} richtig</div>
+        <div class="sd-meta">Dein Stand ist gespeichert – du kannst jederzeit weitermachen.</div>
+        <button class="lb-knopf voll stark" style="margin-top:14px;"
+          onclick="lbUeben('${esc(s.was || "alle")}','${esc(s.gebiet || "")}','${esc(s.titel)}')">Nächste Runde</button>
+        <button class="lb-knopf voll" style="margin-top:8px;" onclick="renderLernbereich()">Zurück zur Übersicht</button>
+      </div>`;
+  lbSitzung = null;
+  main.scrollTop = 0;
+}
+
+// ── Prüfung abgeben ──────────────────────────────────────────
+async function lbAbgeben() {
+  const s = lbSitzung; if (!s) return;
+  const kopf = lbKopf("Auswertung", "renderLernbereich()");
+  lbWarten(kopf);
+  const antworten = s.aufgaben.map(a => ({ nummer: a.nummer, gegeben: s.gegeben[a.nummer] }));
+  const d = await lbRuf("pruefung-abgeben", { antworten });
+  lbStand = null;
+  if (!d || !d.ok) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">
+      Die Auswertung hat nicht geklappt. Deine Antworten sind leider nicht gespeichert.</div>
+      <button class="lb-knopf voll" style="margin-top:12px;" onclick="renderLernbereich()">Zurück</button></div>`;
+    return;
+  }
+  const falsche = (d.einzeln || []).filter(x => !x.richtig);
+  main.innerHTML = kopf
+    + `<div class="sd-karte" style="border-color:${d.bestanden ? "var(--green)" : "#C0392B"};">
+        <div class="sd-eyebrow" style="color:${d.bestanden ? "var(--green)" : "#C0392B"};">
+          ${d.bestanden ? "Bestanden" : "Nicht bestanden"}</div>
+        <div style="font-size:34px; font-weight:800; color:var(--dark); margin-top:4px; line-height:1.1;">
+          ${d.punkte} Fehlerpunkte</div>
+        <div class="sd-meta">${d.richtig} von ${d.gesamt} Fragen richtig · erlaubt sind ${d.grenze} Fehlerpunkte</div>
+        ${d.zwei_fuenfer ? `<div class="lb-ergebnis schlecht" style="margin-top:10px;">
+          Zwei Fragen mit fünf Fehlerpunkten waren falsch – das allein führt zum Durchfallen.</div>` : ""}
+      </div>`
+    + (falsche.length ? `<div class="sd-karte">
+        <div class="sd-eyebrow">Diese Fragen waren falsch</div>
+        <div class="sd-meta" style="margin-top:3px;">Du findest sie jetzt unter „Falsche wiederholen“.</div>
+        <div style="margin-top:8px;">${falsche.map(x => {
+          const q = s.aufgaben.find(y => y.nummer === x.nummer);
+          const text = q ? q.frage : x.nummer;
+          return `<div class="lb-zeile">
+            <div style="flex:1; min-width:0;">${esc(text.length > 78 ? text.slice(0, 78) + "…" : text)}</div>
+            <div style="color:var(--gray); white-space:nowrap;">${x.fehlerpunkte} ${x.fehlerpunkte === 1 ? "Punkt" : "Punkte"}</div>
+          </div>`;
+        }).join("")}</div>
+      </div>` : "")
+    + `<button class="lb-knopf voll stark" style="margin-top:12px;"
+        onclick="lbUeben('falsch','','Falsche wiederholen')">Falsche Fragen jetzt üben</button>
+       <button class="lb-knopf voll" style="margin-top:8px;" onclick="renderLernbereich()">Zurück zur Übersicht</button>`;
+  lbSitzung = null;
   main.scrollTop = 0;
 }
 
@@ -790,6 +2520,7 @@ function renderChat() {
 let ausbKatalog = null;
 let ausbKataloge = {};   // klasse -> katalog
 let ausbStand = {};
+let ausbKlasseEcht = "";  // echte Klasse laut Fahrschulmanager (z. B. B197) – nur fürs Etikett
 let ausbFilter = "alle";   // alle | offen | sicher
 
 async function renderAusbildung() {
@@ -811,6 +2542,7 @@ async function renderAusbildung() {
     });
     const d = await rs.json();
     const klasse = d.klasse || "B";
+    ausbKlasseEcht = (d.klasse_echt || klasse);   // echte Klasse (B197 …) fürs Etikett
     ausbStand = d.stand || {};
     // … dann NUR die passende Karte laden (Motorrad-Schüler sehen keine Pkw-Karte).
     if (!ausbKataloge[klasse]) {
@@ -835,6 +2567,16 @@ async function renderAusbildung() {
 
 function ausbSetFilter(f) { ausbFilter = f; zeichneAusbildung(); }
 
+// Etikett mit der ECHTEN Klasse (z. B. B197), Karte bleibt B/A.
+// "Ausbildung Klasse B (Pkw)" -> "Ausbildung Klasse B197 (Pkw)"
+function ausbKlasseTitel(k) {
+  const echt = ausbKlasseEcht || (k && k.klasse) || "B";
+  if (k && k.titel) {
+    return (echt && echt !== k.klasse) ? k.titel.replace('Klasse ' + k.klasse, 'Klasse ' + echt) : k.titel;
+  }
+  return 'Klasse ' + echt;
+}
+
 function zeichneAusbildung() {
   const k = ausbKatalog, stand = ausbStand, stufen = k.stufen;
   const stufe = w => stufen.find(s => s.wert === w) || stufen[0];
@@ -848,7 +2590,7 @@ function zeichneAusbildung() {
   // Kopf: Fortschritt zur Prüfungsreife
   let h = `
     <h1 style="margin-bottom:2px;">Meine Ausbildung</h1>
-    <div class="meta" style="margin-bottom:2px;">${esc(k.titel || ('Klasse ' + k.klasse))} · alle ${gesamt} Aufgaben, die du für die Prüfung können musst</div>
+    <div class="meta" style="margin-bottom:2px;">${esc(ausbKlasseTitel(k))} · alle ${gesamt} Aufgaben, die du für die Prüfung können musst</div>
 
     <div class="card" style="border:none; background:var(--orange-soft);">
       <div class="eyebrow">Weg zur Prüfungsreife</div>
@@ -940,6 +2682,8 @@ let fsAnsicht = "liste";        // liste | anfrage
 let fsAuswahl = {};             // tag -> [blockKeys]
 let fsAbDatum = "";
 let fsFiliale = "";
+let fsAnzahl = 1;               // gewünschte Anzahl Fahrstunden (à 80 Min.)
+const FS_MINUTEN = 80;          // eine Fahrstunde = 80 Minuten
 let fsData = null;
 let fsGesendet = false;
 
@@ -1004,7 +2748,12 @@ function zeichneFahrstunden(d) {
           <div style="font-weight:700; font-size:14.5px; color:var(--dark);">${esc(t.datum)}${t.uhrzeit ? " · " + esc(t.uhrzeit) + (t.bis ? "–" + esc(t.bis) : "") + " Uhr" : ""}</div>
           <div style="font-size:12.5px; color:var(--gray); margin-top:1px;">${esc(t.art_text || "Fahrstunde")}${t.fahrlehrer && t.fahrlehrer !== "unbekannt" ? " · " + esc(t.fahrlehrer) : ""}</div>
         </div>
+        <div style="display:flex; gap:6px; flex:0 0 auto;">
+        ${bezahlbar() && Number(t.preis_cent) > 0 ? `<button onclick="renderBezahlen(${Number(t.preis_cent)}, 'Fahrstunde ${esc(t.datum)}')"
+          style="flex:0 0 auto; padding:7px 13px; border:none; background:var(--orange); color:#fff;
+                 border-radius:999px; font-size:12.5px; font-weight:700; white-space:nowrap;">💳 ${eur(t.preis_cent)}</button>` : ""}
         ${kannStorno ? `<button onclick="fsStornoStart(${t.id})" style="flex:0 0 auto; padding:7px 13px; border:1px solid #E7D9CC; background:#fff; color:#8A4B10; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer;">Absagen</button>` : ""}
+        </div>
       </div>`;
     });
     h += `</div>`;
@@ -1107,20 +2856,48 @@ async function fsStornoAusfuehren(id) {
   renderFahrstunden();
 }
 
-function fsToggle(tag, block) {
-  const arr = fsAuswahl[tag] || [];
-  fsAuswahl[tag] = arr.includes(block) ? arr.filter(b => b !== block) : [...arr, block];
-  if (!fsAuswahl[tag].length) delete fsAuswahl[tag];
+// Ein Tipp aendert nur den angetippten Knopf - nicht die ganze Seite.
+// Frueher wurde hier renderFsAnfrage() gerufen; dabei sprang der Bildschirm
+// jedes Mal an den Anfang zurueck (Befund 21.08.2026).
+function fsDatumMerken() {
   const inp = document.getElementById("fsDatum");
   if (inp) fsAbDatum = inp.value;
-  renderFsAnfrage();
+}
+
+function fsAnzahlText() {
+  return "Gewählt: " + fsAnzahl + " " + (fsAnzahl === 1 ? "Fahrstunde" : "Fahrstunden")
+    + " · " + (fsAnzahl * FS_MINUTEN) + " Minuten";
+}
+
+// Genau einen Knopf ein- oder ausschalten.
+function fsChip(wahl, an) {
+  const el = document.querySelector(wahl);
+  if (el) el.classList.toggle("an", !!an);
+}
+
+function fsToggle(tag, block) {
+  fsDatumMerken();
+  const arr = fsAuswahl[tag] || [];
+  const jetztAn = !arr.includes(block);
+  fsAuswahl[tag] = jetztAn ? [...arr, block] : arr.filter(b => b !== block);
+  if (!fsAuswahl[tag].length) delete fsAuswahl[tag];
+  fsChip('.fs-blk[data-tag="' + tag + '"][data-blk="' + block + '"]', jetztAn);
 }
 
 function fsSetFiliale(name) {
+  fsDatumMerken();
   fsFiliale = name;
-  const inp = document.getElementById("fsDatum");
-  if (inp) fsAbDatum = inp.value;
-  renderFsAnfrage();
+  document.querySelectorAll(".fs-fil").forEach(el =>
+    el.classList.toggle("an", el.dataset.fil === name));
+}
+
+function fsSetAnzahl(n) {
+  fsDatumMerken();
+  fsAnzahl = n;
+  document.querySelectorAll(".fs-anz").forEach(el =>
+    el.classList.toggle("an", Number(el.dataset.anz) === n));
+  const txt = document.getElementById("fsAnzahlText");
+  if (txt) txt.textContent = fsAnzahlText();
 }
 
 function renderFsAnfrage() {
@@ -1138,10 +2915,8 @@ function renderFsAnfrage() {
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">`;
     for (const f of filialen) {
       const an = fsFiliale === f;
-      h += `<button onclick="fsSetFiliale('${f.replace(/'/g, "\\'")}')" style="
-        border:1.5px solid ${an ? "var(--orange)" : "var(--line)"}; background:${an ? "var(--orange)" : "#fff"};
-        color:${an ? "#fff" : "var(--gray)"}; border-radius:999px; padding:8px 14px; font-size:13px;
-        font-weight:700; cursor:pointer; font-family:inherit;">${esc(f)}</button>`;
+      h += `<button class="fs-chip fs-fil${an ? " an" : ""}" data-fil="${esc(f)}"
+        onclick="fsSetFiliale('${f.replace(/'/g, "\\'")}')">${esc(f)}</button>`;
     }
     h += `</div></div>`;
   }
@@ -1150,6 +2925,21 @@ function renderFsAnfrage() {
     <div class="card">
       <div class="eyebrow">Ab wann möchtest du fahren?</div>
       <input id="fsDatum" type="date" value="${esc(fsAbDatum)}" style="margin-top:8px; width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 14px; font-size:15px; font-family:inherit; outline:none; background:#fff;">
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">Wie viele Fahrstunden möchtest du?</div>
+      <div style="font-size:12px; color:var(--gray); margin:4px 0 8px;">Eine Fahrstunde dauert 80 Minuten. Tippe die gewünschte Anzahl an.</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        ${[1,2,3,4,5,6,7,8,9,10].map(n => {
+          const an = fsAnzahl === n;
+          return `<button class="fs-chip fs-anz${an ? " an" : ""}" data-anz="${n}"
+            onclick="fsSetAnzahl(${n})">${n}</button>`;
+        }).join("")}
+      </div>
+      <div id="fsAnzahlText" style="font-size:12.5px; color:var(--dark); margin-top:9px; font-weight:600;">
+        ${fsAnzahlText()}
+      </div>
     </div>
 
     <div class="card">
@@ -1162,10 +2952,8 @@ function renderFsAnfrage() {
       <div style="display:flex; gap:6px; flex-wrap:wrap;">`;
     for (const [key, label] of FS_BLOECKE) {
       const an = sel.includes(key);
-      h += `<button onclick="fsToggle('${tag}','${key}')" style="
-        border:1.5px solid ${an ? "var(--orange)" : "var(--line)"}; background:${an ? "var(--orange)" : "#fff"};
-        color:${an ? "#fff" : "var(--gray)"}; border-radius:999px; padding:6px 10px; font-size:12px;
-        font-weight:700; cursor:pointer; font-family:inherit;">${label}</button>`;
+      h += `<button class="fs-chip fs-blk${an ? " an" : ""}" data-tag="${tag}" data-blk="${key}"
+        onclick="fsToggle('${tag}','${key}')">${label}</button>`;
     }
     h += `</div></div>`;
   }
@@ -1173,6 +2961,8 @@ function renderFsAnfrage() {
     <button class="btn-primary" id="fsSenden" style="width:100%;" onclick="sendeFsAnfrage()">Anfrage senden</button>
     <div id="fsHinweis" class="meta" style="text-align:center; color:#D64545;"></div>`;
   main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">${h}</div>`;
+  const dat = document.getElementById("fsDatum");
+  if (dat) dat.addEventListener("input", fsDatumMerken);
   main.scrollTop = 0;
 }
 
@@ -1190,11 +2980,11 @@ async function sendeFsAnfrage() {
   try {
     const r = await fetch("fahrstunden/anfrage", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, filiale: fsFiliale, ab_datum: fsAbDatum, verfuegbarkeit: fsAuswahl }),
+      body: JSON.stringify({ token, filiale: fsFiliale, ab_datum: fsAbDatum, verfuegbarkeit: fsAuswahl, anzahl: fsAnzahl, dauer_min: FS_MINUTEN }),
     });
     const d = await r.json();
     if (!d.ok) { hinweis.textContent = d.fehler || "Das hat nicht geklappt – versuch es nochmal."; btn.disabled = false; btn.textContent = "Anfrage senden"; return; }
-    fsAuswahl = {}; fsAbDatum = ""; fsFiliale = "";
+    fsAuswahl = {}; fsAbDatum = ""; fsFiliale = ""; fsAnzahl = 1;
     main.innerHTML = `<div style="display:flex; flex-direction:column; gap:14px;">
       <h1>Anfrage gesendet 🦊</h1>
       <div class="card" style="border:none; background:var(--orange-soft);">
@@ -1211,12 +3001,16 @@ async function sendeFsAnfrage() {
 }
 
 // ── Navigation ───────────────────────────────────────────────
+// Gezeichnete Symbole statt Emojis: Emojis werden von jedem Handy selbst
+// gezeichnet - auf einem Samsung sieht das Auto anders aus als auf einem
+// iPhone. Diese hier sehen ueberall gleich aus und nehmen die Farbe des
+// aktiven Menuepunktes an.
 const TABS = [
-  { id: "home", label: "Start", icon: "🏠" },
-  { id: "ausbildung", label: "Ausbildung", icon: "📋" },
-  { id: "fahrstunden", label: "Fahren", icon: "🚗" },
-  { id: "chat", label: "Chat", icon: "💬" },
-  { id: "mediathek", label: "Videos", icon: "▶️" },
+  { id: "home", label: "Start", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-5.5h5V20"/></svg>' },
+  { id: "ausbildung", label: "Fortschritt", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 20V12"/><path d="M10 20V5"/><path d="M16 20v-6"/><path d="M22 20H2"/></svg>' },
+  { id: "fahrstunden", label: "Fahrstunden", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16.5h16v-3l-1.7-4.2A2 2 0 0 0 16.4 8H7.6a2 2 0 0 0-1.9 1.3L4 13.5z"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/></svg>' },
+  { id: "chat", label: "Chat", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a7.5 7.5 0 0 1-7.5 7.5H8L4 22v-4.2A7.5 7.5 0 0 1 12.5 4.5 7.5 7.5 0 0 1 20 12z"/></svg>' },
+  { id: "mediathek", label: "Lernen", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5"/><path d="M12 6.5C13.5 5 16 4.5 20 5v13c-4-.5-6.5 0-8 1.5"/><path d="M12 6.5v13"/></svg>' },
 ];
 function demoHinweis(label) {
   let t = document.getElementById("toast");
@@ -1240,6 +3034,8 @@ function waehleTab(id, label) {
   else if (id === "ausbildung") renderAusbildung();
   else if (id === "fahrstunden") renderFahrstunden();
   else renderHome();
+  // Balken neu bewerten: im Chat darf er nicht über der Eingabe liegen (S5).
+  setTimeout(function () { if (window.fuchsPushPruefen) window.fuchsPushPruefen(); }, 60);
 }
 document.getElementById("nav").innerHTML = TABS.map(t => `
   <button data-tab="${t.id}" class="${t.id === "home" ? "aktiv" : ""}" onclick="waehleTab('${t.id}','${t.label}')">
@@ -1251,17 +3047,30 @@ if (token || zugangscode) {
   renderHome();
   meldeAlles();
   ladeProfilbild();
+  zahlungRueckkehr();   // kommt der Schüler von der Bezahlseite zurück?
 } else {
-  const gespeicherteNr = lade("fuchs_nummer", "");
-  if (gespeicherteNr) autoLoginNummer(gespeicherteNr);   // bekannte Nummer -> ohne Code rein
-  else zeigeGate();
+  // Kommt jemand von der Bezahlseite zurueck, aber in einem Fenster ohne
+  // Anmeldung? Dann NICHT nach der Handynummer fragen - das versteht an
+  // dieser Stelle niemand. Stattdessen kurz sagen, was Sache ist.
+  let vonBezahlung = "";
+  try { vonBezahlung = (new URLSearchParams(window.location.search).get("zahlung") || "").trim(); } catch (e) {}
+  const einladung = einladungSchluessel();
+  if (einladung) {
+    einladungEinloesen(einladung);          // QR vom Vertrag -> direkt hinein
+  } else if (vonBezahlung === "ok" || vonBezahlung === "ab") {
+    zahlungSeiteOhneAnmeldung(vonBezahlung);
+  } else {
+    const gespeicherteNr = lade("fuchs_nummer", "");
+    if (gespeicherteNr) autoLoginNummer(gespeicherteNr);   // bekannte Nummer -> ohne Code rein
+    else zeigeGate();
+  }
 }
 </script>
 <script>
 /* Fuchs-App: Web-Push (Benachrichtigungen). Eigenständig, nutzt nur localStorage. */
 (function () {
   var VAPID = "BJYc8H02c4QqwL883jsXq-LMmnP6zr30rNoepYqtxEMBTmHK2pa6kBdxoq5iowdETozJHXmim487uj7o4m8_7YQ";
-var support = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
+  var support = ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);
   var reg = null;
   function token() { try { return JSON.parse(localStorage.getItem("fuchs_token")) || ""; } catch (e) { return ""; } }
   function b64u(s) {
@@ -1300,34 +3109,87 @@ var support = ('serviceWorker' in navigator) && ('PushManager' in window) && ('N
     catch (e) { return false; }
   }
   function entferne(id) { var e = document.getElementById(id); if (e) e.remove(); }
+  // Wird beim Wechsel des Bereichs aufgerufen (siehe waehleTab).
+  window.fuchsPushPruefen = function () { try { pruefe(); } catch (e) {} };
+  // Befund S5: Im Chat sitzt das Eingabefeld genau dort, wo der Balken liegt.
+  // Deshalb erscheint er dort nicht - und ueberall sonst laesst er sich wegtippen.
+  function imChat() {
+    var b = document.querySelector('nav button[data-tab="chat"]');
+    return !!(b && b.classList.contains("aktiv"));
+  }
   function knopf() {
     entferne("fuchsPushHint");
+    if (imChat() || hinweisStumm()) { entferne("fuchsPushBtn"); return; }
     if (document.getElementById("fuchsPushBtn")) return;
+    var huelle = document.createElement("div");
+    huelle.id = "fuchsPushBtnBox";
     var b = document.createElement("button");
     b.id = "fuchsPushBtn";
     b.textContent = "🔔 Benachrichtigungen aktivieren";
     b.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:9999;padding:12px 16px;border:none;border-radius:14px;background:#E8600B;color:#fff;font-size:15px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.22);cursor:pointer;display:block;";
-    b.onclick = function () { anmelden(true).then(function (ok) { if (ok) b.remove(); }); };
+    b.onclick = function () { anmelden(true).then(function (ok) { if (ok) { b.remove(); entferne("fuchsPushZuBtn"); } }); };
     document.body.appendChild(b);
+    // Kreuz zum Wegtippen - danach 14 Tage Ruhe.
+    var zu = document.createElement("button");
+    zu.id = "fuchsPushZuBtn";
+    zu.setAttribute("aria-label", "Hinweis schließen");
+    zu.innerHTML = "&times;";
+    zu.style.cssText = "position:fixed;right:20px;bottom:calc(86px + env(safe-area-inset-bottom));"
+      + "z-index:10000;border:none;background:transparent;color:#fff;font-size:22px;line-height:1;"
+      + "padding:2px 6px;cursor:pointer;";
+    zu.onclick = function () {
+      try { localStorage.setItem("fuchs_push_weg", String(Date.now() + 14 * 86400000)); } catch (e) {}
+      entferne("fuchsPushBtn"); entferne("fuchsPushZuBtn");
+    };
+    document.body.appendChild(zu);
+  }
+  // Wurde der Hinweis weggetippt? Dann 14 Tage Ruhe.
+  function hinweisStumm() {
+    try {
+      var bis = Number(localStorage.getItem("fuchs_push_weg") || 0);
+      return bis > Date.now();
+    } catch (e) { return false; }
+  }
+  function istIphone() {
+    return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+      || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+  function anleitung() {
+    return istIphone()
+      ? "Tippe unten auf das Teilen-Symbol und dann auf &bdquo;Zum Home-Bildschirm&ldquo;. "
+        + "Danach die App &uuml;ber das Fuchs-Symbol &ouml;ffnen &ndash; dort kannst du "
+        + "Benachrichtigungen einschalten."
+      : "Tippe oben rechts auf die drei Punkte und dann auf &bdquo;Zum Startbildschirm hinzuf&uuml;gen&ldquo;. "
+        + "Danach die App &uuml;ber das Fuchs-Symbol &ouml;ffnen.";
   }
   function hinweis(text) {
     entferne("fuchsPushBtn");
+    if (hinweisStumm()) { entferne("fuchsPushHint"); return; }
     var h = document.getElementById("fuchsPushHint");
     if (!h) {
       h = document.createElement("div");
       h.id = "fuchsPushHint";
-      h.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:9999;padding:10px 14px;border-radius:12px;background:#FFF3E9;border:1px solid #F3C79E;color:#8A4B10;font-size:13px;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.12);text-align:center;";
+      h.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(78px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:9999;padding:11px 34px 11px 14px;border-radius:12px;background:#FFF3E9;border:1px solid #F3C79E;color:#8A4B10;font-size:13px;line-height:1.4;box-shadow:0 4px 14px rgba(0,0,0,.12);text-align:left;";
       document.body.appendChild(h);
     }
-    h.textContent = text;
+    h.innerHTML = "<div style=\"font-weight:700;margin-bottom:2px\">" + text + "</div>"
+      + "<div style=\"font-size:12.5px\">" + anleitung() + "</div>"
+      + "<button id=\"fuchsPushZu\" aria-label=\"Hinweis schlie&szlig;en\" "
+      + "style=\"position:absolute;top:6px;right:8px;border:none;background:transparent;"
+      + "color:#8A4B10;font-size:19px;line-height:1;padding:4px 6px;cursor:pointer\">&times;</button>";
+    var zu = document.getElementById("fuchsPushZu");
+    if (zu) zu.onclick = function () {
+      try { localStorage.setItem("fuchs_push_weg", String(Date.now() + 14 * 86400000)); } catch (e) {}
+      entferne("fuchsPushHint");
+    };
   }
   async function pruefe() {
     var t = token();
     if (!t) { entferne("fuchsPushBtn"); entferne("fuchsPushHint"); return; }   // nicht angemeldet
     if (!support) {
       hinweis(istStandalone()
-        ? "🔔 Dein iPhone/System unterstützt keine Web-Benachrichtigungen (evtl. iOS zu alt)."
-        : "🔔 Für Benachrichtigungen: App über das Fuchs-Symbol auf dem Home-Bildschirm öffnen.");
+        ? "🔔 Benachrichtigungen gehen auf diesem Gerät leider nicht"
+        : "🔔 Benachrichtigungen einschalten");
       return;
     }
     await initSW();
@@ -1339,6 +3201,40 @@ var support = ('serviceWorker' in navigator) && ('PushManager' in window) && ('N
     knopf();
   }
   window.addEventListener("load", function () { initSW().then(pruefe); setInterval(pruefe, 5000); });
+})();
+</script>
+<script>
+// ── Neue Fassung selbst holen ────────────────────────────────────────
+// "__APP_STAND__" ersetzt der Server beim Ausliefern durch die Aenderungszeit
+// dieser Datei. Stimmt sie nicht mehr mit dem ueberein, was auf dem Server
+// liegt, laedt sich die App einmal unter neuer Adresse - denn eine zum
+// Home-Bildschirm hinzugefuegte App gibt sonst wochenlang die alte Seite aus.
+(function () {
+  var MEIN_STAND = "__APP_STAND__";
+  function neuLaden(stand) {
+    // Nur einmal je Sitzung, damit daraus niemals eine Schleife wird.
+    try {
+      if (sessionStorage.getItem("fuchs_neuladen") === String(stand)) return;
+      sessionStorage.setItem("fuchs_neuladen", String(stand));
+    } catch (e) { return; }
+    location.replace(location.pathname + "?v=" + encodeURIComponent(stand));
+  }
+  function pruefen() {
+    if (!MEIN_STAND || MEIN_STAND.indexOf("APP_STAND") >= 0) return;
+    fetch("/app/version?t=" + Date.now(), { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) {
+        var stand = d && d.stand;
+        if (stand && String(stand) !== String(MEIN_STAND)) neuLaden(stand);
+      })
+      .catch(function () { /* offline - dann eben beim naechsten Mal */ });
+  }
+  window.addEventListener("load", pruefen);
+  // Auch beim Zurueckholen aus dem Hintergrund nachsehen: Eine App auf dem
+  // Home-Bildschirm wird oft wochenlang nicht wirklich neu gestartet.
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) pruefen();
+  });
 })();
 </script>
 </body>
