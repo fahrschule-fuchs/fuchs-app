@@ -404,9 +404,23 @@ workflows:
             || { echo "ABBRUCH: App-Symbol wurde nicht erzeugt"; exit 1; }
           echo "Symbol erzeugt aus quellen/fl-icon-512.png"
 
-      - name: Verschluesselungs-Erklaerung ergaenzen
+      - name: Info.plist ergaenzen
         script: |
+          # Verschluesselungs-Erklaerung: erspart die Rueckfrage bei jedem Upload.
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$INFO_PLIST" || true
+          # Zweckangaben. Apple verlangt sie, SOBALD eine App die Kamera- oder
+          # Foto-Schnittstellen auch nur referenziert - und @capacitor/camera tut
+          # das, ob die App sie benutzt oder nicht. Fehlen sie, weist Apple den
+          # fertigen Build nach dem Hochladen ab (ITMS-90683, am 27.08. passiert).
+          # Wortlaut wie in der Schueler-App, die damit durch die Pruefung ist.
+          /usr/libexec/PlistBuddy -c 'Add :NSCameraUsageDescription string "Die App verwendet die Kamera, damit du Nachweise und Unterlagen zur Fahrausbildung fotografieren kannst."' "$INFO_PLIST" || true
+          /usr/libexec/PlistBuddy -c 'Add :NSPhotoLibraryUsageDescription string "Die App greift auf deine Fotos zu, damit du Unterlagen zur Fahrausbildung auswaehlen und hochladen kannst."' "$INFO_PLIST" || true
+          /usr/libexec/PlistBuddy -c 'Add :NSPhotoLibraryAddUsageDescription string "Die App kann Bilder in deiner Fotomediathek speichern."' "$INFO_PLIST" || true
+          echo "--- Zweckangaben im Info.plist ---"
+          for K in NSCameraUsageDescription NSPhotoLibraryUsageDescription NSPhotoLibraryAddUsageDescription; do
+            /usr/libexec/PlistBuddy -c "Print :$K" "$INFO_PLIST" \
+              || { echo "ABBRUCH: $K fehlt - Apple wuerde den Build nach dem Hochladen abweisen"; exit 1; }
+          done
 
       - name: Geteiltes Schema sicherstellen
         script: |
