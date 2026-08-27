@@ -328,3 +328,241 @@ workflows:
 
           print("Alles in Ordnung.")
           PRUEF
+
+  # ====================================================================
+  # FAHRLEHRER-APP  ->  iOS (App Store / TestFlight)
+  # --------------------------------------------------------------------
+  # Gegenstueck zu "fahrlehrer-android". Aufgebaut wie "schueler-ios",
+  # mit drei Unterschieden:
+  #
+  #   1. Der Ordner apps/fahrlehrer/ios liegt NICHT im Repository. Er wird
+  #      bei jedem Lauf frisch aus capacitor.config.json erzeugt - genau
+  #      wie beim Android-Bau. Dadurch stimmt die Bundle-ID immer und es
+  #      gibt nichts, was veralten kann.
+  #   2. Die Bundle-ID wird bei Apple angelegt, falls es sie noch nicht
+  #      gibt. Beim Schueler-Bau existierte sie schon.
+  #   3. Das App-Symbol kommt aus quellen/fl-icon-512.png.
+  #
+  # Voraussetzung, die NICHT automatisierbar ist: In App Store Connect
+  # muss ein App-Eintrag fuer de.fahrsyn.fuchs.fahrlehrer bestehen. Apple
+  # laest das nur von Hand anlegen. Ohne ihn schlaegt erst der letzte
+  # Schritt fehl (Hochladen), der Bau selbst laeuft durch.
+  # ====================================================================
+  fahrlehrer-ios:
+    name: Fahrlehrer iOS
+    instance_type: mac_mini_m2
+    max_build_duration: 45
+
+    integrations:
+      app_store_connect: FuchsApiKey
+
+    environment:
+      vars:
+        BUNDLE_ID: "de.fahrsyn.fuchs.fahrlehrer"
+        APP_DIR: "apps/fahrlehrer"
+        IOS_DIR: "apps/fahrlehrer/ios/App"
+        XCODE_PROJECT: "apps/fahrlehrer/ios/App/App.xcodeproj"
+        XCODE_SCHEME: "App"
+        INFO_PLIST: "apps/fahrlehrer/ios/App/App/Info.plist"
+        VERSION_NAME: "1.0"
+      node: 22
+      xcode: latest
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+
+    scripts:
+      - name: Web-Bundle bauen und pruefen
+        script: |
+          node scripts/build-www.mjs fahrlehrer
+          node scripts/pruefe.mjs fahrlehrer
+
+      - name: iOS-Projekt erzeugen
+        script: |
+          set -e
+          cd "$APP_DIR"
+          npm install --no-audit --no-fund
+          [ -d ios ] || npx cap add ios
+          npx cap sync ios
+
+      - name: App-Symbol und Startbild erzeugen
+        script: |
+          set -e
+          cd "$APP_DIR"
+          mkdir -p assets
+          cp ../../quellen/fl-icon-512.png assets/icon.png
+          npx capacitor-assets generate --ios --assetPath assets \
+            --iconBackgroundColor '#FBF8F5' --iconBackgroundColorDark '#FBF8F5' \
+            --splashBackgroundColor '#FBF8F5' --splashBackgroundColorDark '#FBF8F5'
+          test -s ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png \
+            || { echo "ABBRUCH: App-Symbol wurde nicht erzeugt"; exit 1; }
+          echo "Symbol erzeugt aus quellen/fl-icon-512.png"
+
+      - name: Verschluesselungs-Erklaerung ergaenzen
+        script: |
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$INFO_PLIST" || true
+
+      - name: Geteiltes Schema sicherstellen
+        script: |
+          set -e
+          python3 - <<'SCHEMA'
+          import os, re
+          proj = os.environ["XCODE_PROJECT"]
+          d = os.path.join(proj, "xcshareddata", "xcschemes")
+          ziel = os.path.join(d, "App.xcscheme")
+          if os.path.exists(ziel):
+              print("Schema war schon da")
+              raise SystemExit(0)
+          # Die Kennung des Bau-Ziels aus dem Projekt lesen statt sie fest
+          # einzutragen - eine neue Capacitor-Fassung koennte sie aendern.
+          s = open(os.path.join(proj, "project.pbxproj")).read()
+          m = re.search(r"([0-9A-F]{24}) /\* App \*/ = \{\s*isa = PBXNativeTarget", s)
+          if not m:
+              raise SystemExit("ABBRUCH: Bau-Ziel 'App' nicht im Projekt gefunden")
+          ref = ('BuildableIdentifier="primary" BlueprintIdentifier="%s" '
+                 'BuildableName="App.app" BlueprintName="App" '
+                 'ReferencedContainer="container:App.xcodeproj"' % m.group(1))
+          os.makedirs(d, exist_ok=True)
+          open(ziel, "w").write(
+              '<?xml version="1.0" encoding="UTF-8"?>\n'
+              '<Scheme LastUpgradeVersion="1430" version="1.3">\n'
+              '<BuildAction parallelizeBuildables="YES" buildImplicitDependencies="YES"><BuildActionEntries>\n'
+              '<BuildActionEntry buildForTesting="YES" buildForRunning="YES" buildForProfiling="YES" '
+              'buildForArchiving="YES" buildForAnalyzing="YES"><BuildableReference ' + ref + '></BuildableReference></BuildActionEntry>\n'
+              '</BuildActionEntries></BuildAction>\n'
+              '<TestAction buildConfiguration="Debug"></TestAction>\n'
+              '<LaunchAction buildConfiguration="Debug"><BuildableProductRunnable runnableDebuggingMode="0">'
+              '<BuildableReference ' + ref + '></BuildableReference></BuildableProductRunnable></LaunchAction>\n'
+              '<ProfileAction buildConfiguration="Release"><BuildableProductRunnable runnableDebuggingMode="0">'
+              '<BuildableReference ' + ref + '></BuildableReference></BuildableProductRunnable></ProfileAction>\n'
+              '<AnalyzeAction buildConfiguration="Debug"></AnalyzeAction>\n'
+              '<ArchiveAction buildConfiguration="Release" revealArchiveInOrganizer="YES"></ArchiveAction>\n'
+              '</Scheme>\n')
+          print("Schema erzeugt, Bau-Ziel", m.group(1))
+          SCHEMA
+
+      - name: Push-Berechtigung und AppDelegate vorbereiten
+        script: |
+          set -e
+          ENT="$IOS_DIR/App/App.entitlements"
+          printf '%s\n' '<?xml version="1.0" encoding="UTF-8"?>' \
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+            '<plist version="1.0"><dict><key>aps-environment</key><string>production</string></dict></plist>' > "$ENT"
+          python3 - <<'DELEGATE'
+          import os
+          p = os.path.join(os.environ['IOS_DIR'], 'App', 'AppDelegate.swift')
+          s = open(p).read()
+          if 'didRegisterForRemoteNotifications' in s:
+              print('AppDelegate schon fertig')
+          else:
+              b = '''
+              func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+                  NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+              }
+              func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+                  NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+              }
+          '''
+              i = s.rstrip().rfind('}')
+              open(p, 'w').write(s[:i] + b + chr(10) + '}' + chr(10))
+              print('AppDelegate ergaenzt')
+          DELEGATE
+          python3 - <<'PROJEKT'
+          import os
+          p = os.path.join(os.environ['IOS_DIR'], 'App.xcodeproj', 'project.pbxproj')
+          s = open(p).read()
+          if 'CODE_SIGN_ENTITLEMENTS' in s:
+              print('Projekteintrag schon vorhanden')
+          else:
+              a = 'PRODUCT_BUNDLE_IDENTIFIER = %s;' % os.environ['BUNDLE_ID']
+              if a not in s:
+                  raise SystemExit('ABBRUCH: Bundle-ID nicht im Projekt gefunden: ' + a)
+              b = a + chr(10) + chr(9)*4 + 'CODE_SIGN_ENTITLEMENTS = App/App.entitlements;'
+              print('Projekteintrag in', s.count(a), 'Konfigurationen ergaenzt')
+              open(p, 'w').write(s.replace(a, b))
+          PROJEKT
+
+      - name: Versionsnummer setzen
+        script: |
+          cd "$IOS_DIR"
+          agvtool new-marketing-version "$VERSION_NAME" || true
+          agvtool new-version -all "$BUILD_NUMBER" || true
+
+      - name: Bundle-ID bei Apple sicherstellen
+        script: |
+          set -e
+          J="import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print(chr(10).join(x['id'] for x in d))"
+          RES=$(app-store-connect bundle-ids list --bundle-id-identifier "$BUNDLE_ID" \
+            --strict-match-identifier --json | python3 -c "$J" | head -1)
+          if [ -z "$RES" ]; then
+            echo "Bundle-ID gibt es bei Apple noch nicht - wird angelegt."
+            app-store-connect bundle-ids register "$BUNDLE_ID" --name "FUCHS Fahrlehrer" --platform IOS
+            RES=$(app-store-connect bundle-ids list --bundle-id-identifier "$BUNDLE_ID" \
+              --strict-match-identifier --json | python3 -c "$J" | head -1)
+            [ -n "$RES" ] || { echo "ABBRUCH: Bundle-ID liess sich nicht anlegen"; exit 1; }
+          fi
+          echo "Bundle-ID bei Apple: $RES"
+          app-store-connect bundle-ids enable-capabilities "$RES" \
+            --capability "Push Notifications" || echo "Push war schon aktiv"
+          echo "$RES" > /tmp/bundle_id_ref
+
+      - name: Altes Profil und Zertifikat entfernen
+        script: |
+          J="import sys,json; d=json.load(sys.stdin); d=d.get('data',d) if isinstance(d,dict) else d; print(chr(10).join(x['id'] for x in d))"
+          RES=$(cat /tmp/bundle_id_ref)
+          for P in $(app-store-connect bundle-ids profiles --bundle-ids "$RES" \
+              --type IOS_APP_STORE --json | python3 -c "$J"); do
+            echo "Profil weg: $P"; app-store-connect profiles delete "$P" --ignore-not-found || true
+          done
+          for C in $(app-store-connect certificates list --type DISTRIBUTION IOS_DISTRIBUTION \
+              --json | python3 -c "$J"); do
+            echo "Zertifikat weg: $C"; app-store-connect certificates delete "$C" --ignore-not-found || true
+          done
+          sleep 20
+
+      - name: Zertifikat und Profil neu erzeugen
+        script: |
+          openssl genrsa -out /tmp/k.pem 2048
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE \
+            --certificate-key @file:/tmp/k.pem --create
+          keychain initialize
+          keychain add-certificates --certificate-password ""
+          xcode-project use-profiles --project "$XCODE_PROJECT"
+
+      - name: iPhone-App bauen
+        script: |
+          xcode-project build-ipa --project "$XCODE_PROJECT" --scheme "$XCODE_SCHEME" \
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO" \
+          || {
+            echo "=================== FEHLERGRUND ==================="
+            grep -h -A4 -E "error:|error :" /tmp/xcodebuild_logs/*.log | tail -n 60
+            echo "=================== LETZTE ZEILEN ================="
+            tail -n 40 /tmp/xcodebuild_logs/*.log
+            exit 1
+          }
+
+      - name: Nachsehen, was in der App steckt
+        script: |
+          set -e
+          python3 - <<'PRUEF'
+          import glob, zipfile
+          p = glob.glob("build/ios/ipa/*.ipa")
+          if not p:
+              raise SystemExit("ABBRUCH - keine .ipa gebaut")
+          z = zipfile.ZipFile(p[0])
+          treffer = [n for n in z.namelist() if n.endswith("public/index.html")]
+          if not treffer:
+              raise SystemExit("ABBRUCH - keine Oberflaeche in der App")
+          h = z.read(treffer[0]).decode("utf-8", "ignore")
+          fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf") if w not in h]
+          print("Oberflaeche in der App:", len(h), "Zeichen")
+          if fehlt:
+              raise SystemExit("ABBRUCH - fehlt in der App: " + ", ".join(fehlt))
+          print("Alles in Ordnung.")
+          PRUEF
