@@ -1180,6 +1180,73 @@ function telSchoen(roh) {
   return "+" + z;
 }
 
+// ── Termin per WhatsApp schicken ─────────────────────────────
+// Der Fahrlehrer schickt von seinem eigenen WhatsApp. Wir nehmen ihm nur das
+// Tippen ab: Datum, Wochentag, Uhrzeit, Dauer und Art stehen fertig da.
+
+// Aus "2026-08-28" wird "Donnerstag, 28.08.2026". Das ISO-Datum ist
+// eindeutig - die Anzeigefassung sieht je nach Ansicht anders aus.
+const WOCHENTAGE = ["Sonntag", "Montag", "Dienstag", "Mittwoch",
+                    "Donnerstag", "Freitag", "Samstag"];
+function terminDatumLang(iso, rueckfall) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || "").trim());
+  if (!m) return String(rueckfall || "").split(" · ")[0].trim();
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return WOCHENTAGE[d.getDay()] + ", " + m[3] + "." + m[2] + "." + m[1];
+}
+
+// "15:00" + 90 Minuten -> "16:30"
+function terminEnde(zeit, dauer) {
+  const m = /^(\d{1,2}):(\d{2})/.exec(String(zeit || "").trim());
+  const min = Number(dauer || 0);
+  if (!m || !min) return "";
+  const g = Number(m[1]) * 60 + Number(m[2]) + min;
+  return String(Math.floor(g / 60) % 24).padStart(2, "0") + ":" + String(g % 60).padStart(2, "0");
+}
+
+// Die fertige Nachricht. Sie soll allein stehen koennen - der Schueler liest
+// sie vielleicht Tage spaeter wieder.
+function terminNachricht(t) {
+  const vorname = String(t.schueler || "").trim().split(" ")[0];
+  const ich = (typeof FLNAME === "string" ? FLNAME.trim() : "");
+  const wann = terminDatumLang(t.datum_iso, t.datum);
+  const von = String(t.uhrzeit || "").slice(0, 5);
+  const bis = String(t.bis || "").slice(0, 5) || terminEnde(von, t.dauer);
+  const art = String(t.art_text || "Fahrstunde").trim();
+
+  let z = "";
+  if (von && bis) z = "von " + von + " bis " + bis + " Uhr";
+  else if (von) z = "um " + von + " Uhr";
+  if (t.dauer) z += (z ? " · " : "") + String(t.dauer) + " Minuten";
+
+  let s = "Hallo" + (vorname ? " " + vorname : "") + "! 🚗\n\n";
+  s += "Dein Termin steht:\n";
+  s += art + "\n" + wann + (z ? "\n" + z : "") + "\n";
+  if (t.bemerkung) s += "\n" + String(t.bemerkung).trim() + "\n";
+  s += "\nFalls es nicht passt, sag mir bitte rechtzeitig Bescheid.\n\n";
+  s += (ich ? ich : "Deine Fahrschule") + " · Fahrschule Fuchs 🦊";
+  return s;
+}
+
+// Oeffnet WhatsApp mit der fertigen Nachricht. Ohne Handynummer gibt es den
+// Knopf gar nicht erst - deshalb hier nur der Notnagel.
+function terminSchicken(t) {
+  const z = telZiffern(t && t.nummer);
+  if (!z) { toast("Keine Handynummer hinterlegt"); return; }
+  window.open("https://wa.me/" + z + "?text=" + encodeURIComponent(terminNachricht(t)),
+              "_blank", "noopener");
+}
+
+// Der Knopf. Nur bei echten Terminen mit Schueler und Handynummer.
+function terminSchickenKnopfHTML(kennung) {
+  return `<button class="btn-primary" style="background:#25D366" onclick="terminSchickenAus('${kennung}')">📱 Termin per WhatsApp schicken</button>`;
+}
+function terminSchickenAus(kennung) {
+  const t = FUCHS_TERMINE[kennung] || GEPLANT_ZULETZT;
+  if (t) terminSchicken(t);
+}
+let GEPLANT_ZULETZT = null;
+
 const WA_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>';
 const RUF_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3.5h3l1.5 4-2 1.5a12 12 0 0 0 6 6l1.5-2 4 1.5v3a1.5 1.5 0 0 1-1.6 1.5C11.6 19.9 4.1 12.4 3.5 5.1A1.5 1.5 0 0 1 5 3.5z"/></svg>';
 
@@ -1287,6 +1354,7 @@ function terminMenue(id){
     ${e.bemerkung?`<div class="card" style="cursor:default"><div class="sub">${esc(e.bemerkung)}</div></div>`:""}
     ${blocker?`<div class="hint">Hier ist keine Fahrstunde eingetragen – die Zeit ist nur geblockt.
        Das Büro sieht den Eintrag genauso in deinem Plan.</div>`:""}
+    ${(!blocker && !fertig && !abgesagt && istHandy(e.nummer)) ? terminSchickenKnopfHTML(String(id)) : ""}
     ${blocker?"":kontaktKarteHTML(e.schueler, e.nummer,
         "Es geht um deine Fahrstunde am " + String(e.datum||"")
         + (e.uhrzeit?(" um " + String(e.uhrzeit).slice(0,5) + " Uhr"):"") + ".")}
@@ -1407,13 +1475,45 @@ async function planenSpeichern(trotzdem){
     fahrzeug_id:blocker?null:(document.getElementById("pFz").value||null),
     bemerkung:document.getElementById("pBem").value, trotzdem});
   btn.disabled=false;btn.textContent="🗓 Termin einplanen";
-  if(d&&d.ok){toast("Termin eingeplant ✓");viewWoche(wMontag(datum));return;}
+  if(d&&d.ok){
+    const sch=W_SCHUELER.find(x=>String(x.id)===String(schueler_id))||{};
+    const artText=(W_ARTEN.find(a=>a[0]===art)||[art,art])[1];
+    GEPLANT_ZULETZT={schueler:sch.name||"",nummer:sch.telefon||"",klasse:sch.klasse||"",
+      datum_iso:datum,datum:datum,uhrzeit:document.getElementById("pZeit").value,
+      dauer:document.getElementById("pDauer").value,art_text:artText,bis:"",
+      bemerkung:document.getElementById("pBem").value};
+    // Ohne Schueler oder ohne Handy gibt es nichts zu schicken - dann wie bisher.
+    if(blocker||!istHandy(sch.telefon)){toast("Termin eingeplant ✓");viewWoche(wMontag(datum));return;}
+    geplantFertig(wMontag(datum));return;
+  }
   if(d&&d.konflikt&&!trotzdem){
     err.innerHTML=esc(d.fehler||"Zeitlicher Konflikt.")+
       `<br><button class="btn-ghost" style="margin-top:8px" onclick="planenSpeichern(true)">Trotzdem einplanen</button>`;
     return;
   }
   err.textContent=(d&&d.fehler)||FEHLERTEXT||"Einplanen fehlgeschlagen.";
+}
+
+// Nach dem Einplanen: kurz zeigen, was steht, und das Verschicken anbieten.
+// Frueher sprang die App sofort in den Wochenplan zurueck - dann war der
+// Termin zwar drin, der Schueler wusste aber nichts davon.
+function geplantFertig(zurueckW){
+  const t=GEPLANT_ZULETZT||{};
+  const bis=terminEnde(t.uhrzeit,t.dauer);
+  main().innerHTML=`
+    <div><div class="eyebrow">Eingeplant</div><h1>✅ Termin steht</h1></div>
+    <div class="card zeile" style="cursor:default">
+      <div class="zeit">${esc(String(t.uhrzeit||"").slice(0,5))}${bis?"–"+esc(bis):""}</div>
+      <div class="info"><div class="titel">${esc(terminDatumLang(t.datum_iso,t.datum))}</div>
+      <div class="sub">${esc(t.art_text||"")}${t.dauer?" · "+esc(String(t.dauer))+" Min.":""}</div></div>
+    </div>
+    <div class="card" style="cursor:default"><div class="sub">Für <b>${esc(t.schueler||"")}</b>${
+      t.klasse?" · Klasse "+esc(t.klasse):""}</div></div>
+    <div class="hint">Der Schüler weiß davon noch nichts. Mit dem Knopf öffnet sich dein
+      WhatsApp mit einer fertigen Nachricht – du tippst nur noch auf Senden.</div>
+    ${terminSchickenKnopfHTML("")}
+    <button class="btn-ghost" onclick="viewWoche('${zurueckW}')" style="margin-top:6px">Fertig – zurück zum Wochenplan</button>`;
+  main().scrollTop=0;
 }
 
 function pruefErg(e){const p=(e.pruefung_ergebnis||"");return p==="bestanden"||p==="nicht_bestanden"?p:"";}
@@ -1785,9 +1885,9 @@ function verschiebenPanel(id){
     <div style="font-weight:700;font-size:14px;margin:12px 0 4px">Neue Uhrzeit</div>
     <input id="vZeit" type="time" class="app-select" value="${esc(s.uhrzeit||"")}" style="width:100%;box-sizing:border-box">
     ${vDauerFeld(s.dauer)}
-    <label style="display:flex;align-items:center;gap:10px;margin:16px 0 6px;font-size:14px;cursor:pointer">
-      <input id="vInfo" type="checkbox" style="width:20px;height:20px;flex:none"> Schüler per WhatsApp benachrichtigen
-    </label>
+    <div class="hint" style="margin-top:14px">Der Schüler bekommt automatisch eine
+      Benachrichtigung in seiner App. Eine WhatsApp schreibst du danach mit dem Knopf
+      am Termin – dann kommt sie von dir und er kann direkt antworten.</div>
     <button class="btn-primary" id="vSpeichern">Verschieben</button>
     <div class="meta" id="vFehler" style="color:#D64545;min-height:16px"></div>`;
   vDauerBinden();
@@ -1799,16 +1899,15 @@ async function verschiebenSpeichern(trotzdem){
   const neues_datum=document.getElementById("vDatum").value;
   const neue_zeit=document.getElementById("vZeit").value;
   if(!neues_datum||!neue_zeit){if(err)err.textContent="Bitte Datum und Uhrzeit angeben.";return;}
-  const benachrichtigen=document.getElementById("vInfo").checked;
   const btn=document.getElementById("vSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
   const s=AKT_STUNDE;
   const d=await jpost("fahrlehrer/stunde-verschieben",{fl:FL,stunde_id:s.id,schueler_id:s.schueler_id,
     dauer:vDauerWert(s.dauer),art:s.art,fahrzeug_id:s.fahrzeug_id,bemerkung:s.bemerkung,
-    neues_datum,neue_zeit,benachrichtigen,nummer:s.nummer,schueler:s.schueler,trotzdem});
+    neues_datum,neue_zeit,nummer:s.nummer,schueler:s.schueler,trotzdem});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){
     let msg="Termin verschoben ✓";
-    if(benachrichtigen)msg+=d.benachrichtigt?" · Schüler benachrichtigt":" · Schüler nicht erreichbar – bitte selbst anrufen";
+    msg+=d.benachrichtigt?" · Schüler in der App benachrichtigt":" · keine App-Benachrichtigung möglich – bitte selbst Bescheid geben";
     toast(msg);AKT_STUNDE=null;wZurueckGehen();
   }else if(d&&d.konflikt&&!trotzdem){
     if(err)err.innerHTML=esc((d&&d.fehler)||"Zeitlicher Konflikt.")+`<br><button class="btn-ghost" style="margin-top:8px" onclick="verschiebenSpeichern(true)">Trotzdem verschieben</button>`;
