@@ -502,7 +502,7 @@ workflows:
             --strict-match-identifier --json | python3 -c "$J" | head -1)
           if [ -z "$RES" ]; then
             echo "Bundle-ID gibt es bei Apple noch nicht - wird angelegt."
-            app-store-connect bundle-ids register "$BUNDLE_ID" --name "FUCHS Fahrlehrer" --platform IOS
+            app-store-connect bundle-ids create "$BUNDLE_ID" --name "FUCHS Fahrlehrer" --platform IOS
             RES=$(app-store-connect bundle-ids list --bundle-id-identifier "$BUNDLE_ID" \
               --strict-match-identifier --json | python3 -c "$J" | head -1)
             [ -n "$RES" ] || { echo "ABBRUCH: Bundle-ID liess sich nicht anlegen"; exit 1; }
