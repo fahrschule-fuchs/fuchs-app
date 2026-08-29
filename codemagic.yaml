@@ -319,12 +319,35 @@ workflows:
 
       - name: Paket bauen und signieren
         script: |
+          set -e
           cd apps/schueler/android
           echo $CM_KEYSTORE | base64 --decode > /tmp/schueler.keystore
+          # Welche Schluessel liegen ueberhaupt im Speicher?
+          # Ein unter Windows erzeugter PKCS12 traegt oft NICHT den Namen,
+          # den man beim Erzeugen angegeben hat - dann passt CM_KEY_ALIAS
+          # nicht und der Bau bricht mit "No key with alias ... found" ab.
+          echo "--- Inhalt des Schluesselspeichers ---"
+          keytool -list -keystore /tmp/schueler.keystore \
+            -storepass "$CM_KEYSTORE_PASSWORD" 2>/dev/null \
+            | grep -i "PrivateKeyEntry" || true
+          echo "--------------------------------------"
+          ALIAS="$CM_KEY_ALIAS"
+          if ! keytool -list -keystore /tmp/schueler.keystore \
+               -storepass "$CM_KEYSTORE_PASSWORD" -alias "$ALIAS" >/dev/null 2>&1; then
+            ALIAS=$(keytool -list -keystore /tmp/schueler.keystore \
+              -storepass "$CM_KEYSTORE_PASSWORD" 2>/dev/null \
+              | grep -i "PrivateKeyEntry" | head -1 | sed 's/,.*//')
+            echo "Name aus CM_KEY_ALIAS passt nicht - benutze den Namen aus dem Speicher: $ALIAS"
+          fi
+          if [ -z "$ALIAS" ]; then
+            echo "ABBRUCH: im Schluesselspeicher steckt kein privater Schluessel"
+            rm -f /tmp/schueler.keystore
+            exit 1
+          fi
           ./gradlew bundleRelease \
             -Pandroid.injected.signing.store.file=/tmp/schueler.keystore \
             -Pandroid.injected.signing.store.password="$CM_KEYSTORE_PASSWORD" \
-            -Pandroid.injected.signing.key.alias="$CM_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.alias="$ALIAS" \
             -Pandroid.injected.signing.key.password="$CM_KEY_PASSWORD"
           rm -f /tmp/schueler.keystore
 
