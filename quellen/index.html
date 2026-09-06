@@ -1196,12 +1196,13 @@ function sdKontoHTML(d) {
   // und der Schueler weiss nicht, welche der beiden Stellen er antippen soll.
   if (k.status === "offen") return "";
   const gut = k.status === "guthaben";
+  const klaerung = k.status === "unklar";
   return `<div class="sd-zeile" onclick="${d.bezahlen_moeglich ? "renderBezahlen(0)" : ""}">
       <div style="width:22px;height:22px;border-radius:50%;background:#E9F7EE;color:#1E7A43;
         display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">✓</div>
       <div style="flex:1; min-width:0;">
-        <b>${gut ? "Dein Guthaben" : "Konto ausgeglichen"}</b></div>
-      <div style="font-weight:800;color:${gut ? "#1E7A43" : "var(--gray)"};font-size:15px;">${esc(k.betrag_text || "0,00 €")}</div>
+        <b>${klaerung ? "Kontostand in Klärung" : (gut ? "Dein Guthaben" : "Konto ausgeglichen")}</b></div>
+      <div style="font-weight:800;color:${klaerung ? "#8A5A12" : (gut ? "#1E7A43" : "var(--gray)")};font-size:15px;">${klaerung ? "–" : esc(k.betrag_text || "0,00 €")}</div>
       <div class="sd-pfeil">›</div>
     </div>`;
 }
@@ -1318,8 +1319,9 @@ async function renderTheorie() {
   const d = await ladeTheoriePlan();
   const eigene = (d && d.eigene) || [];
   const andere = (d && d.andere) || [];
+  const motorrad = (d && d.motorrad) || [];
 
-  if (!eigene.length && !andere.length) {
+  if (!eigene.length && !andere.length && !motorrad.length) {
     main.innerHTML = kopf + `<div class="sd-karte">
         <div style="font-size:14px; color:var(--gray);">Zurzeit sind keine Theorietermine
         hinterlegt. Frag im Büro nach oder schau in ein paar Tagen noch einmal.</div>
@@ -1331,19 +1333,26 @@ async function renderTheorie() {
 
   const eigenTitel = d.filiale ? "In " + esc(d.filiale) : "Deine Filiale";
   main.innerHTML = kopf
+    + (d.hinweis ? `<div class="hint">${esc(d.hinweis)}</div>` : "")
     + `<div class="hint">Keine Anmeldung nötig – einfach hinkommen und dich vor Ort
         in die Liste eintragen.</div>`
     + (eigene.length ? `<div class="sd-karte">
         <div class="sd-eyebrow">${eigenTitel}</div>
         <div style="margin-top:6px;">${tpListe(eigene, false)}</div>
-      </div>` : `<div class="sd-karte">
+      </div>` : (d.intensiv ? "" : `<div class="sd-karte">
         <div class="sd-eyebrow">${eigenTitel}</div>
         <div class="sd-meta" style="margin-top:6px;">Hier ist gerade kein Termin hinterlegt.</div>
-      </div>`)
+      </div>`))
     + (andere.length ? `<div class="sd-karte">
         <div class="sd-eyebrow">Andere Filialen</div>
         <div class="sd-meta" style="margin-top:2px;">Du darfst überall mitmachen.</div>
         <div style="margin-top:6px;">${tpListe(andere, true)}</div>
+      </div>` : "")
+    + (motorrad.length ? `<div class="sd-karte">
+        <div class="sd-eyebrow">Motorrad</div>
+        <div class="sd-meta" style="margin-top:2px;">Der klassenspezifische Stoff für die
+          Klassen A, A1, A2 und AM – nur an diesen Abenden.</div>
+        <div style="margin-top:6px;">${tpListe(motorrad, true)}</div>
       </div>` : "")
     + (d.plan_url ? `<a class="sd-knopf" style="margin-top:14px;" target="_blank"
         rel="noopener" href="${esc(d.plan_url)}">Vollständiger Theorieplan →</a>` : "");
@@ -1562,8 +1571,73 @@ async function zahlungRueckkehr() {
 }
 
 // ── Kontostand-Karte (Guthaben / offener Betrag / ausgeglichen) ──
+// Eine Kontokarte. Wird je Ausbildung einmal gezeichnet: Wer zwei Karteien
+// hat (z. B. B im 7-Tage-Fuchs und A2 in Tegel), hat zwei getrennte Konten -
+// ein Guthaben aus der einen gleicht die andere NICHT aus.
+function eineKontoKarte(k, titelZusatz) {
+  let bg, border, farbe, label, betrag, sub, icon;
+  if (k.status === "guthaben") {
+    bg = "#E9F7EE"; border = "1px solid #A7DCBB"; farbe = "#1E7A43";
+    label = "Dein Guthaben"; betrag = k.betrag_text; sub = "Du hast Guthaben bei der Fahrschule. \ud83e\udd8a"; icon = "\ud83d\udcb0";
+  } else if (k.status === "unklar") {
+    // Die Gegenforderung (z. B. die Kursgebühr) fehlt noch im System - dann
+    // sieht das Konto wie ein Guthaben aus, ist aber keins. Lieber ehrlich
+    // sagen, dass wir es klären, als eine falsche Zahl zeigen (06.09.2026).
+    bg = "#FFF6E6"; border = "1px solid #F0D9A8"; farbe = "#8A5A12";
+    label = "Kontostand in Klärung"; betrag = "–";
+    sub = "Deine Zahlungen sind da – uns fehlt noch eine Buchung dazu. Den genauen Stand sagt dir dein Büro."; icon = "⏳";
+  } else if (k.status === "offen") {
+    bg = "#FDECEC"; border = "1px solid #F3B4B4"; farbe = "#B3261E";
+    label = "Offener Betrag"; betrag = k.betrag_text; sub = "Bitte gleiche den offenen Betrag beim B\u00fcro aus."; icon = "\u26a0\ufe0f";
+  } else {
+    bg = "#fff"; border = "1px solid #EDE6DF"; farbe = "var(--dark)";
+    label = "Konto ausgeglichen"; betrag = k.betrag_text || "0,00 \u20ac"; sub = "Alles beglichen \u2013 top!"; icon = "\u2705";
+  }
+  if (titelZusatz) label = label + " \u00b7 " + titelZusatz;
+  // Kurspaket (7-Tage-Fuchs & Co.): Der Betrag oben ist der Preis des ganzen
+  // Kurses. Ohne diesen Hinweis wundert sich der Fahrschueler, warum eine
+  // Fahrstunde nichts kostet - und spaeter, warum sie doch etwas kostet.
+  const p = k.paket;
+  if (p && p.betrag > 0) {
+    sub = (k.status === "offen")
+      ? "Das ist der Preis deines Kurses \u2013 als Paket."
+      : (k.status === "guthaben" ? "Dein Kurs ist bezahlt, du hast Guthaben. \ud83e\udd8a" : "Dein Kurs ist vollst\u00e4ndig bezahlt \u2013 top!");
+  }
+  const paketZeile = (p && p.betrag > 0) ? `
+    <div style="margin-top:10px; padding:9px 11px; border-radius:11px; background:rgba(255,255,255,.72);
+                border:1px solid rgba(0,0,0,.06);">
+      <div style="font-size:12px; font-weight:800; color:var(--dark);">\ud83c\udf9f\ufe0f ${esc(p.bezeichnung)}</div>
+      <div style="font-size:12.5px; color:var(--gray); margin-top:2px;">${esc(p.text)}</div>
+      ${(p.pruefungsvorbereitung_frei || p.pruefungsfahrt_frei) ? `
+        <div style="font-size:12px; color:var(--gray); margin-top:3px;">Ebenfalls enthalten:
+          ${[p.pruefungsvorbereitung_frei ? "Pr\u00fcfungsvorbereitung" : null,
+             p.pruefungsfahrt_frei ? "Pr\u00fcfungsfahrt" : null].filter(Boolean).join(" und ")}</div>` : ""}
+    </div>` : "";
+  return `<div class="card" style="background:${bg}; border:${border}; margin-bottom:0;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div style="font-size:26px; line-height:1;">${icon}</div>
+      <div style="flex:1; min-width:0;">
+        <div class="eyebrow" style="color:${farbe};">${esc(label)}</div>
+        <div style="font-size:26px; font-weight:800; color:${farbe}; letter-spacing:-.01em; margin-top:2px;">${esc(betrag)}</div>
+        ${sub ? `<div style="font-size:12.5px; color:var(--gray); margin-top:3px;">${sub}</div>` : ""}
+      </div>
+    </div>
+    ${paketZeile}
+  </div>`;
+}
+
 function kontoKarteHTML() {
   const k = kontoDaten;
+  // Zwei oder mehr Ausbildungen: jede bekommt ihre eigene Karte.
+  if (k && k.gefunden && Array.isArray(k.konten) && k.konten.length > 1) {
+    const karten = k.konten.map(x => {
+      const zusatz = [x.klasse, x.filiale].filter(Boolean).join(" \u00b7 ");
+      return eineKontoKarte(x, zusatz || x.nummer || "");
+    }).join('<div style="height:9px"></div>');
+    return `<div style="font-size:12.5px;color:var(--gray);margin-bottom:7px">
+        Du hast ${k.konten.length} Ausbildungen \u2013 jede hat ihr eigenes Konto.</div>
+      ${karten}${zahlKnopfHTML()}`;
+  }
   let bg, border, farbe, label, betrag, sub, icon;
   if (!k) {
     bg = "#fff"; border = "1px solid #EDE6DF"; farbe = "var(--gray)";
@@ -1573,6 +1647,13 @@ function kontoKarteHTML() {
   } else if (k.status === "guthaben") {
     bg = "#E9F7EE"; border = "1px solid #A7DCBB"; farbe = "#1E7A43";
     label = "Dein Guthaben"; betrag = k.betrag_text; sub = "Du hast Guthaben bei der Fahrschule. 🦊"; icon = "💰";
+  } else if (k.status === "unklar") {
+    // Die Gegenforderung (z. B. die Kursgebühr) fehlt noch im System - dann
+    // sieht das Konto wie ein Guthaben aus, ist aber keins. Lieber ehrlich
+    // sagen, dass wir es klären, als eine falsche Zahl zeigen (06.09.2026).
+    bg = "#FFF6E6"; border = "1px solid #F0D9A8"; farbe = "#8A5A12";
+    label = "Kontostand in Klärung"; betrag = "–";
+    sub = "Deine Zahlungen sind da – uns fehlt noch eine Buchung dazu. Den genauen Stand sagt dir dein Büro."; icon = "⏳";
   } else if (k.status === "offen") {
     bg = "#FDECEC"; border = "1px solid #F3B4B4"; farbe = "#B3261E";
     label = "Offener Betrag"; betrag = k.betrag_text; sub = "Bitte gleiche den offenen Betrag beim Büro aus."; icon = "⚠️";
@@ -1804,18 +1885,77 @@ async function dokHochladen(input) {
   };
   rd.readAsDataURL(f);
 }
+// Dokument anzeigen. Ein Download-Klick (a.download auf eine blob:-Adresse)
+// tut in der App-Hülle nichts: Dort gibt es keinen Download-Manager, und eine
+// blob:-Adresse kann die WebView nicht als PDF darstellen. Deshalb: Bilder
+// direkt in der App zeigen, alles andere über eine kurzlebige echte Adresse
+// und einen ECHTEN Link öffnen.
+function dokBlattZu() {
+  const b = document.getElementById("dokBlatt");
+  if (b) b.remove();
+  document.body.style.overflow = "";
+}
+
+function dokBlatt(innen) {
+  dokBlattZu();
+  const d = document.createElement("div");
+  d.id = "dokBlatt";
+  d.style.cssText = "position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.72);"
+    + "display:flex; align-items:center; justify-content:center; padding:16px;";
+  d.innerHTML = `<div style="background:#fff; border-radius:16px; max-width:560px; width:100%;
+      max-height:92vh; overflow:auto; padding:18px 18px 16px;">${innen}</div>`;
+  d.onclick = e => { if (e.target === d) dokBlattZu(); };
+  document.body.appendChild(d);
+  document.body.style.overflow = "hidden";
+  return d;
+}
+
 async function dokOeffnen(id) {
   const doc = (dokDaten || []).find(x => x.id === id);
   const name = doc ? doc.dateiname : "Dokument";
+  const typ = String((doc && doc.mimetyp) || "");
+
+  // Bilder: direkt in der App anzeigen – das kann jede WebView.
+  if (typ.startsWith("image/")) {
+    try {
+      const r = await fetch("dokumente/datei", { method: "POST",
+        headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id }) });
+      if (!r.ok) throw new Error("nicht abrufbar");
+      const url = URL.createObjectURL(await r.blob());
+      dokBlatt(`
+        <div style="font-weight:800; margin-bottom:10px; word-break:break-word;">${esc(name)}</div>
+        <img src="${url}" alt="${esc(name)}" style="width:100%; border-radius:10px; display:block;">
+        <button class="btn-primary" style="width:100%; margin-top:14px;" onclick="dokBlattZu()">Schließen</button>`);
+      setTimeout(() => URL.revokeObjectURL(url), 120000);
+      ladeDokumente();
+      return;
+    } catch (e) { /* weiter über die Adresse unten */ }
+  }
+
+  // Alles andere (PDF): kurzlebige Adresse holen und als echten Link anbieten.
+  let url = "";
   try {
-    const r = await fetch("dokumente/datei", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id }) });
-    if (!r.ok) { alert("Konnte das Dokument gerade nicht öffnen."); return; }
-    const blob = await r.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = name || "Dokument"; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
-  } catch (e) { alert("Konnte das Dokument gerade nicht öffnen."); }
+    const r = await fetch("dokumente/link", { method: "POST",
+      headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token, id }) });
+    const d = r.ok ? await r.json() : null;
+    if (d && d.ok && d.url) url = d.url;
+  } catch (e) {}
+  if (!url) { alert("Das Dokument lässt sich gerade nicht öffnen. Bitte versuch es in ein paar Minuten noch einmal."); return; }
+
+  const blatt = dokBlatt(`
+    <div style="font-size:26px; margin-bottom:6px;">${dokIcon(typ)}</div>
+    <div style="font-weight:800; word-break:break-word;">${esc(name)}</div>
+    <div class="meta" style="margin-top:2px;">${doc ? dokGroesse(doc.groesse) : ""}</div>
+    <a id="dokLink" class="btn-primary" href="${esc(url)}" target="_blank" rel="noopener"
+       style="display:block; text-align:center; width:100%; margin-top:16px; text-decoration:none;">Dokument öffnen</a>
+    <div class="meta" style="margin-top:10px; line-height:1.5;">
+      Öffnet sich nichts? Dann kopiere den Link und füge ihn in deinem Browser ein –
+      er ist 15 Minuten gültig.</div>
+    <input readonly value="${esc(url)}" onclick="this.select()"
+      style="width:100%; margin-top:8px; font-size:12px; padding:8px; border:1px solid #ddd; border-radius:8px;">
+    <button class="btn-ghost" style="width:100%; margin-top:12px;" onclick="dokBlattZu()">Schließen</button>`);
+  const a = blatt.querySelector("#dokLink");
+  if (a) a.addEventListener("click", () => setTimeout(() => { dokBlattZu(); ladeDokumente(); }, 400));
 }
 
 // ── Mediathek ────────────────────────────────────────────────

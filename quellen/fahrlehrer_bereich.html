@@ -114,10 +114,31 @@
  .wstd{font-size:9.5px; color:#7A6C61; text-align:center; border-bottom:1px solid var(--line,#E7DED6); padding-top:1px;}
  .wspalte{flex:1; min-width:48px; position:relative; border-right:1px solid var(--line,#E7DED6); cursor:pointer;}
  .wlinie{position:absolute; left:0; right:0; border-bottom:1px solid #f3eee9;}
- .wblock{position:absolute; left:2px; right:2px; border-radius:7px; padding:3px 4px; font-size:9px;
+ .pruefbox{border:1.5px solid #C0392B;border-radius:12px;padding:9px 11px;margin:0 0 11px;
+  background:#FDF1EF}
+.pruefh{font-weight:800;font-size:13px;color:#A5271B;margin-bottom:6px}
+.pruefz{display:flex;gap:9px;align-items:flex-start;padding:6px 0;cursor:pointer;
+  border-top:1px solid rgba(192,57,43,.18)}
+.pruefz:first-of-type{border-top:0}
+.pruefk{font-weight:800;font-size:12.5px;white-space:nowrap;color:#A5271B;flex:0 0 auto}
+.pruefi{font-size:13px;line-height:1.35;min-width:0;flex:1 1 auto}
+.pruefo{font-size:12.5px;color:#5b4a47;margin-top:1px}
+.wpruef{-webkit-line-clamp:2;font-size:10.5px;font-weight:800;opacity:1;
+  background:rgba(255,255,255,.22);border-radius:4px;padding:1px 3px;margin-top:3px}
+.wbem{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden;margin-top:2px;font-size:9.5px;line-height:1.2;
+  opacity:.92;word-break:break-word}
+.wblock{position:absolute; left:2px; right:2px; border-radius:7px; padding:3px 4px; font-size:9px;
    line-height:1.15; overflow:hidden; color:#fff; cursor:pointer; word-break:break-word;
    hyphens:auto; -webkit-hyphens:auto;}
  .wblock b{display:block; font-size:9.5px; font-weight:800;}
+ /* Zweite Zeile: Endzeit und Ausbildungsklasse. Die Spalte ist rund 43 px
+    breit - "08:00-08:45" passt dort in EINER Zeile nicht (gemessen: 65 px),
+    deshalb Beginn oben, Ende unten. */
+ .wbis{display:block; font-size:8.4px; font-weight:700; opacity:.95;
+   letter-spacing:-.1px; white-space:nowrap; margin-bottom:0;}
+ .wkl{font-style:normal; font-weight:800; font-size:8px; background:rgba(255,255,255,.28);
+   border-radius:3px; padding:0 3px; margin-right:3px; white-space:nowrap;}
  .wlegende{display:flex; flex-wrap:wrap; gap:4px 12px; font-size:11px; color:#7A6C61; margin:2px 0 4px;}
  .wlegende span{display:inline-flex; align-items:center; gap:5px;}
  .wlegende i{width:11px; height:11px; border-radius:3px; display:inline-block;}
@@ -154,8 +175,11 @@ function preisLader(prefix, werte){
     if(!w.schueler_id){feld.textContent="–";if(hin)hin.textContent="";return;}
     const nr=++lauf;
     feld.textContent="…";
-    const d=await jpost("fahrlehrer/stunde-preis",
-      {fl:FL,schueler_id:w.schueler_id,art:w.art,dauer:w.dauer});
+    // fahrzeug_id nur mitschicken, wenn die Maske eines nennt - sonst nimmt
+    // der Server wie bisher das Stammfahrzeug des Fahrlehrers.
+    const anfrage={fl:FL,schueler_id:w.schueler_id,art:w.art,dauer:w.dauer};
+    if(w.fahrzeug_id!==undefined)anfrage.fahrzeug_id=w.fahrzeug_id;
+    const d=await jpost("fahrlehrer/stunde-preis",anfrage);
     if(nr!==lauf)return;
     const box=document.getElementById(prefix+"Berechnen");
     const bez=document.getElementById(prefix+"PreisLabel");
@@ -330,6 +354,7 @@ function navSub(view){
   else if(view==="konto")viewKonto();
   else if(view==="buchen")viewBuchen();
   else if(view==="autos")viewFahrzeuge();
+  else if(view==="stunden")viewStunden();
 }
 // Handy-/Browser-Zurück: solange angemeldet, immer zurück ins Hauptmenü (kein Rausfliegen).
 window.addEventListener("popstate",function(){
@@ -394,6 +419,11 @@ function viewSchueler(){
     <div class="card klick zeile" onclick="navSub('kalender')">
       <div class="nr done">📅</div>
       <div class="info"><div class="titel">Terminplaner</div><div class="sub">${IS_MASTER?"Fahrstunden aller Fahrlehrer":"Deine kommenden Fahrstunden"}</div></div>
+      <div class="play">›</div>
+    </div>
+    <div class="card klick zeile" onclick="navSub('stunden')">
+      <div class="nr" style="background:#EEF2FB">📋</div>
+      <div class="info"><div class="titel">Meine Stunden</div><div class="sub">Was du in einem Monat geleistet hast</div></div>
       <div class="play">›</div>
     </div>
     <div class="card klick zeile" onclick="navSub('konto')">
@@ -462,11 +492,10 @@ function infoBoxHtml(){
 
 async function ladeStand(nummer){
   aktNummer=nummer;aktFahrstunden=null;
-  const k=document.getElementById("karte");if(k)k.innerHTML='<div id="infoBox"></div><div class="meta">Lädt …</div>';
-  const [d0,fs]=await Promise.all([
-    jpost("ausbildung/stand",{fl:FL,nummer}),
-    jpost("fahrlehrer/fahrstunden",{fl:FL,nummer})
-  ]);
+  const k=document.getElementById("karte");if(k)k.innerHTML='<div class="meta">Lädt …</div>';
+  // Nur noch der Ausbildungsstand - Konto, Infos und Fahrstunden liegen im
+  // Schuelerkonto und muessen hier nicht mehr geholt werden.
+  const [d0,fs]=[await jpost("ausbildung/stand",{fl:FL,nummer}), null];
   // Kein Stand vom Server = Fehler, NICHT "alles auf Anfang". Sonst sieht
   // die Karte aus wie bei einem Schüler ohne jede Bewertung.
   if(!d0){ if(k)k.innerHTML=fehlerKasten("Der Ausbildungsstand konnte nicht geladen werden.");
@@ -476,10 +505,9 @@ async function ladeStand(nummer){
   aktKlasse=d.klasse||"B";aktKlasseEcht=d.klasse_echt||aktKlasse;stand=d.stand||{};
   aktZuletzt=(d.zuletzt_von)?{von:d.zuletzt_von,text:d.zuletzt_text||""}:null;
   offeneSekt=new Set();   // neue Schülerkarte startet zugeklappt
-  ladeInfos(nummer);
   katalog=await ladeKatalog(aktKlasse);
   if(!katalog){
-    if(k)k.innerHTML=fahrstundenHtml()+(KATALOG_FEHLER
+    if(k)k.innerHTML=(KATALOG_FEHLER
       ? fehlerKasten("Die Ausbildungskarte konnte nicht geladen werden.")
       : '<div class="card">Für diesen Schüler gilt Klasse <b>'+esc(aktKlasse)+'</b> – dafür ist noch keine Ausbildungskarte hinterlegt.</div>');
     return;}
@@ -525,7 +553,10 @@ function zeichne(){
   const el=document.getElementById("karte");if(!el)return;
   if(!katalog||!aktNummer){el.innerHTML="";return;}
   const stufen=katalog.stufen;
-  let h=infoBoxHtml()+fahrstundenHtml();
+  // Infos vom Buero und die gefahrenen Stunden stehen seit dem 01.09.2026 im
+  // Schuelerkonto - hier bleibt allein die Diagrammkarte.
+  let h=`<div class="hint" style="margin-bottom:10px">Kontostand, Infos vom Büro, kommende Termine
+    und alle gefahrenen Stunden findest du unter <b>💶 Schülerkonto &amp; Termine</b>.</div>`;
   const titelEcht=(aktKlasseEcht&&katalog.klasse&&aktKlasseEcht!==katalog.klasse&&katalog.titel)
     ? katalog.titel.replace('Klasse '+katalog.klasse,'Klasse '+aktKlasseEcht)
     : (katalog.titel||('Klasse '+(aktKlasseEcht||aktKlasse)));
@@ -654,11 +685,119 @@ async function fahrzeugPlanLaden(){
   ziel.innerHTML=html;
 }
 
+// ---------------- Meine Stunden (Stundenaufstellung) ----------------
+// Was der Fahrlehrer in einem Monat geleistet hat - dieselben Zahlen wie das
+// Blatt, mit dem das Buero abrechnet. Gerechnet wird im Manager, hier wird nur
+// gezeigt: zwei Rechnungen zu derselben Frage sind eine Fehlerquelle.
+const ST_MONATE=["","Januar","Februar","März","April","Mai","Juni","Juli",
+                 "August","September","Oktober","November","Dezember"];
+let ST_MONAT="", ST_DATEN=null, ST_ALLE=false;
+
+function stMonatText(m){
+  const j=String(m||"").slice(0,4), n=Number(String(m||"").slice(5,7));
+  return (ST_MONATE[n]||"")+" "+j;
+}
+function stMonatPlus(m,n){
+  let j=Number(String(m).slice(0,4)), mo=Number(String(m).slice(5,7))+n;
+  while(mo<1){mo+=12;j--;} while(mo>12){mo-=12;j++;}
+  return j+"-"+String(mo).padStart(2,"0");
+}
+function stStd(min){return ((Number(min)||0)/60).toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2});}
+function stEinh(min){return ((Number(min)||0)/45).toLocaleString("de-DE",{minimumFractionDigits:1,maximumFractionDigits:1});}
+
+async function viewStunden(){
+  if(!ST_MONAT){const d=new Date();ST_MONAT=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");}
+  stMaske();
+  await stLaden();
+}
+
+function stMaske(){
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="history.back()">← Zurück</button>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>📋 Meine Stunden</h1></div>
+    <div class="hint">Was in diesem Monat auf dich gebucht ist – dieselbe Aufstellung, mit der das Büro abrechnet.</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+      <button class="btn-ghost" style="margin:0;padding:8px 16px" onclick="stBlaettern(-1)">‹</button>
+      <div style="flex:1;text-align:center;font-weight:800">${esc(stMonatText(ST_MONAT))}</div>
+      <button class="btn-ghost" style="margin:0;padding:8px 16px" onclick="stBlaettern(1)">›</button>
+    </div>
+    <div id="stInhalt"><div class="meta" style="margin-top:10px">Lädt …</div></div>`;
+}
+
+function stBlaettern(n){ST_MONAT=stMonatPlus(ST_MONAT,n);ST_ALLE=false;stMaske();stLaden();}
+function stAlle(){ST_ALLE=!ST_ALLE;stZeichnen();}
+
+async function stLaden(){
+  ST_DATEN=null;
+  const d=await jpost("fahrlehrer/stundenaufstellung",{fl:FL,ziel_fl:(typeof W_FL!=="undefined"?W_FL:"")||undefined,monat:ST_MONAT});
+  const ziel=document.getElementById("stInhalt");if(!ziel)return;
+  if(!d||!d.ok){ziel.innerHTML=fehlerKasten((d&&d.fehler)||"Die Stundenaufstellung konnte nicht geladen werden.");return;}
+  if(!d.daten){
+    ziel.innerHTML=`<div class="card" style="cursor:default"><div class="sub">Für den Leitungs-Zugang gibt es keine eigene Aufstellung.
+      Wähle im Wochenplan zuerst eine Fahrlehrerin oder einen Fahrlehrer.</div></div>`;
+    return;
+  }
+  ST_DATEN=d.daten;
+  stZeichnen();
+}
+
+function stZeichnen(){
+  const ziel=document.getElementById("stInhalt");if(!ziel||!ST_DATEN)return;
+  const d=ST_DATEN, g=d.gesamt||{}, ab=d.abwesenheit||{};
+  const mitWert=(d.summe||[]).filter(s=>s.anzahl>0);
+  const tage=(d.tage||[]);
+  const zeigen=ST_ALLE?tage:tage.slice(0,12);
+  const rest=tage.length-zeigen.length;
+  const titel=Object.fromEntries((d.summe||[]).map(s=>[s.schluessel,s.titel]));
+  ziel.innerHTML=`
+    <div class="card" style="cursor:default;display:block;margin-top:10px">
+      <div class="eyebrow">${esc((d.fahrlehrer&&d.fahrlehrer.name)||"")}${
+        d.fahrlehrer&&d.fahrlehrer.filiale?" · "+esc(d.fahrlehrer.filiale):""}</div>
+      <div style="display:flex;gap:10px;margin-top:8px;text-align:center">
+        <div style="flex:1"><div style="font-size:24px;font-weight:800">${g.anzahl||0}</div>
+          <div class="meta" style="font-size:11.5px">Termine</div></div>
+        <div style="flex:1;border-left:1px solid var(--line);border-right:1px solid var(--line)">
+          <div style="font-size:24px;font-weight:800">${stStd(g.minuten)}</div>
+          <div class="meta" style="font-size:11.5px">Stunden</div></div>
+        <div style="flex:1"><div style="font-size:24px;font-weight:800">${stStd(g.minuten_ohne_fehl)}</div>
+          <div class="meta" style="font-size:11.5px">ohne Fehlstunden</div></div>
+      </div>
+    </div>
+    ${mitWert.length?`<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Aufgeteilt</div>
+      ${mitWert.map(s=>`<div style="display:flex;justify-content:space-between;align-items:baseline;
+          border-top:1px solid var(--line);padding:7px 0;font-size:13.5px">
+        <span>${esc(s.titel)}</span>
+        <span><b>${s.anzahl}</b> <span class="meta" style="font-size:12px">· ${s.minuten} Min. · ${stEinh(s.minuten)} EH</span></span>
+      </div>`).join("")}
+    </div>`:`<div class="card" style="cursor:default"><div class="sub">In diesem Monat ist noch nichts gebucht.</div></div>`}
+    ${(ab.urlaub||ab.krank||ab.feiertage)?`<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Abwesenheit</div>
+      <div style="font-size:13.5px;margin-top:4px">Urlaub <b>${ab.urlaub||0}</b> ·
+        Krank <b>${ab.krank||0}</b> · Feiertage <b>${ab.feiertage||0}</b></div></div>`:""}
+    ${zeigen.length?`<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Tag für Tag</div>
+      ${zeigen.map(t=>`<div style="border-top:1px solid var(--line);padding:7px 0">
+        <div style="display:flex;justify-content:space-between;font-size:13.5px">
+          <span><b>${esc(t.wochentag)} ${Number(String(t.datum).slice(8))}.</b></span>
+          <span>${t.anzahl?`<b>${t.anzahl}</b> <span class="meta" style="font-size:12px">· ${t.minuten} Min.</span>`:""}</span></div>
+        <div class="meta" style="font-size:12px">${
+          Object.keys(t.werte||{}).map(k=>`${esc(titel[k]||k)} ${t.werte[k].anzahl}`).join(" · ")}${
+          (t.marken&&t.marken.length)?(Object.keys(t.werte||{}).length?" · ":"")+t.marken.map(esc).join(" · "):""}</div>
+      </div>`).join("")}
+      ${(rest>0||ST_ALLE)?`<button class="btn-ghost" style="width:100%;margin-top:8px;padding:8px;font-size:12.5px"
+        onclick="stAlle()">${ST_ALLE?"weniger anzeigen":"alle "+tage.length+" Tage anzeigen"}</button>`:""}
+    </div>`:""}
+    <div class="meta" style="font-size:11.5px;margin-top:8px">Live aus dem Fahrschulmanager · nur zur Ansicht.
+      Stimmt etwas nicht, bitte im Büro melden – hier lässt sich nichts ändern.</div>`;
+}
+
 function viewKonto(){
   main().innerHTML=`
     <button class="btn-ghost" onclick="history.back()">← Zurück</button>
-    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>💶 Schülerkonto</h1></div>
-    <div class="hint">Schüler suchen oder Handynummer eingeben – der Kontostand wird live aus dem Fahrschulmanager gelesen (nur zur Ansicht).</div>
+    <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>💶 Schülerkonto & Termine</h1></div>
+    <div class="hint">Schüler suchen – du siehst Kontostand, Infos vom Büro, die kommenden
+      Termine und alle bereits gefahrenen Stunden. Live aus dem Fahrschulmanager, nur zur Ansicht.</div>
     <input id="kontoSuche" class="app-input" style="text-align:left" placeholder="🔍 Suche: Vorname, Nachname oder Geburtstag">
     <select id="kontoSel" class="app-select">${schuelerOptions("")}</select>
     <div id="kontoKarte"></div>`;
@@ -666,26 +805,164 @@ function viewKonto(){
   document.getElementById("kontoSuche").oninput=e=>{sel.innerHTML=schuelerOptions(e.target.value);};
   sel.onchange=e=>{if(e.target.value){ladeKonto(e.target.value);}};
 }
+
+let AKTE=null, AKTE_ALLE=false;
+
 async function ladeKonto(nummer){
   const el=document.getElementById("kontoKarte");if(el)el.innerHTML='<div class="meta">Lädt …</div>';
-  const d=await jpost("fahrlehrer/konto",{fl:FL,nummer});
+  AKTE=null; AKTE_ALLE=false;
+  const d=await jpost("fahrlehrer/schueler-akte",{fl:FL,pin:PIN,nummer});
   if(!el)return;
-  const k=d&&d.konto;
-  if(!k||!k.gefunden){el.innerHTML='<div class="leer">'+(k&&k.mehrdeutig?"Zu dieser Nummer gibt es mehrere Karteien – bitte im Fahrschulmanager nachsehen.":"Kein Schülerkonto zu dieser Nummer gefunden.")+'</div>';return;}
+  if(!d||!d.ok){el.innerHTML=fehlerKasten(FEHLERTEXT||"Die Schülerdaten konnten nicht geladen werden.");return;}
+  AKTE=d; AKTE.nummer=AKTE.nummer||nummer;
+  zeichneAkte();
+}
+function akteAlle(){AKTE_ALLE=!AKTE_ALLE;zeichneAkte();}
+
+// Kontostand als Karte - unveraendert im Aufbau, nur jetzt Teil der Uebersicht.
+function akteKontoHtml(k){
+  if(!k||!k.gefunden){
+    return '<div class="leer">'+(k&&k.mehrdeutig
+      ? "Zu dieser Nummer gibt es mehrere Karteien – bitte im Fahrschulmanager nachsehen."
+      : "Kein Schülerkonto zu dieser Nummer gefunden.")+'</div>';
+  }
   const farbe=k.status==="guthaben"?"var(--green)":(k.status==="offen"?"#D64545":"var(--gray)");
   const vorz=k.status==="offen"?"−":(k.status==="guthaben"?"+":"");
-  el.innerHTML=`
-    <div class="card">
-      <div class="titel" style="font-size:16px">${esc(k.name)}</div>
-      <div class="sub">Kartei ${esc(k.schuelernummer)}${k.klasse?" · Klasse "+esc(k.klasse):""}</div>
-      <div style="text-align:center;margin:16px 0 8px">
+  return `<div class="card">
+      <div style="text-align:center;margin:4px 0 8px">
         <div class="eyebrow" style="color:${farbe}">${esc(k.status_text)}</div>
         <div style="font-size:32px;font-weight:800;color:${farbe};margin-top:2px">${vorz}${esc(k.betrag_text)}</div>
       </div>
       <div style="display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:10px;font-size:13.5px"><span class="meta">Zu zahlen gesamt</span><b>${esc(k.zuzahlen_text)}</b></div>
       <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-top:5px"><span class="meta">Bereits gezahlt</span><b>${esc(k.gezahlt_text)}</b></div>
+    </div>`;
+}
+
+// Eine Terminzeile - gleich aufgebaut fuer kommende und gefahrene Stunden.
+function akteZeile(t, kommend){
+  const zeit=String(t.uhrzeit||"").slice(0,5);
+  const bis=kommend&&t.bis?"–"+esc(String(t.bis).slice(0,5)):"";
+  const fl=String(t.fahrlehrer||"").trim();
+  const eigen=fl&&FLNAME&&fl===FLNAME;
+  // Wer zwei Fahrerlaubnisklassen macht, hat zwei Karteien und ein Konto.
+  // Dann gehoert an jeden Termin, zu welcher Klasse er zaehlt.
+  const kl=(AKTE&&AKTE.karteien>1&&String(t.klasse||"").trim())?
+    ` · <span style="opacity:.75">${esc(String(t.klasse).trim())}</span>`:"";
+  return `<div class="zeile" style="cursor:default;padding:7px 0;border-top:1px solid var(--line)">
+      <div class="zeit" style="min-width:74px;font-size:13px">${esc(zeit)}${bis}</div>
+      <div class="info"><div class="titel" style="font-size:13.5px">${esc(t.datum||"")}</div>
+      <div class="sub" style="font-size:12.5px">${esc(t.art_text||"Fahrstunde")}${
+        fl?` · ${eigen?"<b>du</b>":esc(fl.split(" ")[0])}`:""}${kl}</div></div>
+    </div>`;
+}
+
+function akteKommendHtml(liste){
+  if(!liste||!liste.length){
+    return `<div class="card" style="cursor:default"><div class="eyebrow">Kommende Termine</div>
+      <div class="sub" style="margin-top:4px">Es steht noch kein Termin an.</div></div>`;
+  }
+  return `<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Kommende Termine</div>
+      <div class="titel" style="font-size:15px;margin-bottom:2px">${liste.length} anstehend</div>
+      ${liste.map(t=>akteZeile(t,true)).join("")}
+    </div>`;
+}
+
+function akteGefahrenHtml(liste, z){
+  const arten=(z&&z.nach_art||[]).map(a=>`${esc(a.art)} <b>${a.anzahl}</b>`).join(" · ");
+  const fehl=(z&&z.fehlstunden)?`<span style="color:#D64545"> · ${z.fehlstunden} Fehlstunde${z.fehlstunden>1?"n":""}</span>`:"";
+  const gesamt=(z&&z.gesamt)||((liste&&liste.length)||0);
+  if(!liste||!liste.length){
+    return `<div class="card" style="cursor:default"><div class="eyebrow">Gefahrene Fahrstunden</div>
+      <div class="sub" style="margin-top:4px">Noch keine Fahrstunde gefahren.</div></div>`;
+  }
+  // Die juengsten zuerst - beim Planen interessiert das Letzte, nicht das Erste.
+  const umgekehrt=liste.slice().reverse();
+  const zeigen=AKTE_ALLE?umgekehrt:umgekehrt.slice(0,10);
+  const rest=umgekehrt.length-zeigen.length;
+  return `<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Gefahrene Fahrstunden</div>
+      <div class="titel" style="font-size:15px">insgesamt ${gesamt} Stunde${gesamt===1?"":"n"}${fehl}</div>
+      ${arten?`<div style="margin-top:7px;font-size:13px;line-height:1.7">${arten}</div>`:""}
+      <div style="margin-top:9px">${zeigen.map(t=>akteZeile(t,false)).join("")}</div>
+      ${(rest>0||AKTE_ALLE)?`<button class="btn-ghost" style="width:100%;margin-top:8px;padding:8px;font-size:12.5px"
+        onclick="akteAlle()">${AKTE_ALLE?"weniger anzeigen":"alle "+umgekehrt.length+" Stunden anzeigen"}</button>`:""}
+    </div>`;
+}
+
+// Theorie-Lernstand aus dem Lernbereich der Fahrschueler-App. Gerechnet wird
+// im Bot (theorie_lernen.py), hier wird nur gezeigt. Fehlt der Wert - alte
+// Server-Fassung, Lernbereich aus oder noch nie benutzt - faellt die Karte
+// einfach weg; die Akte muss auch ohne sie vollstaendig sein.
+function akteTheorieHtml(l){
+  if(!l||!l.verfuegbar)return "";
+  if(!l.begonnen){
+    return `<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Theorie lernen</div>
+      <div class="sub" style="margin-top:4px">Der Lernbereich in der Schüler-App wurde noch nicht benutzt.</div></div>`;
+  }
+  const p=Math.max(0,Math.min(100,Number(l.prozent)||0));
+  const farbe=p>=80?"var(--green,#2E9E5B)":(p>=40?"#D8A11A":"#D64545");
+  const balken=(wert,f)=>`<div style="background:var(--line,#e6ded7);border-radius:6px;height:8px;overflow:hidden">
+      <div style="width:${Math.max(0,Math.min(100,wert))}%;height:100%;background:${f}"></div></div>`;
+  const schwach=(l.gebiete||[]).filter(g=>g.gesamt>0)
+    .map(g=>({...g,quote:Math.round(g.sicher*100/g.gesamt)}))
+    .sort((a,b)=>a.quote-b.quote).slice(0,3);
+  const pr=l.letzte_pruefung;
+  return `<div class="card" style="cursor:default;display:block">
+    <div class="eyebrow">Theorie lernen</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:4px">
+      <div style="font-size:28px;font-weight:800;color:${farbe};min-width:66px">${p} %</div>
+      <div style="flex:1">${balken(p,farbe)}
+        <div class="meta" style="font-size:11.5px;margin-top:4px">${l.sicher} von ${l.gesamt} Fragen sitzen sicher</div></div>
     </div>
-    <div class="meta" style="font-size:11.5px">Live aus dem Fahrschulmanager · nur zur Ansicht, keine Buchung.</div>`;
+    <div class="meta" style="font-size:12px;margin-top:6px">${l.zu_ueben} noch zu üben · ${l.offen} noch nie beantwortet${
+      l.zuletzt_text?" · zuletzt am "+esc(l.zuletzt_text):""}</div>
+    <div style="border-top:1px solid var(--line);margin-top:8px;padding-top:7px;font-size:13px">
+      <b>${l.pruefungen_gesamt}</b> Prüfungssimulation${l.pruefungen_gesamt===1?"":"en"} · <b>${l.pruefungen_bestanden}</b> bestanden${
+      pr?`<div class="meta" style="font-size:11.5px;margin-top:2px">zuletzt ${esc(pr.wann_text)} · ${pr.punkte} Fehlerpunkte · ${
+        pr.bestanden?"bestanden":"nicht bestanden"}</div>`:""}</div>
+    ${schwach.length?`<div style="border-top:1px solid var(--line);margin-top:8px;padding-top:7px">
+      <div class="meta" style="font-size:11.5px;margin-bottom:5px">Wo es noch hakt</div>
+      ${schwach.map(g=>`<div style="margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${esc(g.titel)}</span>
+          <span class="meta">${g.quote} %</span></div>
+        ${balken(g.quote,g.quote<50?"#D64545":"#D8A11A")}</div>`).join("")}</div>`:""}
+    <div class="meta" style="font-size:11px;margin-top:6px">„Sicher“ = zweimal hintereinander richtig. Aus dem Lernbereich der Schüler-App.</div>
+  </div>`;
+}
+
+function zeichneAkte(){
+  const el=document.getElementById("kontoKarte");if(!el||!AKTE)return;
+  const k=AKTE.konto||{};
+  el.innerHTML=`
+    <div class="card" style="cursor:default">
+      <div class="titel" style="font-size:16px">${esc(AKTE.name||k.name||"Schüler")}</div>
+      <div class="sub">${AKTE.schuelernummer?"Kartei "+esc(AKTE.schuelernummer):""}${
+        AKTE.klasse?" · Klasse "+esc(AKTE.klasse):""}</div>${
+        AKTE.karteien>1?`<div class="meta" style="font-size:11.5px;margin-top:3px">${AKTE.karteien} Karteien – Konto, Termine und Stunden sind zusammengefasst.</div>`:""}
+    </div>
+    ${akteKontoHtml(k)}
+    ${akteInfosHtml(AKTE.infos)}
+    ${akteTheorieHtml(AKTE.theorie_lernstand)}
+    ${akteKommendHtml(AKTE.kommend)}
+    ${akteGefahrenHtml(AKTE.gefahren, AKTE.zusammenfassung)}
+    ${kontaktKarteHTML(AKTE.name||"", AKTE.nummer, "")}
+    ${alleTermineKnopfHTML(AKTE.nummer)}
+    <div class="meta" style="font-size:11.5px;margin-top:8px">Live aus dem Fahrschulmanager · nur zur Ansicht, keine Buchung.</div>`;
+  el.scrollIntoView&&el.scrollIntoView({block:"nearest"});
+}
+
+// Infos vom Buero - dieselbe Darstellung wie frueher auf der Ausbildungsseite.
+function akteInfosHtml(infos){
+  if(!infos||!infos.length)return "";
+  return `<div class="card" style="border-left:5px solid var(--orange,#E8600B);display:block;cursor:default">
+    <div style="font-weight:800;margin-bottom:4px">🗒 Infos vom Büro</div>
+    ${infos.map(i=>`<div style="border-top:1px solid var(--line);padding:6px 0">
+      <div style="font-size:13.5px;white-space:pre-wrap">${esc(i.text||"")}</div>
+      <div class="meta" style="font-size:11.5px">${esc(String(i.erstellt||"").slice(0,16))}${i.autor?" · "+esc(i.autor):""}</div>
+    </div>`).join("")}
+  </div>`;
 }
 
 // ---------------- Fahrstunde eintragen (mit Unterschrift, schreibt nach FUCHS) ----
@@ -712,6 +989,7 @@ async function ladeBuchen(){
     <div class="hint">Trage die gegebene Fahrstunde ein. Der Schüler bestätigt mit seiner Unterschrift – sie wird direkt in FUCHS hinter der Stunde gespeichert.</div>
     ${(d.schueler||[]).length?"":'<div class="leer" style="margin-bottom:12px">Für dich sind in FUCHS aktuell keine aktiven Schüler hinterlegt.</div>'}
     <select id="bSchueler" class="app-select"><option value="">— Schüler wählen —</option>${opts}</select>
+    <div id="bKlasse"></div>
     <div class="row">
       <input id="bDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${heute}">
       <input id="bZeit" type="time" class="app-input" style="text-align:left;width:120px" value="${zeit}">
@@ -753,6 +1031,11 @@ async function ladeBuchen(){
   const bPreisNeu=preisLader("b",()=>({
     schueler_id:document.getElementById("bSchueler").value,
     art:bArt.value, dauer:bDauer.value}));
+  B_SCHUELER=d.schueler||[];
+  const bKlasseNeu=()=>skZeichnen("bKlasse",
+    skSchueler(B_SCHUELER,document.getElementById("bSchueler").value)||{},bPreisNeu);
+  document.getElementById("bSchueler").addEventListener("change",bKlasseNeu);
+  bKlasseNeu();
   document.getElementById("bSchueler").addEventListener("change",bPreisNeu);
   bArt.addEventListener("change",bPreisNeu);
   bDauer.addEventListener("input",bPreisNeu);
@@ -784,6 +1067,34 @@ function dauerBlinken(feldId){
   f.style.backgroundColor="#FFE2C2";
   setTimeout(()=>{f.style.backgroundColor="";},1100);
 }
+// Mehrere Fahrerlaubnisklassen in einer Kartei (z. B. A und BE): An der
+// Fahrstunde muss stehen, um WELCHE es geht - davon haengt der Preis ab.
+// Bei nur einer Klasse erscheint hier gar nichts.
+let SK_WAHL={};                 // feldId -> gewaehlte Klasse
+function skKlassen(s){
+  const haupt=String((s&&s.klasse)||"").trim();
+  const w=String((s&&s.weitere_klassen)||"").split(",").map(x=>x.trim()).filter(Boolean);
+  return [...new Set([haupt,...w].filter(Boolean))];
+}
+function skZeichnen(feldId,s,nachWahl){
+  const el=document.getElementById(feldId); if(!el)return;
+  const alle=skKlassen(s);
+  if(alle.length<2){SK_WAHL[feldId]="";el.innerHTML="";return;}
+  if(!alle.includes(SK_WAHL[feldId]))SK_WAHL[feldId]=alle[0];
+  const jetzt=SK_WAHL[feldId];
+  el.innerHTML=`<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Klasse dieser Fahrstunde</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 4px">${alle.map(k=>
+        `<button type="button" class="${k===jetzt?"btn-primary":"btn-ghost"}" data-sk="${esc(k)}"
+           style="padding:7px 14px;width:auto;margin:0">${esc(k)}</button>`).join("")}</div>
+      <div class="sub">${esc(s.name||"")} macht ${esc(alle.join(" + "))}. Der Preis richtet sich nach der gewählten Klasse.</div>
+    </div>`;
+  el.querySelectorAll("[data-sk]").forEach(b=>b.onclick=()=>{
+    SK_WAHL[feldId]=b.dataset.sk; skZeichnen(feldId,s,nachWahl); if(nachWahl)nachWahl();
+  });
+}
+function skSchueler(liste,id){return (liste||[]).find(x=>String(x.id)===String(id))||null;}
+
 function dArtText(sel){
   const o=sel&&sel.selectedOptions&&sel.selectedOptions[0];
   return o?String(o.text||"").trim():"";
@@ -835,7 +1146,8 @@ async function buchungSpeichern(){
   const unterschrift=sigCanvas.toDataURL("image/png");
   const btn=document.getElementById("bSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
   const berechnen=!!(document.getElementById("bBerechnen")||{}).checked;
-  const d=await jpost("fahrlehrer/buchen",{fl:FL,schueler_id,datum,beginn,dauer,art,unterschrift,berechnen});
+  const d=await jpost("fahrlehrer/buchen",{fl:FL,schueler_id,datum,beginn,dauer,art,unterschrift,berechnen,
+    klasse:SK_WAHL["bKlasse"]||""});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){
     // Hat etwas beim Berechnen geklemmt, MUSS der Fahrlehrer das sehen -
@@ -866,7 +1178,7 @@ let WOCHE_START=null, WOCHE_DATEN=[], FAHRZEUGE=null, FZ_MEIN=null, W_SCHUELER=[
 // Zwei freiwillige Filter im Wochenplan: Fahrlehrer und Fahrzeug.
 let W_FL=null, W_FZ=null, W_FLLISTE=null;
 const WTAGE=["Mo","Di","Mi","Do","Fr","Sa","So"];
-const WVON=6, WBIS=22, WPX=54;
+const WVON=6, WBIS=22, WPX=76;   // 76 px/Stunde: Beginn, Ende, Klasse und Name brauchen Platz
 const ART_FARBE={uebung:"#2e5e3f", ueberland:"#f2c200", autobahn:"#e0740b", nacht:"#1a56a0",
   pruefungsvorbereitung:"#c22a20", praktische_pruefung:"#c22a20", testfahrt:"#0e7a6d",
   theorie:"#e0559f", taetigkeit:"#8a8f8a", privat:"#7a4a2b",
@@ -1016,6 +1328,13 @@ async function wLaden(){
   if(!W_FZ) for(const t of (d.taetigkeiten||[])){
     t.fremd=true; t.taetigkeit=true; t.id=null; WOCHE_DATEN.push(t);
   }
+  // Theorieunterricht, den DIESER Fahrlehrer haelt. Stand vorher nirgends im
+  // Plan - niemand sah, wann er Theorie zu geben hat (Benjamin, 01.09.2026).
+  if(!W_FZ) for(const t of (d.theorie||[])){
+    WOCHE_DATEN.push({...t, art:"theorie", art_text:"Theorieunterricht",
+      schueler:(t.thema||"Theorieunterricht")+(t.filiale?" · "+t.filiale:""),
+      fremd:true, taetigkeit:true, id:null, status:"geplant"});
+  }
   if(hinweis){
     const wer=((W_FLLISTE||[]).find(f=>f.fl===W_FL)||{}).name||"";
     hinweis.textContent=W_FL
@@ -1072,6 +1391,65 @@ function azKopf(liste) {
     + `<span style="opacity:.55"> min</span></i>`;
 }
 
+// Gibt es in dieser Woche ueberhaupt gleichzeitige Termine?
+function wHatDoppel(){
+  const proTag={};
+  for(const e of WOCHE_DATEN){
+    const t=String(e.uhrzeit||"").split(":"); if(t.length<2)continue;
+    const von=Number(t[0])*60+Number(t[1]), bis=von+(Number(e.dauer)||45);
+    (proTag[e.datum_iso]=proTag[e.datum_iso]||[]).push([von,bis]);
+  }
+  for(const tag of Object.values(proTag)){
+    tag.sort((a,b)=>a[0]-b[0]);
+    for(let i=1;i<tag.length;i++) if(tag[i][0]<tag[i-1][1]) return true;
+  }
+  return false;
+}
+
+// Gleichzeitige Termine nebeneinander legen (wie im Fahrschulmanager).
+// Ohne das lagen zwei Termine zur selben Zeit exakt uebereinander und der
+// zweite war unsichtbar - bei der B96-Anhaengerausbildung faehrt Thomas
+// Krentz aber zulaessigerweise mit zwei Schuelern gleichzeitig.
+//
+// Verfahren wie in jedem Kalender: nach Beginn sortieren, sich beruehrende
+// Termine zu einer Gruppe zusammenfassen, innerhalb der Gruppe jedem Termin
+// die erste Spalte geben, die zu seiner Startzeit wieder frei ist. Die
+// Gruppe teilt sich die Tagesspalte zu gleichen Teilen.
+function wNebeneinander(eintraege){
+  const liste=eintraege.filter(x=>x && x.von!=null).sort((a,b)=>(a.von-b.von)||(a.bis-b.bis));
+  let gruppe=[], gruppenEnde=-1;
+  const abschliessen=()=>{
+    if(!gruppe.length)return;
+    const spaltenEnde=[];                       // je Spalte: Ende des letzten Termins
+    for(const x of gruppe){
+      let i=0;
+      while(i<spaltenEnde.length && spaltenEnde[i]>x.von) i++;
+      if(i===spaltenEnde.length) spaltenEnde.push(x.bis); else spaltenEnde[i]=x.bis;
+      x.spalte=i;
+    }
+    for(const x of gruppe) x.spalten=spaltenEnde.length;
+    gruppe=[]; gruppenEnde=-1;
+  };
+  for(const x of liste){
+    if(gruppe.length && x.von>=gruppenEnde) abschliessen();
+    gruppe.push(x); gruppenEnde=Math.max(gruppenEnde,x.bis);
+  }
+  abschliessen();
+  return liste;
+}
+
+// Endzeit aus Beginn und Dauer. Bewusst hier und nicht beim Server geholt:
+// der Wochenplan zeigt drei verschiedene Quellen an, und nur eine davon
+// liefert eine Endzeit mit.
+function wEnde(beginn, dauer){
+  const t=String(beginn||"").split(":");
+  if(t.length<2)return "";
+  const h=Number(t[0]), m=Number(t[1]);
+  if(!Number.isFinite(h)||!Number.isFinite(m))return "";
+  const g=h*60+m+(Number(dauer)||45);
+  return String(Math.floor(g/60)%24).padStart(2,"0")+":"+String(g%60).padStart(2,"0");
+}
+
 function zeichneWoche(){
   const el=document.getElementById("wGitter"); if(!el)return;
   const heute=wHeute();
@@ -1089,12 +1467,38 @@ function zeichneWoche(){
   for(let i=0;i<7;i++){
     const iso=wPlus(WOCHE_START,i);
     let blocks="";
+    // Erst Zeiten rechnen, dann das Nebeneinander bestimmen.
+    const desTages=[];
+    // Eine B96-Gruppenschulung (Anlage 7a FeV) steht als eine Zeile JE TEILNEHMER
+    // in FUCHS, ist im Plan aber EIN Termin: ein Fahrlehrer, ein Fahrzeug, eine
+    // Zeit. Sie wird deshalb zu einem Block zusammengefasst - sonst stuenden vier
+    // schmale Saeulen nebeneinander und der Plan saehe aus wie eine Doppelbuchung.
+    const gKoepfe={};
     for(const e of WOCHE_DATEN.filter(x=>x.datum_iso===iso)){
       const t=String(e.uhrzeit||"").split(":");
       if(t.length<2)continue;
-      const min=(Number(t[0])-WVON)*60+Number(t[1]);
+      const gid=String(e.gruppe_id||"");
+      if(gid){
+        if(gKoepfe[gid]){ gKoepfe[gid].e.gruppe_mit.push(e); continue; }
+        GRUPPEN[gid]=gKoepfe[gid]={e:{...e, gruppe_mit:[e]}};
+      }
+      const kopf=gid?gKoepfe[gid].e:e;
+      const von=(Number(t[0])-WVON)*60+Number(t[1]);
+      desTages.push({e:kopf, von, bis:von+(Number(e.dauer)||45), spalte:0, spalten:1});
+    }
+    for(const platz of wNebeneinander(desTages)){
+      const e=platz.e;
+      const min=platz.von;
       const oben=Math.max(min/60*WPX,0);
-      const hoehe=Math.max((Number(e.dauer)||45)/60*WPX-3,20);
+      let hoehe=Math.max((Number(e.dauer)||45)/60*WPX-3,20);
+      // Pruefungstermin mit Pruefort: Mindesthoehe, damit der Ort hineinpasst.
+      if(String(e.art||"")==="praktische_pruefung"&&String(e.bemerkung||"").trim())
+        hoehe=Math.max(hoehe,84);
+      // Teilen sich mehrere Termine die Zeit, teilen sie sich auch die Breite.
+      const breit=platz.spalten>1
+        ? `left:calc(2px + ${platz.spalte} * (100% - 4px) / ${platz.spalten});`
+          + `width:calc((100% - 4px) / ${platz.spalten} - 2px);right:auto;font-size:8px;`
+        : "";
       const fertig=e.signiert||e.status==="durchgefuehrt";
       const farbe=ART_FARBE[e.art]||"#667";
       let grund=farbe, schrift="#fff";
@@ -1103,14 +1507,58 @@ function zeichneWoche(){
       else if(farbe==="#f2c200"){schrift="#332800";}
       // Frueher stand hier nur der Vorname. Bei zwei Annas in derselben Woche
       // half das nicht weiter - jetzt steht der ganze Name da.
-      const wer=String(e.schueler||e.art_text||"Termin").trim()||"Termin";
+      const inGruppe=Array.isArray(e.gruppe_mit)&&e.gruppe_mit.length>1;
+      const blocker=istBlocker(e);
+      // Bei geblockten Zeiten steht kein Name im Termin - dort gehoert die
+      // Bemerkung in den Block, sonst heisst jeder Block nur "Taetigkeit".
+      const wer=inGruppe
+        ? ("\u{1F465} B96-Gruppe ("+e.gruppe_mit.length+")")
+        : (blocker
+          ? (()=>{
+              const n=BLOCKER_NAME[e.art]||e.art_text||"Geblockte Zeit";
+              const bm=String(e.bemerkung||"").trim();
+              // "Urlaub: Urlaub" liest sich albern - der Zusatz nur, wenn er
+              // wirklich etwas Neues sagt.
+              return (bm && bm.toLowerCase()!==n.toLowerCase()) ? n+": "+bm : n;
+            })()
+          : (String(e.schueler||e.art_text||"Termin").trim()||"Termin"));
       // Fremde Termine (Auto-Ansicht oder Plan einer Kollegin) sind nur zum
       // Ansehen - antippen laesst sich nur der eigene Termin.
       const tippbar=e.id&&!e.fremd;
-      blocks+=`<div class="wblock" title="${esc(wer)} · ${esc((e.uhrzeit||"").slice(0,5))} · ${esc(e.art_text||"")}"
-        style="top:${oben}px;height:${hoehe}px;background:${grund};color:${schrift}${e.fremd?";opacity:.85":""}"
-        ${tippbar?`onclick="event.stopPropagation();wBlock(${e.id})"`:'onclick="event.stopPropagation()"'}
-        ><b>${fertig?"🔑 ":""}${esc((e.uhrzeit||"").slice(0,5))}</b>${esc(wer)}</div>`;
+      const titel=inGruppe
+        ? (e.gruppe_mit.map(m=>String(m.schueler||"")).join(", ")+" · "+String((e.uhrzeit||"").slice(0,5))+" · Gruppenschulung B96")
+        : (String(wer)+" · "+String((e.uhrzeit||"").slice(0,5))+" · "+String(e.art_text||""));
+      const ruf=inGruppe?`wGruppe('${e.gruppe_id}')`:`wBlock(${e.id})`;
+      // Bemerkung aus der Planung direkt im Block - der Fahrlehrer soll
+      // "Schaltwagen mitbringen" oder "Treffpunkt Bahnhof" sehen, ohne den
+      // Termin erst anzutippen. Sie steht auch im Tooltip, falls der Block
+      // zu flach ist. Bei geblockten Zeiten ist die Bemerkung schon der Text.
+      const bem=(!blocker&&!e.taetigkeit)?String(e.bemerkung||"").trim():"";
+      // Bei PRUEFUNGEN steht in der Bemerkung der Pruefort. Der muss immer
+      // lesbar sein - da wird nicht gekuerzt und nicht auf die Blockhoehe
+      // geschaut. Der Block waechst notfalls ueber seine Zeit hinaus.
+      const istPruefung=String(e.art||"")==="praktische_pruefung";
+      const bemZeile=bem
+        ?(istPruefung
+          ?`<span class="wbem wpruef">\u{1F4CD} ${esc(bem)}</span>`
+          :(hoehe>=64
+            ?`<span class="wbem">\u{1F4DD} ${esc(bem)}</span>`
+            :`<span class="wbem" title="${esc(bem)}">\u{1F4DD}</span>`))
+        :"";
+      // Anfang UND Ende: "wann bin ich wieder frei" ist beim Planen die
+      // haeufigste Frage. Gerechnet wird es hier aus Beginn + Dauer und nicht
+      // aus e.bis - nicht jede Quelle (Fahrzeugplan, Taetigkeiten) liefert das.
+      const bisText=wEnde(e.uhrzeit, e.dauer);
+      // Ausbildungsklasse gleich mit im Block: daran sieht der Fahrlehrer auf
+      // einen Blick, welches Fahrzeug er braucht (Benjamin, 01.09.2026).
+      const kl=(!blocker&&!e.taetigkeit)?String(e.klasse||"").trim():"";
+      const klBadge=kl?`<i class="wkl">${esc(kl)}</i>`:"";
+      blocks+=`<div class="wblock" title="${esc(titel)}${bisText?" \u2013 "+esc(bisText):""}${kl?" \u00b7 Klasse "+esc(kl):""}${bem?" \u00b7 \u{1F4DD} "+esc(bem):""}"
+        style="${breit}top:${oben}px;height:${hoehe}px;background:${grund};color:${schrift}${e.fremd?";opacity:.85":""}"
+        ${tippbar?`onclick="event.stopPropagation();${ruf}"`:'onclick="event.stopPropagation()"'}
+        ><b>${esc((e.uhrzeit||"").slice(0,5))}${bisText?"\u2013":""}</b>${
+          bisText?`<span class="wbis">${esc(bisText)}</span>`:""
+        }${klBadge}${fertig?"🔑 ":""}${esc(wer)}${bemZeile}</div>`;
     }
     spalten+=`<div class="wspalte" data-tag="${iso}" style="height:${(WBIS-WVON)*WPX}px">${raster}${blocks}</div>`;
   }
@@ -1121,8 +1569,11 @@ function zeichneWoche(){
   if(WOCHE_DATEN.some(x=>x.status==="fehlstunde")) leg+=`<span><i style="background:${FEHL_MUSTER}"></i>Fehlstunde</span>`;
   if(WOCHE_DATEN.some(x=>x.status==="ausgefallen")) leg+=`<span><i style="background:${AUS_MUSTER}"></i>ausgefallen</span>`;
   if(WOCHE_DATEN.some(x=>x.signiert||x.status==="durchgefuehrt")) leg+=`<span>🔑 gebucht</span>`;
+  // Bei B96 und Co. faehrt ein Fahrlehrer zulaessig mit zwei Schuelern
+  // gleichzeitig - dann stehen die Termine nebeneinander wie im Manager.
+  if(wHatDoppel()) leg+=`<span title="Zwei Schüler zur selben Zeit – z. B. B96-Anhängerausbildung">⇉ gleichzeitig</span>`;
   leg+=`<span class="wzeit">Minuten je Tag: <b>Praxis</b>/<b>gesamt</b> · erlaubt ${AZ_PRAXIS_MAX}/${AZ_GESAMT_MAX}</span>`;
-  el.innerHTML=`${leg?`<div class="wlegende">${leg}</div>`:""}<div class="wrahmen"><div style="min-width:100%">${kopf}<div class="wkoerper">${leiste}${spalten}</div></div></div>`;
+  el.innerHTML=`${pruefKasten()}${leg?`<div class="wlegende">${leg}</div>`:""}<div class="wrahmen"><div style="min-width:100%">${kopf}<div class="wkoerper">${leiste}${spalten}</div></div></div>`;
   el.querySelectorAll(".wspalte").forEach(sp=>{
     sp.onclick=(ev)=>{
       const r=sp.getBoundingClientRect();
@@ -1237,14 +1688,30 @@ function terminSchicken(t) {
               "_blank", "noopener");
 }
 
-// Der Knopf. Nur bei echten Terminen mit Schueler und Handynummer.
-function terminSchickenKnopfHTML(kennung) {
-  return `<button class="btn-primary" style="background:#25D366" onclick="terminSchickenAus('${kennung}')">📱 Termin per WhatsApp schicken</button>`;
+// ALLE anstehenden Termine eines Schuelers auf einmal schicken. Der Server
+// baut die Nachricht (er kennt auch die Termine bei Kollegen), verschickt wird
+// sie aus dem eigenen WhatsApp des Fahrlehrers - kostenlos und ohne Vorlage.
+async function alleTermineSchicken(nummer) {
+  const z = telZiffern(nummer);
+  if (!z) { toast("Keine Handynummer hinterlegt"); return; }
+  toast("Termine werden geholt …");
+  let d = null;
+  try { d = await jpost("fahrlehrer/termine-text", { fl: FL, pin: PIN, nummer }); } catch (e) { }
+  if (!d || !d.ok) { toast((d && d.fehler) || "Termine gerade nicht abrufbar"); return; }
+  window.open("https://wa.me/" + z + "?text=" + encodeURIComponent(d.text),
+              "_blank", "noopener");
 }
-function terminSchickenAus(kennung) {
-  const t = FUCHS_TERMINE[kennung] || GEPLANT_ZULETZT;
-  if (t) terminSchicken(t);
+// Der Sammelknopf. Ohne Handynummer gibt es ihn nicht.
+function alleTermineKnopfHTML(nummer) {
+  if (!istHandy(nummer)) return "";
+  return `<button class="btn-primary" style="background:#25D366;margin-top:8px"
+    onclick="alleTermineSchicken('${esc(String(nummer || ""))}')">📤 Alle Termine per WhatsApp senden</button>`;
 }
+
+// Den frueheren Knopf "Termin per WhatsApp schicken" gibt es nicht mehr
+// (Benjamin, 01.09.2026): Zwei gruene Knoepfe untereinander waren verwirrend,
+// und der Sammelknopf deckt den Einzelfall mit ab. GEPLANT_ZULETZT bleibt -
+// daraus holt sich die Seite "Termin steht" die Handynummer.
 let GEPLANT_ZULETZT = null;
 
 const WA_ZEICHEN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>';
@@ -1283,7 +1750,70 @@ function kontaktKarteHTML(name, nummer, anlass) {
 // Antippen im Wochenplan oeffnet das Terminmenue. Frueher fuehrte jeder Tipp
 // sofort zur Unterschrift - Verschieben und Loeschen waren von hier aus gar
 // nicht erreichbar.
+// Pruefungen der Woche mit PRUEFORT, ueber dem Plan.
+// Im Raster ist eine Spalte auf dem Handy rund 40 Pixel breit - dort passt
+// keine Adresse hinein, egal wie hoch der Block ist. Der Pruefort steht im
+// Buero aber in der Bemerkung, und der Fahrlehrer muss ihn VORHER lesen
+// koennen. Deshalb hier eine eigene Zeile je Pruefung, voll ausgeschrieben.
+const WTAG_KURZ=["So","Mo","Di","Mi","Do","Fr","Sa"];
+function pruefKasten(){
+  const p=(WOCHE_DATEN||[])
+    .filter(e=>String(e.art||"")==="praktische_pruefung"&&e.status!=="ausgefallen")
+    .sort((a,b)=>String(a.datum_iso+a.uhrzeit).localeCompare(String(b.datum_iso+b.uhrzeit)));
+  if(!p.length)return "";
+  const zeile=(e)=>{
+    const d=new Date(String(e.datum_iso)+"T12:00:00");
+    const wt=isNaN(d)?"":WTAG_KURZ[d.getDay()]+" ";
+    const dat=String(e.datum_iso||"").slice(8,10)+"."+String(e.datum_iso||"").slice(5,7)+".";
+    const ort=String(e.bemerkung||"").trim();
+    const fertig=e.signiert||e.status==="durchgefuehrt";
+    return `<div class="pruefz"${e.id?` onclick="wBlock(${e.id})"`:""}>
+        <div class="pruefk">${fertig?"\u{1F511} ":""}${esc(wt+dat)} ${esc((e.uhrzeit||"").slice(0,5))}</div>
+        <div class="pruefi"><b>${esc(e.schueler||"Prüfung")}</b>${e.klasse?" \u00b7 "+esc(e.klasse):""}
+          <div class="pruefo">${ort?"\u{1F4CD} "+esc(ort):"<i>kein Prüfort eingetragen \u2013 bitte im Büro nachfragen</i>"}</div>
+        </div></div>`;
+  };
+  return `<div class="pruefbox">
+      <div class="pruefh">\u{1F4CD} ${p.length===1?"Prüfung":"Prüfungen"} diese Woche</div>
+      ${p.map(zeile).join("")}</div>`;
+}
+
 function wBlock(id){ terminMenue(id); }
+
+// Gruppenschulung B96: ein Block im Plan, aber vier eigenstaendige Fahrstunden.
+// Jede und jeder unterschreibt einzeln - deshalb fuehrt der Block zuerst auf die
+// Teilnehmerliste und von dort in das gewohnte Terminmenue.
+let GRUPPEN={};
+function wGruppe(gid){
+  const k=GRUPPEN[String(gid||"")];
+  if(!k||!k.e){toast("Gruppe nicht gefunden");return;}
+  const e=k.e, mit=e.gruppe_mit||[];
+  const zurueck=WOCHE_START||wMontag(wHeute());
+  const zeile=(m)=>{
+    const fertig=m.signiert||m.status==="durchgefuehrt";
+    const aus=m.status==="ausgefallen"||m.status==="fehlstunde";
+    const stand=fertig?'<div class="klbadge" style="background:#E7F5EC;color:#1B7A43">\u2713 gebucht</div>'
+      :(aus?'<div class="klbadge" style="background:#FBECEC;color:#C23">'+esc(m.status==="fehlstunde"?"Fehlstunde":"ausgefallen")+'</div>'
+      :'<div class="klbadge">offen</div>');
+    return `<div class="card zeile" onclick="terminMenue(${m.id})">
+        <div class="info"><div class="titel">${esc(m.schueler||"Teilnehmer/in")}</div>
+        <div class="sub">${esc(m.klasse||"B96")}</div></div>${stand}</div>`;
+  };
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="viewWoche('${zurueck}')">\u2190 Zur\u00fcck zum Wochenplan</button>
+    <div><div class="eyebrow">Gruppenschulung B96</div><h1>\u{1F465} ${mit.length} Teilnehmer</h1></div>
+    <div class="card zeile" style="cursor:default">
+      <div class="zeit">${esc((e.uhrzeit||"").slice(0,5))}${e.bis?"\u2013"+esc(e.bis):""}</div>
+      <div class="info"><div class="titel">${esc(e.datum||"")}</div>
+      <div class="sub">${esc(e.art_text||"")}${e.dauer?" \u00b7 "+esc(String(e.dauer))+" Min.":""}</div></div>
+    </div>
+    ${fzKarteHTML(e)}
+    <div class="hint">Praktische \u00dcbungen d\u00fcrfen in der Gruppe stattfinden (Anlage 7a FeV) \u2013
+      h\u00f6chstens vier Teilnehmer je Schulungsfahrzeug. <b>Jede und jeder unterschreibt einzeln.</b>
+      Das Fahren im Stra\u00dfenverkehr \u2013 mindestens eine Zeitstunde je Teilnehmer \u2013 wird einzeln gebucht.</div>
+    ${mit.map(zeile).join("")}`;
+  main().scrollTop=0;
+}
 
 // Liegt der Termin noch in der Zukunft? Nur dann darf eine Fahrstunde als
 // Planungsfehler geloescht werden. Was vorbei ist, wird abgesagt oder als
@@ -1297,6 +1827,43 @@ function terminKuenftig(e){
   const t=String(e.uhrzeit||"00:00").split(":");
   const jetzt=new Date();
   return (Number(t[0])*60+Number(t[1])) > (jetzt.getHours()*60+jetzt.getMinutes());
+}
+
+// Darf dieser Termin noch geloescht werden? Bis TAGESENDE - nicht nur bis zur
+// Startzeit (Benjamin, 02.09.2026). Der Fall ist der Alltag: der Schueler kommt
+// um 14:00 nicht, es ist 14:05, der Fahrlehrer vergibt die Zeit an einen
+// anderen Schueler. Dann soll die alte Stunde weg. Was vor heute liegt, wird
+// weiterhin abgesagt oder als Fehlstunde gebucht - sonst verschwindet eine
+// kurzfristige Absage spurlos aus dem Buero.
+function terminLoeschbar(e){
+  const iso=String((e&&e.datum_iso)||"");
+  if(!iso)return false;
+  return iso>=wHeute();
+}
+
+// Fahrzeug zu einem Termin. Der Fahrschulmanager schickt es fertig als
+// fahrzeug_text ("B-FX 1771 - VW Tiguan - Schaltung"); aeltere Antworten ohne
+// dieses Feld werden hier notduerftig zusammengesetzt.
+function fzText(e){
+  if(!e)return "";
+  if(e.fahrzeug_text)return String(e.fahrzeug_text);
+  const teile=[e.fahrzeug_kennzeichen,e.fahrzeug].map(x=>String(x||"").trim()).filter(Boolean);
+  return teile.join(" · ");
+}
+// Kurzform fuer die Wochenliste: Kennzeichen, sonst der Fahrzeugname.
+function fzKurz(e){
+  if(!e||istBlocker(e))return "";
+  const t=String(e.fahrzeug_kennzeichen||"").trim()||String(e.fahrzeug||"").trim();
+  return t?' · 🚗 '+esc(t):"";
+}
+function fzKarteHTML(e){
+  const t=fzText(e);
+  if(t) return `<div class="card" style="cursor:default">
+      <div class="eyebrow">Fahrzeug</div>
+      <div class="titel" style="font-size:16px">🚗 ${esc(t)}</div></div>`;
+  return `<div class="card" style="cursor:default">
+      <div class="eyebrow">Fahrzeug</div>
+      <div class="sub">Für diesen Termin ist kein Fahrzeug eingetragen – bitte im Büro nachfragen.</div></div>`;
 }
 
 function tmKnopf(text, ruf, stil){
@@ -1324,7 +1891,7 @@ function terminMenue(id){
     knoepfe+=tmKnopf("🎓 Prüfungsergebnis eintragen","pruefungErgebnis("+id+")","primary");
   }
   if(!fertig&&!abgesagt){
-    knoepfe+=tmKnopf("🕒 Termin verschieben","verschiebenPanel("+id+")");
+    knoepfe+=tmKnopf("🕒 Termin ändern – Zeit oder Schüler","verschiebenPanel("+id+")");
   }
   if(!fertig&&!abgesagt&&!blocker){
     knoepfe+=tmKnopf("✕ Termin absagen / ausgefallen","viewAusfall("+id+")");
@@ -1332,9 +1899,17 @@ function terminMenue(id){
   if(fertig&&e.nummer){
     knoepfe+=tmKnopf("📋 Ausbildungskarte pflegen","karteVonStunde("+id+")");
   }
+  // Fehlstunde streichen: Konnte die Zeit neu vergeben werden, hat der
+  // Fahrlehrer keinen Ausfall - dann soll der Fahrschueler sie auch nicht
+  // bezahlen (Benjamin, 01.09.2026). Bewusst ein eigener Knopf mit eigenem
+  // Text: "loeschen" waere hier zu harmlos formuliert, es geht um Geld.
+  if(e.status==="fehlstunde"){
+    knoepfe+=`<button class="btn-primary" style="width:100%;text-align:left;margin-top:8px;background:#C23"
+      onclick="fehlstundeStreichen(${id})">\u{1F5D1} Fehlstunde streichen \u2013 wird nicht berechnet</button>`;
+  }
   // Loeschen: geblockte Zeiten immer, Fahrstunden nur, solange sie noch
   // bevorstehen und niemand unterschrieben hat.
-  if(!fertig&&(blocker||(!abgesagt&&terminKuenftig(e)))){
+  if(!fertig&&(blocker||(!abgesagt&&terminLoeschbar(e)))){
     knoepfe+=`<button class="btn-primary" style="width:100%;text-align:left;margin-top:8px;background:#C23"
       onclick="terminLoeschen(${id})">🗑 Termin löschen</button>`;
   }
@@ -1351,10 +1926,11 @@ function terminMenue(id){
       <div class="sub">${esc(blocker?(BLOCKER_NAME[e.art]||e.art_text||""):(e.art_text||""))}${e.dauer?" · "+esc(String(e.dauer))+" Min.":""}</div></div>
       ${stand}
     </div>
+    ${blocker?"":fzKarteHTML(e)}
     ${e.bemerkung?`<div class="card" style="cursor:default"><div class="sub">${esc(e.bemerkung)}</div></div>`:""}
     ${blocker?`<div class="hint">Hier ist keine Fahrstunde eingetragen – die Zeit ist nur geblockt.
        Das Büro sieht den Eintrag genauso in deinem Plan.</div>`:""}
-    ${(!blocker && !fertig && !abgesagt && istHandy(e.nummer)) ? terminSchickenKnopfHTML(String(id)) : ""}
+    ${(!blocker && !fertig && !abgesagt) ? alleTermineKnopfHTML(e.nummer) : ""}
     ${blocker?"":kontaktKarteHTML(e.schueler, e.nummer,
         "Es geht um deine Fahrstunde am " + String(e.datum||"")
         + (e.uhrzeit?(" um " + String(e.uhrzeit).slice(0,5) + " Uhr"):"") + ".")}
@@ -1363,13 +1939,39 @@ function terminMenue(id){
   main().scrollTop=0;
 }
 
+// Fehlstunde streichen - Termin UND Forderung verschwinden zusammen.
+// Der Manager protokolliert, wer es war; das Buero sieht es im Protokoll.
+async function fehlstundeStreichen(id){
+  const e=FUCHS_TERMINE[id]; if(!e)return;
+  const wen=String(e.schueler||"").trim()||"der Fahrschüler";
+  if(!confirm("Fehlstunde streichen?\n\n"+wen+" bekommt sie dann NICHT berechnet – "
+    + "gedacht für den Fall, dass du die Zeit neu vergeben konntest.\n\n"
+    + "Der Termin verschwindet aus dem Plan. Rückgängig macht das nur das Büro."))return;
+  const err=document.getElementById("tmFehler"); if(err)err.textContent="";
+  const d=await jpost("fahrlehrer/fehlstunde-streichen",{fl:FL,stunde_id:id});
+  if(d&&d.ok){
+    toast(d.betrag_text?("Gestrichen \u2713 \u2013 "+d.betrag_text+" nicht berechnet"):"Fehlstunde gestrichen \u2713");
+    delete FUCHS_TERMINE[id]; wZurueckGehen(); return;
+  }
+  if(err)err.textContent=(d&&d.fehler)||FEHLERTEXT||"Streichen fehlgeschlagen.";
+}
+
 async function terminLoeschen(id){
   const e=FUCHS_TERMINE[id]; if(!e)return;
   const mitSchueler=!!(e.schueler_id||String(e.schueler||"").trim());
-  const frage=mitSchueler
-    ? "Diesen Termin wirklich löschen?\n\nNur für einen Planungsfehler gedacht. Hat der Schüler abgesagt, "
-      + "trag ihn bitte stattdessen als „ausgefallen“ oder als Fehlstunde ein – sonst fehlt der Vorgang im Büro."
-    : "Diesen Eintrag wirklich löschen?";
+  // Eine Stunde, die heute schon begonnen hat, darf weg - aber nur, wenn die
+  // Zeit wirklich neu vergeben wird. Sonst gehoert sie als Fehlstunde gebucht,
+  // damit der Ausfall im Buero und auf dem Schuelerkonto sichtbar bleibt.
+  const begonnen=mitSchueler&&!terminKuenftig(e)&&terminLoeschbar(e);
+  const frage=!mitSchueler
+    ? "Diesen Eintrag wirklich löschen?"
+    : begonnen
+      ? "Diese Fahrstunde hat bereits begonnen.\n\nLöschen ist richtig, wenn du die Zeit "
+        + "neu vergibst – dann wird sie dem Schüler nicht berechnet.\n\nIst der Schüler ohne "
+        + "Absage nicht erschienen und die Zeit bleibt leer, trag sie bitte stattdessen als "
+        + "Fehlstunde ein.\n\nWirklich löschen?"
+      : "Diesen Termin wirklich löschen?\n\nNur für einen Planungsfehler gedacht. Hat der Schüler abgesagt, "
+        + "trag ihn bitte stattdessen als „ausgefallen“ oder als Fehlstunde ein – sonst fehlt der Vorgang im Büro.";
   if(!confirm(frage))return;
   const err=document.getElementById("tmFehler"); if(err)err.textContent="";
   const d=await jpost("fahrlehrer/termin-loeschen",{fl:FL,stunde_id:id});
@@ -1401,6 +2003,8 @@ async function viewPlanen(datum,zeit){
     <div id="pSchuelerFeld">
       <input id="pSuche" class="app-input" style="text-align:left" placeholder="🔍 Schüler suchen">
       <select id="pSchueler" class="app-select" style="margin-top:9px"></select>
+      <div id="pGruppe" style="margin-top:10px"></div>
+      <div id="pKlasse" style="margin-top:10px"></div>
     </div>
     <div class="row" style="display:flex;gap:9px">
       <input id="pDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${datum}">
@@ -1427,6 +2031,15 @@ async function viewPlanen(datum,zeit){
   };
   fuellen("");
   document.getElementById("pSuche").oninput=e=>fuellen(e.target.value.trim());
+  // Gruppenschulung B96 (Anlage 7a FeV): bis zu vier Teilnehmer in EINEM Termin.
+  // Erscheint nur, wenn der gewaehlte Schueler B96 macht.
+  P_GRUPPE=[];
+  document.getElementById("pSchueler").addEventListener("change",pGruppeZeigen);
+  pGruppeZeigen();
+  const pKlasseNeu=()=>skZeichnen("pKlasse",
+    skSchueler(W_SCHUELER,document.getElementById("pSchueler").value)||{},null);
+  document.getElementById("pSchueler").addEventListener("change",pKlasseNeu);
+  pKlasseNeu();
   const pArt=document.getElementById("pArt"), pDauer=document.getElementById("pDauer"),
         pFeld=document.getElementById("pSchuelerFeld"), pFz=document.getElementById("pFz"),
         pHin=document.getElementById("pHinweis");
@@ -1457,6 +2070,43 @@ async function viewPlanen(datum,zeit){
   nachfuehren();
   document.getElementById("pSpeichern").onclick=()=>planenSpeichern(false);
 }
+let P_GRUPPE=[];
+const istB96=k=>/B96/i.test(String(k||""));
+// Teilnehmerfeld der Gruppenschulung. Bewusst eine schlichte Auswahlliste:
+// die App wird im Auto bedient, dort zaehlt ein grosser Treffer, kein Suchfeld.
+function pGruppeZeigen(){
+  const kasten=document.getElementById("pGruppe");
+  if(!kasten)return;
+  const id=String((document.getElementById("pSchueler")||{}).value||"");
+  const haupt=W_SCHUELER.find(s=>String(s.id)===id);
+  if(!haupt||!istB96(haupt.klasse)){P_GRUPPE=[];kasten.innerHTML="";return;}
+  P_GRUPPE=P_GRUPPE.filter(x=>String(x)!==id);
+  const frei=W_SCHUELER.filter(s=>istB96(s.klasse)&&String(s.id)!==id
+    &&P_GRUPPE.indexOf(String(s.id))<0);
+  const gewaehlt=P_GRUPPE.map(gid=>W_SCHUELER.find(s=>String(s.id)===String(gid))).filter(Boolean);
+  kasten.innerHTML=`
+    <div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">\u{1F465} Gruppenschulung B96</div>
+      <div class="sub" style="margin:4px 0 9px">Die praktischen \u00dcbungen d\u00fcrfen in der Gruppe
+        stattfinden (Anlage 7a FeV) \u2013 h\u00f6chstens <b>vier Teilnehmer</b> je Schulungsfahrzeug.
+        Das Fahren im Stra\u00dfenverkehr wird einzeln gebucht.</div>
+      <div class="sub" style="margin-bottom:6px">1. ${esc(haupt.name||"")}</div>
+      ${gewaehlt.map((s,i)=>`<div class="sub" style="margin-bottom:6px">${i+2}. ${esc(s.name||"")}
+        <button class="btn-ghost" style="padding:2px 9px;margin-left:6px"
+          onclick="pGruppeWeg('${s.id}')">entfernen</button></div>`).join("")}
+      ${P_GRUPPE.length<3
+        ? `<select id="pGrpWahl" class="app-select" style="margin-top:4px"
+             onchange="pGruppeDazu(this.value)">
+             <option value="">\u2795 weitere/n B96-Teilnehmer/in dazunehmen (${frei.length})</option>
+             ${frei.slice(0,300).map(s=>`<option value="${s.id}">${esc(s.name||"")}</option>`).join("")}
+           </select>`
+        : `<div class="meta">Vier Teilnehmer erreicht \u2013 mehr erlaubt Anlage 7a je Fahrzeug nicht.</div>`}
+    </div>`;
+}
+function pGruppeDazu(id){ if(!id)return; if(P_GRUPPE.indexOf(String(id))<0)P_GRUPPE.push(String(id)); pGruppeZeigen(); }
+function pGruppeWeg(id){ P_GRUPPE=P_GRUPPE.filter(x=>String(x)!==String(id)); pGruppeZeigen(); }
+
+let B_SCHUELER=[];
 let W_ARTEN=[["uebung","Übungsstunde"]];
 let W_BLOCKER=[["theorie","Theorieunterricht"],["taetigkeit","Tätigkeit (Firma)"],
   ["privat","Privat"],["krank","Krankheit"],["urlaub","Urlaub"],["feiertag","Feiertag"]];
@@ -1469,7 +2119,24 @@ async function planenSpeichern(trotzdem){
   if(!blocker&&!schueler_id){err.textContent="Bitte einen Schüler wählen.";return;}
   const btn=document.getElementById("pSpeichern");btn.disabled=true;btn.textContent="Speichert …";
   const datum=document.getElementById("pDatum").value;
-  const d=await jpost("fahrlehrer/termin-neu",{fl:FL,schueler_id,
+  // Gruppenschulung B96: eigene Route, ein Termin fuer alle Teilnehmer.
+  if(!blocker&&P_GRUPPE.length){
+    const g=await jpost("fahrlehrer/termin-neu-gruppe",{fl:FL,
+      schueler_ids:[String(schueler_id)].concat(P_GRUPPE),
+      datum, beginn:document.getElementById("pZeit").value,
+      art, dauer:document.getElementById("pDauer").value,
+      fahrzeug_id:(document.getElementById("pFz").value||null),
+      bemerkung:document.getElementById("pBem").value, trotzdem});
+    btn.disabled=false;btn.textContent="🗓 Termin einplanen";
+    if(g&&g.ok){toast("Gruppenschulung mit "+(g.anzahl||0)+" Teilnehmern eingeplant \u2713");
+      P_GRUPPE=[];viewWoche(wMontag(datum));return;}
+    if(g&&g.konflikt&&!trotzdem){
+      err.innerHTML=esc(g.fehler||"Zeitlicher Konflikt.")+
+        `<br><button class="btn-ghost" style="margin-top:8px" onclick="planenSpeichern(true)">Trotzdem einplanen</button>`;
+      return;}
+    err.textContent=(g&&g.fehler)||FEHLERTEXT||"Einplanen fehlgeschlagen.";return;
+  }
+  const d=await jpost("fahrlehrer/termin-neu",{fl:FL,schueler_id,klasse:SK_WAHL["pKlasse"]||"",
     datum, beginn:document.getElementById("pZeit").value,
     art, dauer:document.getElementById("pDauer").value,
     fahrzeug_id:blocker?null:(document.getElementById("pFz").value||null),
@@ -1509,9 +2176,11 @@ function geplantFertig(zurueckW){
     </div>
     <div class="card" style="cursor:default"><div class="sub">Für <b>${esc(t.schueler||"")}</b>${
       t.klasse?" · Klasse "+esc(t.klasse):""}</div></div>
-    <div class="hint">Der Schüler weiß davon noch nichts. Mit dem Knopf öffnet sich dein
-      WhatsApp mit einer fertigen Nachricht – du tippst nur noch auf Senden.</div>
-    ${terminSchickenKnopfHTML("")}
+    <div class="hint">Der Schüler weiß davon noch nichts – beim Planen geht bewusst keine
+      Nachricht mehr automatisch raus. Mit dem Knopf öffnet sich dein WhatsApp mit einer
+      fertigen Nachricht, du tippst nur noch auf Senden. Sie enthält ALLE anstehenden
+      Termine des Schülers – wenn du gerade mehrere geplant hast, sind sie alle drin.</div>
+    ${alleTermineKnopfHTML((t && t.nummer) || "")}
     <button class="btn-ghost" onclick="viewWoche('${zurueckW}')" style="margin-top:6px">Fertig – zurück zum Wochenplan</button>`;
   main().scrollTop=0;
 }
@@ -1622,9 +2291,9 @@ function zeichneFuchsTermine(t){
       // geplant -> unterschreiben & buchen, zusätzlich verschiebbar
       attr=`class="card zeile klick" onclick="signStunde(${e.id})"`;
       sub+=' · <b style="color:var(--orange)">antippen zum Unterschreiben</b>';
-      moveBtn=`<button onclick="event.stopPropagation();verschiebenPanel(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">🕒 Termin verschieben</button><button onclick="event.stopPropagation();viewAusfall(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">✕ ausgefallen</button><button onclick="event.stopPropagation();terminMenue(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">⋯ mehr</button>`;
+      moveBtn=`<button onclick="event.stopPropagation();verschiebenPanel(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">🕒 Termin ändern</button><button onclick="event.stopPropagation();viewAusfall(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">✕ ausgefallen</button><button onclick="event.stopPropagation();terminMenue(${e.id})" style="margin-top:7px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:5px 13px;font-size:12px;font-weight:700;color:var(--text-2);cursor:pointer;font-family:inherit">⋯ mehr</button>`;
     }
-    h+=`<div ${attr}><div class="zeit">${zeit}</div><div class="info"><div class="titel">${esc(e.schueler||"—")}</div><div class="sub">${sub}</div>${moveBtn}</div>${badge}</div>`;
+    h+=`<div ${attr}><div class="zeit">${zeit}</div><div class="info"><div class="titel">${esc(e.schueler||"—")}</div><div class="sub">${sub}${fzKurz(e)}</div>${moveBtn}</div>${badge}</div>`;
     return h;
   };
 
@@ -1872,25 +2541,103 @@ function vDauerWert(standard) {
   return Math.max(5, Math.min(600, n));
 }
 
-function verschiebenPanel(id){
+// Fahrschueler an einem geplanten Termin wechseln (Benjamin, 02.09.2026).
+// Der Fahrlehrer bekommt eine Absage und vergibt die Zeit an jemand anderen -
+// bisher musste er dafuer loeschen und neu planen. Serverseitig konnte der
+// Fahrschulmanager den Wechsel laengst, es fehlte nur die Auswahl hier.
+// V_WECHSEL haelt fest, ob die Auswahl ueberhaupt aufgeklappt ist: nur dann
+// wird eine geaenderte schueler_id mitgeschickt.
+let V_WECHSEL=false;
+
+async function vWechselZeigen(){
+  const feld=document.getElementById("vSchuelerWahl"); if(!feld)return;
+  const knopf=document.getElementById("vWechseln");
+  if(knopf){knopf.disabled=true;knopf.textContent="Lädt …";}
+  if(!W_SCHUELER.length){
+    const d=await jpost("fahrlehrer/fuchs-schueler",{fl:FL});
+    if(d&&d.schueler)W_SCHUELER=d.schueler;
+  }
+  if(knopf)knopf.style.display="none";
+  if(!W_SCHUELER.length){
+    feld.style.display="block";
+    feld.innerHTML=`<div class="hint">Die Schülerliste konnte nicht geladen werden.
+      Bitte die App neu laden und es noch einmal versuchen.</div>`;
+    return;
+  }
+  V_WECHSEL=true;
+  const s=AKT_STUNDE||{};
+  const sub=document.getElementById("vJetztSub");
+  if(sub)sub.textContent="bisher an diesem Termin";
+  feld.style.display="block";
+  feld.innerHTML=`
+    <input id="vSuche" class="app-input" style="text-align:left" placeholder="🔍 Schüler suchen">
+    <select id="vSchueler" class="app-select" style="margin-top:9px"></select>
+    <div id="vKlasse" style="margin-top:10px"></div>`;
+  // Ganz oben steht IMMER der bisherige Schueler - und zwar mit seiner eigenen
+  // id. Damit passiert nichts, solange der Fahrlehrer die Liste nur aufklappt
+  // und wieder in Ruhe laesst. Auch dann nicht, wenn der bisherige Schueler in
+  // der Auswahlliste gar nicht mehr auftaucht (nicht mehr aktiv).
+  const fuellen=(q)=>{
+    const l=(q?W_SCHUELER.filter(x=>String(x.name||"").toLowerCase().includes(q.toLowerCase())):W_SCHUELER)
+      .filter(x=>String(x.id)!==String(s.schueler_id||""));
+    document.getElementById("vSchueler").innerHTML=
+      `<option value="${esc(String(s.schueler_id||""))}">— ${esc(s.schueler||"bisheriger Schüler")} bleibt —</option>`+
+      l.slice(0,300).map(x=>`<option value="${x.id}">${esc(x.name)}${x.geb?" · "+esc(x.geb):""}</option>`).join("");
+    vKlasseNeu();
+  };
+  const vKlasseNeu=()=>skZeichnen("vKlasse",
+    skSchueler(W_SCHUELER,document.getElementById("vSchueler").value)||{},null);
+  fuellen("");
+  document.getElementById("vSuche").oninput=e=>fuellen(e.target.value.trim());
+  document.getElementById("vSchueler").addEventListener("change",vKlasseNeu);
+}
+
+async function verschiebenPanel(id){
   const s=FUCHS_TERMINE[id];if(!s)return;
-  AKT_STUNDE=s;
+  AKT_STUNDE=s; V_WECHSEL=false; SK_WAHL["vKlasse"]="";
+  const blocker=istBlocker(s);
+  // Fahrzeugliste einmal holen - ohne sie gaebe es hier nur ein leeres Feld.
+  if(!FAHRZEUGE){
+    const fz=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
+    if(fz){FAHRZEUGE=fz.fahrzeuge||[];FZ_MEIN=fz.mein;}
+  }
   main().innerHTML=`
     <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
-    <div><div class="eyebrow">Termin verschieben</div><h1>🕒 ${esc(s.schueler||"Fahrstunde")}</h1></div>
+    <div><div class="eyebrow">Termin ändern</div><h1>🕒 ${esc(s.schueler||"Fahrstunde")}</h1></div>
     <div class="card zeile" style="cursor:default"><div class="zeit">${esc(s.uhrzeit||"")}${s.bis?"–"+esc(s.bis):""}</div><div class="info"><div class="titel">bisher: ${esc(s.datum)}</div><div class="sub">${esc(s.art_text)}</div></div>${s.klasse?`<div class="klbadge">${esc(s.klasse)}</div>`:""}</div>
     <div class="hint">Neues Datum, neue Uhrzeit und – wenn nötig – eine andere Dauer wählen. Es bleibt dieselbe Fahrstunde.</div>
+    ${blocker?"":`<div style="font-weight:700;font-size:14px;margin:6px 0 4px">Fahrschüler</div>
+    <div class="card zeile" style="cursor:default"><div class="info"><div class="titel">${esc(s.schueler||"—")}</div><div class="sub" id="vJetztSub">bleibt an diesem Termin</div></div></div>
+    <button class="btn-ghost" id="vWechseln" style="margin-top:8px">👤 anderen Fahrschüler eintragen</button>
+    <div id="vSchuelerWahl" style="display:none;margin-top:9px"></div>`}
     <div style="font-weight:700;font-size:14px;margin:6px 0 4px">Neues Datum</div>
     <input id="vDatum" type="date" class="app-select" value="${esc(s.datum_iso||"")}" style="width:100%;box-sizing:border-box">
     <div style="font-weight:700;font-size:14px;margin:12px 0 4px">Neue Uhrzeit</div>
     <input id="vZeit" type="time" class="app-select" value="${esc(s.uhrzeit||"")}" style="width:100%;box-sizing:border-box">
     ${vDauerFeld(s.dauer)}
-    <div class="hint" style="margin-top:14px">Der Schüler bekommt automatisch eine
-      Benachrichtigung in seiner App. Eine WhatsApp schreibst du danach mit dem Knopf
-      am Termin – dann kommt sie von dir und er kann direkt antworten.</div>
-    <button class="btn-primary" id="vSpeichern">Verschieben</button>
+    <div style="font-weight:700;font-size:14px;margin:12px 0 4px">Fahrzeug</div>
+    <select id="vFz" class="app-select" style="width:100%;box-sizing:border-box">
+      <option value="">\u2014 kein Fahrzeug \u2014</option>
+      ${(FAHRZEUGE||[]).map(f=>`<option value="${f.id}"${String(f.id)===String(s.fahrzeug_id||"")?" selected":""}>${esc(f.bezeichnung)}${f.kennzeichen?" \u00b7 "+esc(f.kennzeichen):""}${f.getriebe?" \u00b7 "+(f.getriebe==="automatik"?"Automatik":"Schalter"):""}</option>`).join("")}
+    </select>
+    ${blocker?"":`<div class="meta" style="margin-top:6px">Diese Fahrstunde kostet:
+      <strong id="vPreis">\u2026</strong><div id="vPreisHinweis" style="margin-top:2px"></div></div>`}
+    <div class="hint" style="margin-top:14px">Es geht keine Nachricht raus. Wer Bescheid
+      bekommen soll – der alte oder der neue Schüler – bekommt sie von dir mit dem
+      WhatsApp-Knopf am Termin; dann kommt sie von dir und er kann direkt antworten.</div>
+    <button class="btn-primary" id="vSpeichern">Speichern</button>
     <div class="meta" id="vFehler" style="color:#D64545;min-height:16px"></div>`;
   vDauerBinden();
+  const w=document.getElementById("vWechseln");
+  if(w)w.onclick=vWechselZeigen;
+  // Preis mitrechnen: Dauer und Fahrzeug bestimmen ihn. Ein Automatikauto
+  // kostet in B197/BA mehr als ein Schaltwagen - das soll man SEHEN, bevor
+  // gespeichert wird.
+  const vPreisNeu=preisLader("v",()=>({schueler_id:(AKT_STUNDE&&AKT_STUNDE.schueler_id)||"",
+    art:(AKT_STUNDE&&AKT_STUNDE.art)||"uebung", dauer:vDauerWert(s.dauer),
+    fahrzeug_id:(document.getElementById("vFz")||{}).value||""}));
+  const fzFeld=document.getElementById("vFz");
+  if(fzFeld&&!blocker){ fzFeld.onchange=vPreisNeu; vPreisNeu(); }
   document.getElementById("vSpeichern").onclick=()=>verschiebenSpeichern(false);
 }
 async function verschiebenSpeichern(trotzdem){
@@ -1901,16 +2648,31 @@ async function verschiebenSpeichern(trotzdem){
   if(!neues_datum||!neue_zeit){if(err)err.textContent="Bitte Datum und Uhrzeit angeben.";return;}
   const btn=document.getElementById("vSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
   const s=AKT_STUNDE;
-  const d=await jpost("fahrlehrer/stunde-verschieben",{fl:FL,stunde_id:s.id,schueler_id:s.schueler_id,
-    dauer:vDauerWert(s.dauer),art:s.art,fahrzeug_id:s.fahrzeug_id,bemerkung:s.bemerkung,
-    neues_datum,neue_zeit,nummer:s.nummer,schueler:s.schueler,trotzdem});
+  // Wurde die Schuelerauswahl aufgeklappt und ein anderer Name gewaehlt, geht
+  // die neue schueler_id mit - und dann AUCH die Klasse, sonst bliebe im
+  // Fahrschulmanager die Klasse des alten Schuelers an der Stunde stehen.
+  const sel=document.getElementById("vSchueler");
+  let schuelerId=s.schueler_id, schuelerName=s.schueler||"", gewechselt=false;
+  if(V_WECHSEL&&sel&&sel.value&&String(sel.value)!==String(s.schueler_id||"")){
+    schuelerId=Number(sel.value);
+    schuelerName=((skSchueler(W_SCHUELER,sel.value)||{}).name)||"";
+    gewechselt=true;
+  }
+  // Das Fahrzeug aus der Maske hat Vorrang - genau dafuer steht das Feld da.
+  const fzSel=document.getElementById("vFz");
+  const fahrzeugId=fzSel?(fzSel.value||null):s.fahrzeug_id;
+  const koffer={fl:FL,stunde_id:s.id,schueler_id:schuelerId,
+    dauer:vDauerWert(s.dauer),art:s.art,fahrzeug_id:fahrzeugId,bemerkung:s.bemerkung,
+    neues_datum,neue_zeit,nummer:s.nummer,schueler:schuelerName,trotzdem};
+  if(gewechselt)koffer.klasse=SK_WAHL["vKlasse"]||"";
+  const d=await jpost("fahrlehrer/stunde-verschieben",koffer);
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){
-    let msg="Termin verschoben ✓";
-    msg+=d.benachrichtigt?" · Schüler in der App benachrichtigt":" · keine App-Benachrichtigung möglich – bitte selbst Bescheid geben";
-    toast(msg);AKT_STUNDE=null;wZurueckGehen();
+    let msg=gewechselt?("Termin geändert ✓ · jetzt für "+schuelerName):"Termin verschoben ✓";
+    if(!gewechselt&&String(fahrzeugId||"")!==String(s.fahrzeug_id||""))msg="Termin geändert ✓ · neues Fahrzeug";
+    toast(msg);AKT_STUNDE=null;V_WECHSEL=false;wZurueckGehen();
   }else if(d&&d.konflikt&&!trotzdem){
-    if(err)err.innerHTML=esc((d&&d.fehler)||"Zeitlicher Konflikt.")+`<br><button class="btn-ghost" style="margin-top:8px" onclick="verschiebenSpeichern(true)">Trotzdem verschieben</button>`;
+    if(err)err.innerHTML=esc((d&&d.fehler)||"Zeitlicher Konflikt.")+`<br><button class="btn-ghost" style="margin-top:8px" onclick="verschiebenSpeichern(true)">Trotzdem speichern</button>`;
   }else{
     if(err)err.textContent=(d&&d.fehler)||FEHLERTEXT||"Verschieben fehlgeschlagen.";
   }
@@ -1954,6 +2716,7 @@ async function viewKarte(nummer,name,stundeId){
     <div><div class="eyebrow">Ausbildungskarte</div><h1>📋 ${esc(name||"Schüler")}</h1></div>
     <div class="hint">Trage nach der Fahrstunde den aktuellen Ausbildungsstand ein – Stufe antippen speichert sofort, der Schüler sieht es direkt in seiner App.</div>
     ${kontaktKarteHTML(name, nummer, "")}
+    ${alleTermineKnopfHTML(nummer)}
     <div id="karte"><div class="meta">Lädt …</div></div>`;
   await ladeStand(nummer);
   if(katalog)alleSekt(true);   // Abschnitte offen -> sofort bewertbar
