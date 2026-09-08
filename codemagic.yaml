@@ -15,7 +15,7 @@ workflows:
         # Update hochzaehlen - Apple nimmt keine zweite Fassung mit derselben
         # Nummer an. Aendern laesst sich das hier oder in der
         # Codemagic-Oberflaeche unter "Environment variables".
-        APP_VERSION: "1.2"
+        APP_VERSION: "1.3"
         IOS_DIR: "apps/schueler/ios/App"
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
@@ -236,7 +236,7 @@ workflows:
         - signing-schueler
       vars:
         VERSION_OFFSET: 100
-        VERSION_NAME: "1.2"
+        VERSION_NAME: "1.3"
       node: 22
       java: 21
 
@@ -444,7 +444,7 @@ workflows:
         - signing
       vars:
         VERSION_OFFSET: 20
-        VERSION_NAME: "1.2"
+        VERSION_NAME: "1.3"
       node: 22
       java: 21
 
@@ -587,7 +587,7 @@ workflows:
         XCODE_PROJECT: "apps/fahrlehrer/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         INFO_PLIST: "apps/fahrlehrer/ios/App/App/Info.plist"
-        VERSION_NAME: "1.2"
+        VERSION_NAME: "1.3"
       node: 22
       xcode: latest
 
