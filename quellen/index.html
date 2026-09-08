@@ -1216,6 +1216,7 @@ const SD_SYM = {
   lernen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5"/><path d="M12 6.5C13.5 5 16 4.5 20 5v13c-4-.5-6.5 0-8 1.5"/><path d="M12 6.5v13"/></svg>',
   theorielernen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.4 2.4 0 1 1 2.9 2.6v1.3"/><path d="M12.5 16.6h.01"/></svg>',
   erstehilfe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="17" height="12" rx="2.5"/><path d="M12 10v5"/><path d="M9.5 12.5h5"/></svg>',
+  freietermine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 6.4-2"/><path d="M12 14.5v2"/></svg>',
 };
 
 function sdWeitereHTML(d) {
@@ -1225,6 +1226,7 @@ function sdWeitereHTML(d) {
     ["theorieplan", "Theorieplan", "alle Termine", "renderTheorie()"],
     ["theorielernen", "Theorie lernen", "Fragen üben", "renderLernbereich()"],
     ["lernen", "Lernen", "Videos & Theorie", "waehleTab('mediathek','Lernen')"],
+    ["freietermine", "Freie Termine", "selbst buchen", "fsAnsicht='frei';waehleTab('fahrstunden','Fahrstunden')"],
   ];
   if (d && d.kurse_aktiv) felder.push(["erstehilfe", "Erste-Hilfe-Kurs", "Termin buchen", "renderKurse()"]);
   // Bleibt am Ende eine Kachel allein uebrig, nimmt sie die ganze Breite -
@@ -2818,7 +2820,8 @@ function zeichneAusbildung() {
 // ── Fahrstunden (Ansicht + Buchungsanfrage) ──────────────────
 const FS_TAGE = ["Mo","Di","Mi","Do","Fr","Sa"];
 const FS_BLOECKE = [["08-10","08–10"],["10-12","10–12"],["12-14","12–14"],["14-16","14–16"],["16-18","16–18"],["18-20","18–20"]];
-let fsAnsicht = "liste";        // liste | anfrage
+let fsAnsicht = "liste";        // liste | anfrage | frei
+let fsFreiData = null;          // Antwort von "termine/frei"
 let fsAuswahl = {};             // tag -> [blockKeys]
 let fsAbDatum = "";
 let fsFiliale = "";
@@ -2852,6 +2855,7 @@ async function renderFahrstunden() {
     }
   }
   if (fsAnsicht === "anfrage") renderFsAnfrage();
+  else if (fsAnsicht === "frei") renderFsFrei();
   else { zeichneFahrstunden(fsData); main.scrollTop = 0; }
 }
 
@@ -2875,6 +2879,7 @@ function zeichneFahrstunden(d) {
       <span style="font-size:14px; color:var(--gray);">Fahrstunden gefahren</span>
     </div>
     <button class="btn-primary" style="margin-top:12px; width:100%;" onclick="fsAnsicht='anfrage';renderFahrstunden();">➕ Fahrstunde anfragen</button>
+    <button class="btn-ghost" style="margin-top:8px; width:100%;" onclick="fsAnsicht='frei';renderFahrstunden();">🔓 Freie Termine ansehen</button>
   </div>`;
 
   // Kommende Termine
@@ -3138,6 +3143,150 @@ async function sendeFsAnfrage() {
     hinweis.textContent = "Keine Verbindung – versuch es gleich nochmal.";
     btn.disabled = false; btn.textContent = "Anfrage senden";
   }
+}
+
+// ── Freie Termine selbst buchen ──────────────────────────────
+// Was die Fahrlehrerin oder der Fahrlehrer freigegeben hat, steht hier zur
+// Wahl. Geprueft und gerechnet wird alles im Fahrschulmanager - diese Ansicht
+// zeigt nur, was von dort kommt, und schickt die Buchung dorthin zurueck.
+// Wer zuerst bucht, bekommt den Termin; das muss die App ehrlich erklaeren
+// koennen, deshalb der eigene Ausgang fuer "schon vergeben".
+
+function fsFreiZurueck() {
+  return `<button class="btn-ghost" onclick="fsAnsicht='liste';renderFahrstunden();">← Zurück zu deinen Fahrstunden</button>`;
+}
+
+async function renderFsFrei() {
+  aktiv = null;
+  main.innerHTML = `<h1>Freie Termine</h1><div class="meta">Lädt …</div>`;
+  let d = null;
+  try {
+    const r = await fetch("termine/frei", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    d = await r.json();
+  } catch (e) { d = null; }
+  fsFreiData = d;
+
+  if (!d || d.ok === false) {
+    main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">
+      <h1 style="margin-bottom:2px;">Freie Termine</h1>${fsFreiZurueck()}
+      <div class="hint">${esc((d && d.fehler) || "Die freien Termine sind gerade nicht abrufbar. Versuch es in ein paar Minuten nochmal.")}</div></div>`;
+    return;
+  }
+
+  let h = `<h1 style="margin-bottom:2px;">Freie Termine</h1>${fsFreiZurueck()}`;
+
+  if (d.sperre) {
+    h += `<div class="hint">${esc(d.sperre)}</div>`;
+    main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">${h}</div>`;
+    main.scrollTop = 0;
+    return;
+  }
+
+  const liste = d.termine || [];
+  h += `<div class="card" style="border:none; background:var(--orange-soft);">
+    <div class="eyebrow">Selbst buchen</div>
+    <div style="font-size:14px; color:var(--dark); margin-top:4px; line-height:1.5;">
+      Diese Zeiten hat deine Fahrlehrerin oder dein Fahrlehrer freigegeben.
+      <b>Wer zuerst bucht, bekommt den Termin.</b></div>
+    <div class="meta" style="margin-top:8px;">${Number(d.offen || 0)} von ${Number(d.max_offen || 5)} Terminen im Voraus gebucht${
+      d.schalt_relevant ? ` · Schaltstunden: ${Number(d.schalt_einheiten || 0)} von ${Number(d.schalt_soll || 10)}` : ""}</div>
+  </div>`;
+
+  if (!liste.length) {
+    h += `<div class="hint">Gerade ist nichts frei. Deine Fahrlehrerin oder dein Fahrlehrer gibt
+      Zeiten frei, sobald welche zur Verfügung stehen – schau später nochmal rein.
+      Du kannst wie gewohnt auch eine Fahrstunde anfragen.</div>
+      <button class="btn-primary" style="width:100%;" onclick="fsAnsicht='anfrage';renderFahrstunden();">➕ Fahrstunde anfragen</button>`;
+    main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">${h}</div>`;
+    main.scrollTop = 0;
+    return;
+  }
+
+  h += `<div class="eyebrow" style="margin-top:2px;">${liste.length} freie${liste.length === 1 ? "r Termin" : " Termine"}</div>`;
+  for (const t of liste) h += fsFreiKarte(t);
+  main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">${h}</div>`;
+  main.scrollTop = 0;
+}
+
+// Eine Karte je Termin. Bei B197 koennen zwei Knoepfe stehen: Automatik oder
+// Schaltwagen - der Schaltwagen zaehlt auf die zehn Pflichtstunden.
+function fsFreiKarte(t) {
+  const v = (t.varianten && t.varianten.length) ? t.varianten : [{
+    klasse: (t.klassen || [])[0] || "", getriebe: t.getriebe || "",
+    getriebe_text: t.getriebe_text || "", fahrzeug: t.fahrzeug || "",
+    betrag_text: t.betrag_text || "", zaehlt_als_schaltstunde: !!t.zaehlt_als_schaltstunde,
+  }];
+  const mehrere = v.length > 1;
+  const knoepfe = v.map((x, k) => `
+    <button class="btn-primary" style="width:100%; margin-top:8px;"
+      onclick="fsFreiFrage(${Number(t.id)},${k})">${
+        esc(mehrere ? (x.getriebe_text || "Diesen Termin") + " buchen" : "Diesen Termin buchen")
+      }${x.betrag_text ? " · " + esc(x.betrag_text) : ""}</button>
+    ${x.zaehlt_als_schaltstunde ? `<div class="meta" style="margin-top:4px;">Zählt auf deine zehn Schaltstunden.</div>` : ""}`).join("");
+  return `<div class="card" style="display:block;">
+    <div style="font-weight:800; font-size:15.5px; color:var(--dark);">${esc(t.datum_text || t.datum || "")}</div>
+    <div style="font-size:14.5px; color:var(--dark); margin-top:2px;">${esc(t.beginn || "")}–${esc(t.ende || "")} Uhr · ${esc(String(t.dauer || ""))} Minuten</div>
+    <div style="font-size:12.5px; color:var(--gray); margin-top:3px;">${esc(t.fahrlehrer || "")}${
+      t.fahrzeug ? " · " + esc(t.fahrzeug) : ""}</div>
+    <div class="meta" style="margin-top:7px;">${esc(t.storno_text || "")}</div>
+    ${knoepfe}
+  </div>`;
+}
+
+// Erst das Blatt mit allen Angaben, dann verbindlich - wie bei der Absage.
+// Eine Fahrstunde ist Geld und ein fester Termin; ein versehentlicher Tipper
+// darf das nicht ausloesen.
+function fsFreiFrage(id, k) {
+  const t = ((fsFreiData && fsFreiData.termine) || []).find(x => Number(x.id) === Number(id));
+  if (!t) { fsToast("Diesen Termin gibt es nicht mehr."); renderFsFrei(); return; }
+  const v = (t.varianten && t.varianten[k]) || (t.varianten && t.varianten[0]) || {};
+  fsModal(`
+    <div style="font-weight:800; font-size:17px; color:var(--dark); margin-bottom:8px;">Verbindlich buchen?</div>
+    <div style="font-size:14.5px; color:var(--dark); line-height:1.55;">
+      <b>${esc(t.datum_text || t.datum || "")}</b><br>
+      ${esc(t.beginn || "")}–${esc(t.ende || "")} Uhr · ${esc(String(t.dauer || ""))} Minuten<br>
+      ${esc(t.fahrlehrer || "")}${v.fahrzeug ? " · " + esc(v.fahrzeug) : ""}${
+        v.getriebe_text ? " (" + esc(v.getriebe_text) + ")" : ""}
+    </div>
+    ${v.betrag_text ? `<div style="margin-top:9px; font-size:14.5px; color:var(--dark);">Preis: <b>${esc(v.betrag_text)}</b></div>` : ""}
+    ${v.zaehlt_als_schaltstunde ? `<div class="meta" style="margin-top:5px;">Diese Stunde zählt auf deine zehn Schaltstunden.</div>` : ""}
+    <div class="hint" style="margin-top:11px;">${esc(t.storno_text || "")}</div>
+    <button class="btn-primary" style="width:100%; margin-top:12px;" onclick="fsFreiBuchen(${Number(id)},${Number(k)})">Ja, verbindlich buchen</button>
+    <button class="btn-ghost" style="width:100%; margin-top:8px;" onclick="fsModalSchliessen()">Abbrechen</button>`);
+}
+
+async function fsFreiBuchen(id, k) {
+  const t = ((fsFreiData && fsFreiData.termine) || []).find(x => Number(x.id) === Number(id)) || {};
+  const v = (t.varianten && t.varianten[k]) || {};
+  fsModal(`<div style="text-align:center; color:var(--gray); font-size:14px; padding:16px 0;">Einen Moment – ich buche den Termin …</div>`);
+  let d = null;
+  try {
+    const r = await fetch("termine/buchen", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, id: Number(id), klasse: v.klasse || "", getriebe: v.getriebe || "" }),
+    });
+    d = await r.json();
+  } catch (e) { d = null; }
+  fsModalSchliessen();
+  if (d && d.ok) {
+    fsToast("Termin gebucht ✓");
+    fsAnsicht = "liste";
+    renderFahrstunden();
+    return;
+  }
+  // "Schon vergeben" ist keine Panne, sondern der normale Ausgang, wenn
+  // jemand schneller war. Das muss sich auch so lesen.
+  const vergeben = !!(d && d.vergeben);
+  fsModal(`
+    <div style="font-weight:800; font-size:16.5px; color:var(--dark); margin-bottom:7px;">${
+      vergeben ? "Da war jemand schneller" : "Das hat nicht geklappt"}</div>
+    <div style="font-size:14.5px; color:var(--dark); line-height:1.55;">${
+      esc((d && d.fehler) || "Der Termin konnte gerade nicht gebucht werden. Versuch es gleich nochmal.")}</div>
+    <button class="btn-primary" style="width:100%; margin-top:12px;" onclick="fsModalSchliessen();renderFsFrei();">Andere Termine ansehen</button>
+    <button class="btn-ghost" style="width:100%; margin-top:8px;" onclick="fsModalSchliessen()">Schließen</button>`);
 }
 
 // ── Navigation ───────────────────────────────────────────────

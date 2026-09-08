@@ -1190,6 +1190,10 @@ const ART_NAME={uebung:"Übung", ueberland:"Überland", autobahn:"Autobahn", nac
   sonstiges:"Sonstiges"};
 const FEHL_MUSTER="repeating-linear-gradient(45deg,#b3261e,#b3261e 4px,#7e1712 4px,#7e1712 8px)";
 const AUS_MUSTER="repeating-linear-gradient(45deg,#a8afb2,#a8afb2 4px,#cdd3d5 4px,#cdd3d5 8px)";
+// Zur Selbstbuchung freigegebener Block: ein ANGEBOT, kein Termin. Bewusst
+// hell und gestrichelt - er soll sich von allem unterscheiden, was wirklich
+// stattfindet (Benjamin, 08.09.2026).
+const FREI_MUSTER="repeating-linear-gradient(45deg,#fff,#fff 5px,#fdeee2 5px,#fdeee2 10px)";
 function wIso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function wPlus(iso,n){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()+n);return wIso(d);}
 function wMontag(iso){const d=new Date(iso+"T12:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return wIso(d);}
@@ -1238,6 +1242,8 @@ async function viewWoche(start){
       <button class="wknopf" onclick="viewWoche('${basis}')"${WOCHE_START===basis?' disabled':''}
         >⌖ Heute</button>
       <button class="wknopf" onclick="viewBuchen()">✍️ Fahrstunde eintragen</button>
+      <button class="wknopf" id="wFreiKnopf" style="display:none"
+        onclick="viewFreigeben()">🔓 Zeit freigeben</button>
     </div>
     <div id="wFilter" style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap"></div>
     <div class="meta" id="wHinweis">Auf eine freie Stelle tippen, um eine Fahrstunde einzuplanen.</div>
@@ -1308,6 +1314,7 @@ async function wLaden(){
       }
     }
     WOCHE_DATEN=liste;
+    wFreiKnopfZeigen(false);          // in der Auto-Ansicht wird nichts freigegeben
     if(hinweis)hinweis.textContent=`Belegung von ${fzName()} im ganzen Betrieb.`;
     zeichneWoche();
     return;
@@ -1321,6 +1328,9 @@ async function wLaden(){
   if(d.nur_ansicht) for(const e of liste) e.fremd=true;
   else for(const e of liste) FUCHS_TERMINE[e.id]=e;
   WOCHE_DATEN=liste;
+  // Freigeben nur im EIGENEN Plan - und nur, wenn die Filiale mitmacht.
+  // Im 7-Tage-Fuchs stehen die Fahrstunden fest, dort gibt es das nicht.
+  wFreiKnopfZeigen(!!d.frei_moeglich && !W_FL);
   // Urlaub, Theorie, Pruefungen, Buerodienst: die stehen in FUCHS neben den
   // Fahrstunden in einer eigenen Liste. Ohne sie sah eine Urlaubswoche aus wie
   // ein leerer Plan. Sie sind nur zum Ansehen - kein Antippen, kein Loeschen.
@@ -1364,7 +1374,9 @@ const AZ_WEITERE_ARBEIT = ["theorie", "taetigkeit"];
 function azMinuten(liste) {
   let praxis = 0, weitere = 0;
   for (const e of (liste || [])) {
-    if (["ausgefallen", "fehlstunde"].includes(e.status)) continue;
+    // Ein freigegebener, ungebuchter Block ist weder Arbeitszeit noch
+    // Leistung - er ist nur ein Angebot (Benjamin, 08.09.2026).
+    if (["ausgefallen", "fehlstunde", "frei"].includes(e.status)) continue;
     // Aus dem Buero uebernommene Kalendereintraege bleiben aussen vor - siehe
     // Kommentar oben. Selbst eingetragene Zeiten zaehlen weiterhin mit.
     if (e.taetigkeit) continue;
@@ -1500,9 +1512,13 @@ function zeichneWoche(){
           + `width:calc((100% - 4px) / ${platz.spalten} - 2px);right:auto;font-size:8px;`
         : "";
       const fertig=e.signiert||e.status==="durchgefuehrt";
+      // Freigegebener Block: hell und gestrichelt, damit er nie mit einer
+      // echten Fahrstunde verwechselt wird.
+      const istFrei=e.status==="frei";
       const farbe=ART_FARBE[e.art]||"#667";
       let grund=farbe, schrift="#fff";
-      if(e.status==="fehlstunde"){grund=FEHL_MUSTER;}
+      if(istFrei){grund=FREI_MUSTER;schrift="#7a4a2b";}
+      else if(e.status==="fehlstunde"){grund=FEHL_MUSTER;}
       else if(e.status==="ausgefallen"){grund=AUS_MUSTER;schrift="#2b3033";}
       else if(farbe==="#f2c200"){schrift="#332800";}
       // Frueher stand hier nur der Vorname. Bei zwei Annas in derselben Woche
@@ -1511,7 +1527,9 @@ function zeichneWoche(){
       const blocker=istBlocker(e);
       // Bei geblockten Zeiten steht kein Name im Termin - dort gehoert die
       // Bemerkung in den Block, sonst heisst jeder Block nur "Taetigkeit".
-      const wer=inGruppe
+      const wer=istFrei
+        ? ("🔓 frei"+(e.frei_klassen?" · "+String(e.frei_klassen).split(",").join(" · "):""))
+        : inGruppe
         ? ("\u{1F465} B96-Gruppe ("+e.gruppe_mit.length+")")
         : (blocker
           ? (()=>{
@@ -1528,7 +1546,8 @@ function zeichneWoche(){
       const titel=inGruppe
         ? (e.gruppe_mit.map(m=>String(m.schueler||"")).join(", ")+" · "+String((e.uhrzeit||"").slice(0,5))+" · Gruppenschulung B96")
         : (String(wer)+" · "+String((e.uhrzeit||"").slice(0,5))+" · "+String(e.art_text||""));
-      const ruf=inGruppe?`wGruppe('${e.gruppe_id}')`:`wBlock(${e.id})`;
+      const ruf=istFrei?`wFrei(${e.id})`
+        :(inGruppe?`wGruppe('${e.gruppe_id}')`:`wBlock(${e.id})`);
       // Bemerkung aus der Planung direkt im Block - der Fahrlehrer soll
       // "Schaltwagen mitbringen" oder "Treffpunkt Bahnhof" sehen, ohne den
       // Termin erst anzutippen. Sie steht auch im Tooltip, falls der Block
@@ -1554,7 +1573,7 @@ function zeichneWoche(){
       const kl=(!blocker&&!e.taetigkeit)?String(e.klasse||"").trim():"";
       const klBadge=kl?`<i class="wkl">${esc(kl)}</i>`:"";
       blocks+=`<div class="wblock" title="${esc(titel)}${bisText?" \u2013 "+esc(bisText):""}${kl?" \u00b7 Klasse "+esc(kl):""}${bem?" \u00b7 \u{1F4DD} "+esc(bem):""}"
-        style="${breit}top:${oben}px;height:${hoehe}px;background:${grund};color:${schrift}${e.fremd?";opacity:.85":""}"
+        style="${breit}top:${oben}px;height:${hoehe}px;background:${grund};color:${schrift}${e.fremd?";opacity:.85":""}${istFrei?";border:1.5px dashed #f67b32;box-shadow:none":""}"
         ${tippbar?`onclick="event.stopPropagation();${ruf}"`:'onclick="event.stopPropagation()"'}
         ><b>${esc((e.uhrzeit||"").slice(0,5))}${bisText?"\u2013":""}</b>${
           bisText?`<span class="wbis">${esc(bisText)}</span>`:""
@@ -1568,6 +1587,7 @@ function zeichneWoche(){
     leg+=`<span><i style="background:${ART_FARBE[a]}"></i>${esc(n)}</span>`;}
   if(WOCHE_DATEN.some(x=>x.status==="fehlstunde")) leg+=`<span><i style="background:${FEHL_MUSTER}"></i>Fehlstunde</span>`;
   if(WOCHE_DATEN.some(x=>x.status==="ausgefallen")) leg+=`<span><i style="background:${AUS_MUSTER}"></i>ausgefallen</span>`;
+  if(WOCHE_DATEN.some(x=>x.status==="frei")) leg+=`<span><i style="background:${FREI_MUSTER};border:1px dashed #f67b32"></i>🔓 zur Selbstbuchung frei</span>`;
   if(WOCHE_DATEN.some(x=>x.signiert||x.status==="durchgefuehrt")) leg+=`<span>🔑 gebucht</span>`;
   // Bei B96 und Co. faehrt ein Fahrlehrer zulaessig mit zwei Schuelern
   // gleichzeitig - dann stehen die Termine nebeneinander wie im Manager.
@@ -1776,6 +1796,133 @@ function pruefKasten(){
   return `<div class="pruefbox">
       <div class="pruefh">\u{1F4CD} ${p.length===1?"Prüfung":"Prüfungen"} diese Woche</div>
       ${p.map(zeile).join("")}</div>`;
+}
+
+// ── Zur Selbstbuchung freigeben ──────────────────────────────
+// Ein freigegebener Block ist ein ANGEBOT, kein Termin: keine Arbeitszeit,
+// keine Leistung, kein blockiertes Fahrzeug. Erst wenn ein Fahrschueler ihn
+// in seiner App bucht, wird eine echte Fahrstunde daraus.
+//
+// Benjamin, 08.09.2026:
+//   - 80 Minuten sind Standard UND Untergrenze, laenger geht (bis 240)
+//   - KEIN Fahrzeug: Jeder faehrt sein festes Auto; ob der Automatikwagen
+//     frei ist, entscheidet sich erst im Moment der Buchung
+let FREI_MOEGLICH=false;
+const FREI_KLASSEN_FL=["B","B197","BA"];
+let FREI_WAHL={B:true,B197:true,BA:true};
+
+function wFreiKnopfZeigen(an){
+  FREI_MOEGLICH=!!an;
+  const b=document.getElementById("wFreiKnopf");
+  if(b)b.style.display=an?"":"none";
+}
+
+// Antippen eines freigegebenen Blocks. Kein Terminmenue - hier gibt es nichts
+// zu unterschreiben und nichts abzusagen, nur zurueckzunehmen.
+function wFrei(id){
+  const zurueck=WOCHE_START||wMontag(wHeute());
+  const e=(WOCHE_DATEN||[]).find(x=>String(x.id)===String(id));
+  if(!e){toast("Block nicht gefunden");return;}
+  const kl=String(e.frei_klassen||"").split(",").map(x=>x.trim()).filter(Boolean).join(" · ");
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="viewWoche('${zurueck}')">← Zurück zum Wochenplan</button>
+    <div><div class="eyebrow">Selbstbuchung</div><h1>🔓 Freigegebener Block</h1></div>
+    <div class="card zeile" style="cursor:default">
+      <div class="zeit">${esc((e.uhrzeit||"").slice(0,5))}${e.bis?"–"+esc(e.bis):""}</div>
+      <div class="info"><div class="titel">${esc(e.datum||"")}</div>
+        <div class="sub">${esc(String(e.dauer||""))} Min.${kl?" · für "+esc(kl):""}</div></div>
+    </div>
+    <div class="hint">Dieser Block steht in der Fahrschüler-App zur Buchung bereit.
+      <b>Gebucht hat ihn noch niemand.</b> Bis dahin zählt er weder als Arbeitszeit noch als
+      geleistete Fahrstunde, und er blockiert kein Fahrzeug – das Auto wird erst bei der
+      Buchung bestimmt.</div>
+    <button class="btn-ghost" id="fWeg">Freigabe zurücknehmen</button>
+    <div class="meta" id="fErr" style="color:#D64545;min-height:16px"></div>`;
+  document.getElementById("fWeg").onclick=async()=>{
+    const b=document.getElementById("fWeg");
+    b.disabled=true; b.textContent="Nimmt zurück …";
+    const d=await jpost("fahrlehrer/frei-zuruecknehmen",{fl:FL,id:e.id});
+    if(d&&d.ok){toast("Freigabe zurückgenommen ✓");viewWoche(zurueck);return;}
+    b.disabled=false; b.textContent="Freigabe zurücknehmen";
+    document.getElementById("fErr").textContent=(d&&d.fehler)||FEHLERTEXT||"Das hat nicht geklappt.";
+  };
+  main().scrollTop=0;
+}
+
+function viewFreigeben(datum,zeit){
+  const zurueck=WOCHE_START||wMontag(wHeute());
+  const heute=wHeute();
+  const vorgabe=datum||((WOCHE_START&&WOCHE_START>heute)?WOCHE_START:heute);
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="viewWoche('${zurueck}')">← Zurück zum Wochenplan</button>
+    <div><div class="eyebrow">Selbstbuchung</div><h1>🔓 Zeit freigeben</h1></div>
+    <div class="hint">Der Block erscheint in der Fahrschüler-App als buchbarer Termin.
+      Bis jemand bucht, zählt er <b>weder als Arbeitszeit noch als Fahrstunde</b> und blockiert
+      kein Fahrzeug. Solange niemand gebucht hat, kannst du ihn jederzeit zurücknehmen.</div>
+    <div class="row" style="display:flex;gap:9px">
+      <input id="fDatum" type="date" class="app-input" style="text-align:left;flex:1"
+        value="${vorgabe}" min="${heute}">
+      <input id="fZeit" type="time" class="app-input" style="text-align:left;width:120px"
+        value="${zeit||"09:00"}">
+    </div>
+    <div class="row" style="display:flex;gap:9px;align-items:center">
+      <div class="meta" style="flex:1">Dauer in Minuten – <b>80</b> ist Standard und zugleich
+        die kürzeste Freigabe. Für eine 120-Minuten-Stunde einfach höher stellen.</div>
+      <input id="fDauer" type="number" inputmode="numeric" min="80" max="240" step="5"
+        class="app-input" style="width:110px;text-align:center" value="80">
+    </div>
+    <div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Für welche Ausbildung?</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:9px">
+        ${FREI_KLASSEN_FL.map(k=>`<button class="wknopf fklasse" data-k="${k}">${k}</button>`).join("")}
+      </div>
+      <div class="sub" style="margin-top:9px">Alle drei sind ausgewählt. Nur abwählen, wenn dieser
+        Block ausdrücklich nicht dafür gelten soll.</div>
+    </div>
+    <div class="hint">Ein Fahrzeug brauchst du nicht auszuwählen: Gefahren wird dein festes Auto –
+      und braucht der Fahrschüler Automatik, sieht das System beim Buchen nach, ob der
+      Automatikwagen der Filiale zu der Zeit frei ist.</div>
+    <button class="btn-primary" id="fSpeichern">🔓 Zeit freigeben</button>
+    <div class="meta" id="fErr" style="color:#D64545;min-height:16px"></div>`;
+  FREI_WAHL={B:true,B197:true,BA:true};
+  const male=()=>{
+    for(const b of document.querySelectorAll(".fklasse")){
+      const an=!!FREI_WAHL[b.dataset.k];
+      b.style.background=an?"#f67b32":"";
+      b.style.color=an?"#fff":"";
+      b.style.opacity=an?"1":".5";
+    }
+  };
+  for(const b of document.querySelectorAll(".fklasse"))
+    b.onclick=()=>{FREI_WAHL[b.dataset.k]=!FREI_WAHL[b.dataset.k];male();};
+  male();
+  document.getElementById("fSpeichern").onclick=()=>freigebenSpeichern(false);
+  main().scrollTop=0;
+}
+
+async function freigebenSpeichern(trotzdem){
+  const err=document.getElementById("fErr"); if(err)err.innerHTML="";
+  const klassen=FREI_KLASSEN_FL.filter(k=>FREI_WAHL[k]);
+  if(!klassen.length){err.textContent="Bitte mindestens eine Ausbildung auswählen.";return;}
+  const dauer=Number(document.getElementById("fDauer").value||0);
+  if(dauer<80){err.textContent="Ein freigegebener Block ist mindestens 80 Minuten lang.";return;}
+  const datum=document.getElementById("fDatum").value;
+  const beginn=document.getElementById("fZeit").value;
+  if(!datum||!beginn){err.textContent="Bitte Datum und Uhrzeit angeben.";return;}
+  const btn=document.getElementById("fSpeichern");
+  btn.disabled=true; btn.textContent="Gibt frei …";
+  const d=await jpost("fahrlehrer/frei-anlegen",{fl:FL,datum,beginn,dauer,klassen,trotzdem});
+  btn.disabled=false; btn.textContent="🔓 Zeit freigeben";
+  if(d&&d.ok){toast("Zeit freigegeben ✓");viewWoche(wMontag(datum));return;}
+  // Die Arbeitszeitgrenze ist beim Freigeben eine WARNUNG, keine Sperre:
+  // geplante Stunden koennen schliesslich noch ausfallen.
+  if(d&&d.konflikt&&!trotzdem){
+    err.innerHTML=esc(d.fehler||"Das passt zeitlich nicht.")
+      +`<br><button class="btn-ghost" style="margin-top:8px"
+          onclick="freigebenSpeichern(true)">Trotzdem freigeben</button>`;
+    return;
+  }
+  err.textContent=(d&&d.fehler)||FEHLERTEXT||"Freigeben hat nicht geklappt.";
 }
 
 function wBlock(id){ terminMenue(id); }
