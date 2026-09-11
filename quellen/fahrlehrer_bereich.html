@@ -932,6 +932,58 @@ function akteTheorieHtml(l){
   </div>`;
 }
 
+// Ausbildungsstand: Soll und Ist nebeneinander, mit schmalem Balken - dieselben
+// Zahlen wie im Fahrschulmanager. Gerechnet wird dort, hier wird gezeigt.
+function standBalken(wert, soll){
+  const fertig=soll&&wert>=soll;
+  const anteil=soll?Math.min(100,Math.round(wert*100/soll)):0;
+  return `<div style="flex:0 0 62px;background:var(--line,#e6ded7);border-radius:6px;height:6px;overflow:hidden">
+      <div style="width:${anteil}%;height:100%;background:${fertig?"var(--green,#2E9E5B)":"var(--orange,#E8600B)"}"></div></div>`;
+}
+function standZeile(name, wert, soll){
+  const fertig=soll&&wert>=soll;
+  return `<div style="display:flex;align-items:center;gap:9px;padding:3px 0;font-size:13px">
+      <div style="flex:1;color:var(--gray,#6A6A6A)">${esc(name)}</div>
+      <div style="font-weight:700;white-space:nowrap${fertig?";color:var(--green,#2E9E5B)":""}">${wert}${
+        soll?`<span style="font-weight:400;color:var(--gray,#6A6A6A)"> / ${soll}</span>`:""}${fertig?" ✓":""}</div>
+      ${soll?standBalken(wert,soll):'<div style="flex:0 0 62px"></div>'}
+    </div>`;
+}
+function akteStandHtml(staende){
+  if(!staende||!staende.length)return "";
+  return staende.map(st=>{
+    const sf=st.sonderfahrten_soll||{};
+    // Nur zeigen, was gefordert ist oder trotzdem gefahren wurde - B196 kennt
+    // keine Sonderfahrten (Benjamin, 09.09.2026).
+    const sfZ=(name,ist,soll)=>(soll||ist)?standZeile(name,ist,soll||0):"";
+    let z=standZeile("Übungsstunden",st.uebung,0)
+      +sfZ("Überlandfahrten",st.ueberland,sf.ueberland||0)
+      +sfZ("Autobahnfahrten",st.autobahn,sf.autobahn||0)
+      +sfZ("Nachtfahrten",st.nacht,sf.nacht||0);
+    if(st.schalt_soll){
+      z+=standZeile("Schaltstunden",st.schalt,st.schalt_soll);
+      // Ohne hinterlegtes Fahrzeug ist die Stunde nicht zuzuordnen - meist
+      // Stunden aus der Uebernahme. Ohne diesen Satz liest sich eine Luecke
+      // in den Daten wie eine Aussage.
+      if(st.schalt_unklar>0)z+=`<div style="font-size:11.5px;color:#B07800;padding:0 0 4px">${
+        st.schalt_unklar} Std. ohne hinterlegtes Fahrzeug – nicht zuzuordnen</div>`;
+      z+=`<div style="display:flex;align-items:center;gap:9px;padding:3px 0;font-size:13px">
+        <div style="flex:1;color:var(--gray,#6A6A6A)">Testfahrt Schaltkompetenz</div>
+        <div style="font-weight:700;white-space:nowrap;color:${st.testfahrt?"var(--green,#2E9E5B)":"var(--gray,#6A6A6A)"}">${
+          st.testfahrt?("✓ "+st.testfahrt_minuten+" Min."):"fehlt"}</div>
+        <div style="flex:0 0 62px"></div></div>`;
+    }
+    if(st.sonstiges>0)z+=standZeile("Sonstige",st.sonstiges,0);
+    if(st.grundstoff_soll)z+=standZeile("Theorie Grundstoff",st.grundstoff,st.grundstoff_soll);
+    if(st.zusatzstoff_soll)z+=standZeile("Theorie Zusatzstoff",st.zusatzstoff,st.zusatzstoff_soll);
+    if(!st.grundstoff_soll&&!st.zusatzstoff_soll)z+=standZeile("Theorie-Teilnahmen",st.theorie_teilnahmen,0);
+    return `<div class="card" style="cursor:default;display:block">
+      <div class="eyebrow">Ausbildungsstand${staende.length>1&&st.klasse?" · Klasse "+esc(st.klasse):""}</div>
+      <div style="margin-top:6px">${z}</div>
+    </div>`;
+  }).join("");
+}
+
 function zeichneAkte(){
   const el=document.getElementById("kontoKarte");if(!el||!AKTE)return;
   const k=AKTE.konto||{};
@@ -943,6 +995,7 @@ function zeichneAkte(){
         AKTE.karteien>1?`<div class="meta" style="font-size:11.5px;margin-top:3px">${AKTE.karteien} Karteien – Konto, Termine und Stunden sind zusammengefasst.</div>`:""}
     </div>
     ${akteKontoHtml(k)}
+    ${akteStandHtml(AKTE.staende)}
     ${akteInfosHtml(AKTE.infos)}
     ${akteTheorieHtml(AKTE.theorie_lernstand)}
     ${akteKommendHtml(AKTE.kommend)}
@@ -980,15 +1033,19 @@ async function ladeBuchen(){
   const d=await jpost("fahrlehrer/fuchs-schueler",{fl:FL});
   const el=document.getElementById("buchInhalt");if(!el)return;
   if(!d||!d.ok){el.innerHTML=`<div class="leer">${esc((d&&d.fehler)||FEHLERTEXT||"FUCHS ist gerade nicht verbunden.")}</div>`;return;}
-  const opts=(d.schueler||[]).map(s=>`<option value="${s.id}">${esc(s.name)}${s.geb?" · "+esc(s.geb):""}</option>`).join("");
   const arten=(d.arten||[]).map(a=>`<option value="${esc(a[0])}">${esc(a[1])}</option>`).join("");
+  const ruhende=(d.schueler||[]).filter(s=>s.aktuell===false).length;
   const jetzt=new Date();
   const heute=jetzt.getFullYear()+"-"+String(jetzt.getMonth()+1).padStart(2,"0")+"-"+String(jetzt.getDate()).padStart(2,"0");
   const zeit=String(jetzt.getHours()).padStart(2,"0")+":"+String(jetzt.getMinutes()).padStart(2,"0");
   el.innerHTML=`
     <div class="hint">Trage die gegebene Fahrstunde ein. Der Schüler bestätigt mit seiner Unterschrift – sie wird direkt in FUCHS hinter der Stunde gespeichert.</div>
     ${(d.schueler||[]).length?"":'<div class="leer" style="margin-bottom:12px">Für dich sind in FUCHS aktuell keine aktiven Schüler hinterlegt.</div>'}
-    <select id="bSchueler" class="app-select"><option value="">— Schüler wählen —</option>${opts}</select>
+    <input id="bSuche" class="app-input" style="text-align:left" placeholder="🔍 Fahrschüler suchen (Name oder Geburtsdatum)">
+    <select id="bSchueler" class="app-select"></select>
+    ${ruhende?`<label class="meta" style="display:flex;gap:8px;align-items:center;margin-top:-2px;cursor:pointer">
+      <input type="checkbox" id="bAlle" style="width:17px;height:17px;flex:none">
+      <span>auch lange ruhende anzeigen (${ruhende})</span></label>`:""}
     <div id="bKlasse"></div>
     <div class="row">
       <input id="bDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${heute}">
@@ -1032,6 +1089,27 @@ async function ladeBuchen(){
     schueler_id:document.getElementById("bSchueler").value,
     art:bArt.value, dauer:bDauer.value}));
   B_SCHUELER=d.schueler||[];
+  // Vorgefiltert auf die, die noch fahren. Wer laenger pausiert, kommt ueber
+  // den Schalter zurueck. Die Reihenfolge bleibt alphabetisch, so wie sie vom
+  // Server kommt.
+  const bFuellen=()=>{
+    const q=(document.getElementById("bSuche")?.value||"").trim().toLowerCase();
+    const alle=!!document.getElementById("bAlle")?.checked;
+    const l=B_SCHUELER
+      .filter(s=>alle||s.aktuell!==false)
+      .filter(s=>!q||((s.name||"")+" "+(s.geb||"")).toLowerCase().includes(q));
+    const sel=document.getElementById("bSchueler");
+    const vorher=sel.value;
+    sel.innerHTML=`<option value="">${l.length?("— Schüler wählen ("+l.length+") —"):"— kein Treffer —"}</option>`
+      +l.slice(0,300).map(s=>`<option value="${s.id}">${esc(s.name)}${s.geb?" · "+esc(s.geb):""}</option>`).join("");
+    // Eine bereits getroffene Wahl darf durch das Tippen nicht verlorengehen.
+    if(vorher&&l.some(s=>String(s.id)===String(vorher)))sel.value=vorher;
+  };
+  bFuellen();
+  const bSuche=document.getElementById("bSuche");
+  if(bSuche)bSuche.oninput=bFuellen;
+  const bAlle=document.getElementById("bAlle");
+  if(bAlle)bAlle.onchange=bFuellen;
   const bKlasseNeu=()=>skZeichnen("bKlasse",
     skSchueler(B_SCHUELER,document.getElementById("bSchueler").value)||{},bPreisNeu);
   document.getElementById("bSchueler").addEventListener("change",bKlasseNeu);
