@@ -170,6 +170,19 @@
   .sd-kopf h1{margin:0;font-size:23px;letter-spacing:-.02em;line-height:1.15;}
   .sd-karte{background:#fff;border:1px solid var(--line);border-radius:16px;padding:15px;margin-top:12px;}
   .sd-karte.betont{background:var(--orange-soft);border-color:#F3D9C2;}
+  /* Die einzige vollflaechig orange Karte der App. Genau daher faellt sie auf -
+     also bitte nirgendwo sonst verwenden. Sie zeigt an, dass der Fahrlehrer
+     Fahrstunden freigegeben hat, und sonst nichts. */
+  .sd-frei{background:linear-gradient(135deg,#F98B45 0%,#E2610E 100%);border-radius:16px;
+    padding:16px;margin-top:12px;color:#fff;cursor:pointer;
+    box-shadow:0 6px 18px rgba(206,88,14,.26);}
+  .sd-frei .sd-eyebrow{color:#FFDFC8;}
+  .sd-frei .sd-gross{color:#fff;}
+  .sd-frei .sd-meta{color:#FFE8DA;}
+  /* .sd-knopf.voll steht weiter unten und ist gleich stark - deshalb hier die
+     Klasse mitnennen, sonst bliebe der Knopf orange auf Orange. */
+  .sd-frei .sd-knopf, .sd-frei .sd-knopf.voll{background:#fff;color:#C95A0C;
+    border-color:#fff;box-shadow:0 2px 6px rgba(120,50,0,.18);}
   .sd-eyebrow{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
     color:var(--orange);}
   .sd-gross{font-size:19px;font-weight:800;color:var(--dark);margin-top:3px;line-height:1.25;}
@@ -1036,11 +1049,21 @@ async function kursRueckkehr(sid) {
 // waehrend man schon liest.
 let startDaten = null;
 
+// Welchen Stand hat diese Seite? Der Server setzt ihn beim Ausliefern ein.
+// Steht der Platzhalter noch da, kommt die Seite nicht vom Server, sondern
+// aus dem Bündel einer Store-App - dann wird nichts gemeldet.
+function seitenStand() {
+  var s = "__APP_STAND__";
+  return s.indexOf("APP_STAND") >= 0 ? "" : s;
+}
+
 async function holeStart() {
   try {
     const r = await fetch("start", { method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(token ? { token } : { code: zugangscode, nummer: chatNummer }) });
+      body: JSON.stringify(Object.assign(
+        token ? { token } : { code: zugangscode, nummer: chatNummer },
+        seitenStand() ? { stand: seitenStand() } : {})) });
     const d = await r.json();
     if (d && d.ok) { startDaten = d; return d; }
   } catch (e) {}
@@ -1113,6 +1136,32 @@ function sdTerminHTML(d) {
       <div class="sd-knopfreihe">
         <button class="sd-knopf" onclick="waehleTab('fahrstunden','Fahrstunden')">Alle Termine</button>
         ${route}
+      </div>
+    </div>`;
+}
+
+// Was der Fahrlehrer freigegeben hat, ist eine Gelegenheit - und eine
+// Gelegenheit muss man sehen. Bisher stand sie nur als blasser Knopf tief auf
+// der Fahrstunden-Seite; Schueler haben sie nicht gefunden (Benjamin,
+// 09.09.2026). Darum die auffaelligste Flaeche, die die App hat.
+function sdFreiAnzahl(d) {
+  return Number((d && d.frei && d.frei.anzahl) || 0);
+}
+
+function sdFreiHTML(d) {
+  const n = sdFreiAnzahl(d);
+  if (!n) return "";              // keine leere Einladung aussprechen
+  const f = d.frei || {};
+  const wann = f.naechster
+    ? "Die nächste: " + esc(f.naechster) + (f.beginn ? " um " + esc(f.beginn) + " Uhr" : "")
+    : "Von deinem Fahrlehrer freigegeben";
+  return `<div class="sd-frei" onclick="waehleTab('fahrstunden','Fahrstunden','frei')">
+      <div class="sd-eyebrow">Selbst buchen</div>
+      <div class="sd-gross">${n === 1 ? "Eine Fahrstunde ist frei"
+                                      : n + " Fahrstunden sind frei"}</div>
+      <div class="sd-meta">${wann}</div>
+      <div class="sd-knopfreihe">
+        <button class="sd-knopf voll">Termin aussuchen</button>
       </div>
     </div>`;
 }
@@ -1216,7 +1265,9 @@ const SD_SYM = {
   lernen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5"/><path d="M12 6.5C13.5 5 16 4.5 20 5v13c-4-.5-6.5 0-8 1.5"/><path d="M12 6.5v13"/></svg>',
   theorielernen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.4 2.4 0 1 1 2.9 2.6v1.3"/><path d="M12.5 16.6h.01"/></svg>',
   erstehilfe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="17" height="12" rx="2.5"/><path d="M12 10v5"/><path d="M9.5 12.5h5"/></svg>',
-  freietermine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10.5" width="16" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 6.4-2"/><path d="M12 14.5v2"/></svg>',
+  // Frueher ein Vorhaengeschloss. Ein Schloss heisst "zu" - gemeint ist aber
+  // das Gegenteil. Jetzt ein Lenkrad (Benjamin, 09.09.2026).
+  freietermine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.7"/><path d="M12 3.5v5.8"/><path d="m4.7 16.3 4.9-2.9"/><path d="m19.3 16.3-4.9-2.9"/></svg>',
 };
 
 function sdWeitereHTML(d) {
@@ -1226,7 +1277,9 @@ function sdWeitereHTML(d) {
     ["theorieplan", "Theorieplan", "alle Termine", "renderTheorie()"],
     ["theorielernen", "Theorie lernen", "Fragen üben", "renderLernbereich()"],
     ["lernen", "Lernen", "Videos & Theorie", "waehleTab('mediathek','Lernen')"],
-    ["freietermine", "Freie Termine", "selbst buchen", "fsAnsicht='frei';waehleTab('fahrstunden','Fahrstunden')"],
+    ["freietermine", "Freie Termine", sdFreiAnzahl(d)
+      ? (sdFreiAnzahl(d) === 1 ? "1 Termin frei" : sdFreiAnzahl(d) + " Termine frei")
+      : "selbst buchen", "waehleTab('fahrstunden','Fahrstunden','frei')"],
   ];
   if (d && d.kurse_aktiv) felder.push(["erstehilfe", "Erste-Hilfe-Kurs", "Termin buchen", "renderKurse()"]);
   // Bleibt am Ende eine Kachel allein uebrig, nimmt sie die ganze Breite -
@@ -1245,8 +1298,14 @@ function sdGeruestHTML() {
 }
 
 function sdSeiteHTML(d) {
+  // Steht keine Fahrstunde an, ist ein freier Termin die Nachricht des Tages -
+  // dann gehoert er ueber "Als Naechstes". Ist eine geplant, ist die wichtiger.
+  const frei = sdFreiHTML(d);
+  const hatTermin = !!(d && d.termin);
   return sdKopfHTML(d)
+    + (hatTermin ? "" : frei)
     + sdTerminHTML(d)
+    + (hatTermin ? frei : "")
     + sdAufgabenHTML(d)
     + sdFortschrittHTML(d)
     + sdTheorieHTML(d)
@@ -2872,6 +2931,10 @@ function zeichneFahrstunden(d) {
   const gefahren = (d.gefahren || []).slice().reverse();   // neueste zuerst
   let h = `<h1 style="margin-bottom:2px;">Fahrstunden</h1>`;
 
+  // Ganz oben, in derselben Aufmachung wie auf der Startseite: wer hierher
+  // kommt, sucht einen Termin - und soll zuerst sehen, was schon frei ist.
+  h += sdFreiHTML(d);
+
   h += `<div class="card" style="border:none; background:var(--orange-soft);">
     <div class="eyebrow">Dein Stand</div>
     <div style="display:flex; align-items:baseline; gap:8px; margin-top:4px;">
@@ -2879,7 +2942,8 @@ function zeichneFahrstunden(d) {
       <span style="font-size:14px; color:var(--gray);">Fahrstunden gefahren</span>
     </div>
     <button class="btn-primary" style="margin-top:12px; width:100%;" onclick="fsAnsicht='anfrage';renderFahrstunden();">➕ Fahrstunde anfragen</button>
-    <button class="btn-ghost" style="margin-top:8px; width:100%;" onclick="fsAnsicht='frei';renderFahrstunden();">🔓 Freie Termine ansehen</button>
+    ${sdFreiAnzahl(d) ? "" : `<button class="sd-knopf" style="margin-top:8px; width:100%;"
+      onclick="fsAnsicht='frei';renderFahrstunden();">Freie Termine ansehen</button>`}
   </div>`;
 
   // Kommende Termine
@@ -3314,10 +3378,17 @@ function demoHinweis(label) {
   clearTimeout(t._timer);
   t._timer = setTimeout(() => { t.style.opacity = "0"; }, 2600);
 }
-function waehleTab(id, label) {
+// ansicht (nur bei "fahrstunden"): welche Unteransicht geoeffnet werden soll -
+// "frei" fuer die freien Termine, "anfrage" fuer die Anfrage. Ohne Angabe die
+// Uebersicht. Frueher wurde hier IMMER auf "liste" zurueckgesetzt; damit war
+// jeder Aufruf der Art fsAnsicht='frei';waehleTab(...) wirkungslos, weil die
+// Zuweisung sofort ueberschrieben wurde (Benjamin, 09.09.2026).
+function waehleTab(id, label, ansicht) {
   if (!["mediathek","chat","home","ausbildung","fahrstunden"].includes(id)) { demoHinweis(label); return; }
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("aktiv", b.dataset.tab === id));
-  if (id === "fahrstunden") { fsAnsicht = "liste"; }
+  // Die untere Leiste gibt nichts mit und landet deshalb wie bisher in der
+  // Uebersicht. Wer gezielt auf "Freie Termine" tippt, kommt dorthin.
+  if (id === "fahrstunden") { fsAnsicht = ansicht || "liste"; }
   if (id === "mediathek") renderListe();
   else if (id === "chat") renderChat();
   else if (id === "ausbildung") renderAusbildung();
