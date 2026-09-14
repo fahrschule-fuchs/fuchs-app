@@ -121,6 +121,16 @@
     text-transform:uppercase; color:var(--orange);}
   .lb-punkte{font-size:12.5px; color:var(--gray);}
   .lb-frage{font-size:18px; font-weight:700; color:var(--dark); line-height:1.35;}
+  /* Die Frage und der Lautsprecher stehen nebeneinander; der Text nimmt den
+     Platz, der Knopf behaelt seine 44 Pixel - genug zum Treffen mit dem Daumen. */
+  .lb-fragezeile{display:flex; align-items:flex-start; gap:10px;}
+  .lb-fragezeile .lb-frage{flex:1; min-width:0;}
+  .lb-vorlesen{flex:0 0 auto; width:44px; height:44px; padding:0; cursor:pointer;
+    border:1.5px solid var(--line); border-radius:14px; background:#fff;
+    color:var(--dark); font-size:20px; line-height:1;
+    display:flex; align-items:center; justify-content:center;}
+  .lb-vorlesen:active{background:var(--orange-soft);}
+  .lb-vorlesen.laeuft{border-color:var(--orange); background:var(--orange-soft);}
   .lb-medium{display:flex; flex-direction:column; gap:8px;}
   .lb-medium img,.lb-medium video{width:100%; border-radius:14px; background:#000;
     border:1px solid var(--line); display:block;}
@@ -2392,6 +2402,26 @@ function lbFrageZeigen(halten) {
   }
   const g = s.gegeben[a.nummer];
 
+  // Bei einer NEUEN Frage schweigt die Stimme wieder. Beim blossen Neuzeichnen
+  // derselben Frage (Antwort angetippt oder geprueft) laeuft sie weiter - der
+  // Knopf wird gleich passend zu lbSpricht gebaut.
+  if (!halten) lbVorleseStoppen();
+
+  // Der Film wird beim Neuzeichnen GERETTET statt neu gebaut. Sonst entstuende
+  // ein frisches <video>, das wieder beim Standbild anfaengt: der Film sprang
+  // beim Beantworten optisch an den Anfang zurueck (Benjamin, 14.09.2026).
+  // Das Element wird nur kurz ausgehaengt und im selben Durchlauf wieder
+  // eingesetzt - dadurch laeuft ein noch laufender Film weiter und ein zu Ende
+  // gespielter bleibt auf seinem letzten Bild stehen.
+  lbFilmGerettet = null;
+  if (halten) {
+    const alt = document.getElementById("lbFilm");
+    if (alt && alt.dataset && alt.dataset.frage === String(a.nummer)) {
+      lbFilmGerettet = alt;
+      alt.remove();
+    }
+  }
+
   const kopf = `<button class="btn-ghost" onclick="lbAbbrechen()">← ${pruefung ? "Prüfung abbrechen" : "Zurück"}</button>
     <div class="lb-fortschritt">
       <div class="lb-zaehler">Frage ${s.i + 1} von ${s.aufgaben.length}</div>
@@ -2401,11 +2431,19 @@ function lbFrageZeigen(halten) {
 
   main.innerHTML = kopf
     + (pruefung ? lbPunkteLeiste(s) : "")
-    + `<div class="lb-frage">${esc(a.frage)}</div>`
+    + `<div class="lb-fragezeile"><div class="lb-frage">${esc(a.frage)}</div>${lbVorleseKnopf()}</div>`
     + (a.zusatz ? `<div class="sd-meta" style="margin-top:-6px;">${esc(a.zusatz)}</div>` : "")
     + lbMedienHTML(a, s)
     + lbAntwortenHTML(a, g, e)
     + lbFussHTML(a, s, e);
+
+  // Der gerettete Film kommt an die Stelle, die lbMedienHTML() dafuer
+  // freigehalten hat - und zwar BEVOR lbFilmVorbereiten() ihn sucht.
+  if (lbFilmGerettet) {
+    const platz = document.getElementById("lbFilmPlatz");
+    if (platz && platz.parentNode) platz.parentNode.replaceChild(lbFilmGerettet, platz);
+    lbFilmGerettet = null;
+  }
 
   lbFilmVorbereiten(a, s);
   main.scrollTop = stand;
@@ -2428,9 +2466,13 @@ function lbMedienHTML(a, s) {
     const gesehen = s.filme[a.nummer] || 0;
     const rest = grenze ? grenze - gesehen : 0;
     return `<div class="lb-medium">
-      <video id="lbFilm" playsinline preload="metadata"
+      ${lbFilmGerettet
+        // Der Film von eben wird gleich hier eingehaengt. Ein zweites <video>
+        // mit derselben Quelle wuerde nur unnoetig noch einmal laden.
+        ? `<div id="lbFilmPlatz"></div>`
+        : `<video id="lbFilm" data-frage="${esc(a.nummer)}" playsinline preload="metadata"
         ${a.standbild ? `poster="${esc(lbMedien(a.standbild))}"` : ""}
-        src="${esc(lbMedien(a.film))}" onerror="lbBildFehlt()"></video>
+        src="${esc(lbMedien(a.film))}" onerror="lbBildFehlt()"></video>`}
       <button class="lb-knopf voll" id="lbFilmKnopf" onclick="lbFilmStarten()"
         ${grenze && rest <= 0 ? "disabled" : ""}>
         ${grenze
@@ -2475,6 +2517,95 @@ function lbFilmStarten() {
 // der App wie ein Tippfehler aus und kommt deshalb weg.
 function lbAntwortText(x) {
   return String(x || "").replace(/^\s*[-–—]\s*/, "");
+}
+
+// ── Vorlesen ─────────────────────────────────────────────────
+// Frage und Antworten laut vorlesen - fuer alle, denen langes Lesen auf dem
+// Telefon schwerfaellt. Das macht der Browser selbst (speechSynthesis): kein
+// Serverdienst, keine Kosten, keine zusaetzliche Abhaengigkeit. Vorgelesen
+// wird NUR auf Knopfdruck, nie von allein.
+let lbFilmGerettet = null;   // siehe lbFrageZeigen()
+let lbSpricht = false;
+let lbSprachLauf = 0;        // zaehlt die Vorlesevorgaenge durch
+
+// Kann dieser Browser ueberhaupt sprechen? Aeltere und abgespeckte Browser
+// koennen es nicht - dann gibt es den Knopf gar nicht erst, statt dass er
+// beim Antippen einen Fehler wirft.
+function lbVorlesenGeht() {
+  try {
+    return !!window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function";
+  } catch (e) { return false; }
+}
+
+function lbVorleseKnopf() {
+  if (!lbVorlesenGeht()) return "";
+  const titel = lbSpricht ? "Vorlesen anhalten" : "Frage und Antworten vorlesen";
+  return `<button type="button" id="lbVorleseKnopf" class="lb-vorlesen${lbSpricht ? " laeuft" : ""}"
+    onclick="lbVorlesen()" aria-label="${esc(titel)}" title="${esc(titel)}"
+    >${lbSpricht ? "⏹" : "🔊"}</button>`;
+}
+
+function lbVorleseKnopfStand() {
+  const k = document.getElementById("lbVorleseKnopf");
+  if (!k) return;
+  const titel = lbSpricht ? "Vorlesen anhalten" : "Frage und Antworten vorlesen";
+  k.classList.toggle("laeuft", lbSpricht);
+  k.textContent = lbSpricht ? "⏹" : "🔊";
+  k.setAttribute("aria-label", titel);
+  k.setAttribute("title", titel);
+}
+
+function lbVorleseStoppen() {
+  lbSprachLauf++;          // alles, was noch aus dem alten Lauf zurueckkommt, gilt nicht mehr
+  lbSpricht = false;
+  try { if (lbVorlesenGeht()) window.speechSynthesis.cancel(); } catch (e) {}
+  lbVorleseKnopfStand();
+}
+
+// Was gelesen wird: erst die Frage, dann der Zusatz, dann jede Antwort
+// einzeln. Jeder Teil ist eine eigene Aeusserung - so entsteht dazwischen
+// eine Pause, und lange Texte werden von manchen Browsern nicht abgeschnitten.
+function lbVorleseTeile(a) {
+  const teile = [String(a.frage || ""), String(a.zusatz || "")];
+  if (a.art === "freitext") {
+    const t = (a.textteile || []).filter(x => String(x || "").trim());
+    teile.push(t.length ? t.join(" Lücke ") : "Bitte die Lücke ausfüllen.");
+  } else if (a.art === "abbildungsauswahl") {
+    teile.push("Die Antworten sind Bilder - sie lassen sich nicht vorlesen.");
+  } else {
+    (a.antworten || []).forEach((x, i) => {
+      teile.push("Antwort " + (i + 1) + ": " + lbAntwortText(x));
+    });
+  }
+  return teile.filter(t => String(t).trim());
+}
+
+function lbVorlesen() {
+  if (!lbVorlesenGeht()) return;
+  if (lbSpricht) { lbVorleseStoppen(); return; }   // derselbe Knopf haelt wieder an
+  const s = lbSitzung;
+  if (!s || !s.aufgaben || !s.aufgaben[s.i]) return;
+  const teile = lbVorleseTeile(s.aufgaben[s.i]);
+  if (!teile.length) return;
+  try {
+    window.speechSynthesis.cancel();
+    const lauf = ++lbSprachLauf;
+    lbSpricht = true;
+    lbVorleseKnopfStand();
+    // Nur der Rueckmeldung des EIGENEN Laufs wird geglaubt: das Abbrechen oben
+    // meldet sich bei den alten Aeusserungen noch als Fehler zurueck.
+    const fertig = () => { if (lauf === lbSprachLauf) lbVorleseStoppen(); };
+    teile.forEach((t, i) => {
+      const u = new SpeechSynthesisUtterance(t);
+      u.lang = "de-DE";
+      u.rate = 0.95;
+      u.onerror = fertig;
+      if (i === teile.length - 1) u.onend = fertig;
+      window.speechSynthesis.speak(u);
+    });
+  } catch (e) {
+    lbVorleseStoppen();
+  }
 }
 
 function lbAntwortenHTML(a, g, e) {
@@ -2570,6 +2701,7 @@ function lbWeiter() {
   lbFrageZeigen();
 }
 function lbAbbrechen() {
+  lbVorleseStoppen();
   lbStand = null;          // Stand hat sich geändert - neu holen
   renderLernbereich();
 }
@@ -2585,6 +2717,7 @@ async function lbPruefen() {
 }
 
 function lbUebungFertig() {
+  lbVorleseStoppen();
   const s = lbSitzung;
   const geprueft = Object.keys(s.geprueft).length;
   const richtig = s.richtig || 0;
