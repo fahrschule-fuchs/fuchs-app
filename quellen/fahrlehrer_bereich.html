@@ -160,6 +160,61 @@ const main=()=>document.getElementById("main");
 
 function toast(t){const s=document.getElementById("status");s.textContent=t;s.style.opacity=1;clearTimeout(s._t);s._t=setTimeout(()=>s.style.opacity=0,1500);}
 function esc(s){const d=document.createElement("div");d.textContent=s==null?"":s;return d.innerHTML;}
+
+/* ── Uhrzeit ohne nativen Picker (11.09.2026) ─────────────────────────
+   Samsung Internet schneidet den eingebauten Uhr-Picker unten ab: die
+   Zeile mit OK/Abbrechen ist nicht erreichbar, die Aenderung laesst sich
+   nicht abschliessen (Meldung einer Buerokraft, Samsung-Handy). Ein
+   <input type="time"> haengt immer am Picker des Geraets - deshalb hier
+   ueberall zwei Auswahlfelder: Stunde (05-22) und Minute (00,05,...,55).
+
+   WICHTIG fuer alles, was schon da war: Der Wert bleibt ein verborgenes
+   Eingabefeld mit derselben Kennung und demselben Inhalt "HH:MM". Jede
+   Stelle, die vorher .value gelesen hat, liest unveraendert weiter; am
+   Server und an der Schnittstelle aendert sich nichts.
+
+   Es startet mit der URSPRUENGLICHEN Zeit und wird erst ueberschrieben,
+   wenn wirklich etwas gewaehlt wird. Eine krumme Bestandszeit (08:03)
+   bleibt also 08:03, solange sie niemand anfasst - vorbelegt ist dabei
+   die naechstliegende Fuenferstufe (08:05). */
+var ZEIT_STUNDE_VON = 5, ZEIT_STUNDE_BIS = 22;
+
+function zeitOption(n, gewaehlt){
+  var v = ("0" + n).slice(-2);
+  return '<option value="' + v + '"' + (n === gewaehlt ? " selected" : "") + ">" + v + "</option>";
+}
+
+function zeitFeld(id, wert){
+  var roh = String(wert == null ? "" : wert);
+  var t = roh.match(/^(\d{1,2}):(\d{2})/);
+  var hh = t ? Math.max(0, Math.min(23, Number(t[1]))) : 9;
+  var mm = t ? Math.round(Number(t[2]) / 5) * 5 : 0;
+  if (mm >= 60) { mm = 0; hh = (hh + 1) % 24; }   // 08:58 -> vorbelegt 09:00
+  var std = "", min = "";
+  for (var h = ZEIT_STUNDE_VON; h <= ZEIT_STUNDE_BIS; h++) std += zeitOption(h, hh);
+  // Eine Bestandszeit ausserhalb 05-22 darf nicht unter den Tisch fallen.
+  if (t && (hh < ZEIT_STUNDE_VON || hh > ZEIT_STUNDE_BIS)) std = zeitOption(hh, hh) + std;
+  for (var m = 0; m < 60; m += 5) min += zeitOption(m, mm);
+  var attr = 'class="app-select" style="width:100%;box-sizing:border-box;text-align:left"'
+    + ' onchange="zeitUebernehmen(\'' + id + '\')"';
+  return '<input type="hidden" id="' + id + '" value="' + esc(roh) + '">'
+    + '<div style="display:flex;gap:9px">'
+    +   '<div style="flex:1"><div class="meta" style="margin-bottom:3px">Stunde</div>'
+    +     '<select id="' + id + 'Std" ' + attr + '>' + std + '</select></div>'
+    +   '<div style="flex:1"><div class="meta" style="margin-bottom:3px">Minute</div>'
+    +     '<select id="' + id + 'Min" ' + attr + '>' + min + '</select></div>'
+    + '</div>';
+}
+
+// Erst eine echte Auswahl schreibt die Zeit fort. Das "input"-Ereignis geht
+// mit, damit die Dauer-Hinweise (dauerZeigen) weiter mitlaufen wie bisher.
+function zeitUebernehmen(id){
+  var h = document.getElementById(id + "Std"), m = document.getElementById(id + "Min"),
+      z = document.getElementById(id);
+  if (!h || !m || !z) return;
+  z.value = h.value + ":" + m.value;
+  try { z.dispatchEvent(new Event("input", { bubbles: true })); } catch (e) {}
+}
 // Betrag in deutscher Schreibweise - 62.75 -> "62,75 €"
 function eurTxt(n){return (Number(n)||0).toFixed(2).replace(".",",")+" €";}
 // Preisvorschau wie im Manager: aendert sich Fahrtart oder Dauer, wird neu
@@ -949,9 +1004,54 @@ function standZeile(name, wert, soll){
       ${soll?standBalken(wert,soll):'<div style="flex:0 0 62px"></div>'}
     </div>`;
 }
+// Die Zeilen EINER Klasse einer Mehrklassen-Kartei. Gerechnet hat das der
+// Fahrschulmanager (stand.je_klasse) - hier wird nur gezeigt.
+function standKlasseZeilen(e){
+  const sf=e.sonderfahrten_soll||{};
+  const sfZ=(name,ist,soll)=>(soll||ist)?standZeile(name,ist,soll||0):"";
+  let z=standZeile("Übungsstunden",e.uebung,0)
+    +sfZ("Überlandfahrten",e.ueberland,sf.ueberland||0)
+    +sfZ("Autobahnfahrten",e.autobahn,sf.autobahn||0)
+    +sfZ("Nachtfahrten",e.nacht,sf.nacht||0);
+  if(e.schalt_soll){
+    z+=standZeile("Schaltstunden",e.schalt,e.schalt_soll);
+    if(e.schalt_unklar>0)z+=`<div style="font-size:11.5px;color:#B07800;padding:0 0 4px">${
+      e.schalt_unklar} Std. ohne hinterlegtes Fahrzeug – nicht zuzuordnen</div>`;
+    z+=`<div style="display:flex;align-items:center;gap:9px;padding:3px 0;font-size:13px">
+      <div style="flex:1;color:var(--gray,#6A6A6A)">Testfahrt Schaltkompetenz</div>
+      <div style="font-weight:700;white-space:nowrap;color:${e.testfahrt?"var(--green,#2E9E5B)":"var(--gray,#6A6A6A)"}">${
+        e.testfahrt?("✓ "+e.testfahrt_minuten+" Min."):"fehlt"}</div>
+      <div style="flex:0 0 62px"></div></div>`;
+  }
+  if(e.sonstiges>0)z+=standZeile("Sonstige",e.sonstiges,0);
+  if(e.zusatzstoff_soll)z+=standZeile("Theorie Zusatzstoff",e.zusatzstoff,e.zusatzstoff_soll);
+  return z;
+}
+// Zwei Klassen auf einer Kartei: bis zum 11.09.2026 standen beide
+// Ausbildungen in einem Topf - 48,2 Uebungsstunden, Zusatzstoff 6/2. Jetzt ein
+// Block je Klasse untereinander (auf dem Telefon ist nebeneinander zu eng),
+// darunter der Grundstoff, den es nur EINMAL gibt. Stunden ohne Klasse werden
+// KEINER Klasse zugeschlagen, sondern gesondert genannt.
+function standMehrklassenKarte(st){
+  const g=st.grundstoff_gemeinsam||{};
+  const nt=st.nicht_trennbar||{};
+  return `<div class="card" style="cursor:default;display:block">
+    <div class="eyebrow">Ausbildungsstand · je Klasse</div>
+    ${st.je_klasse.map((e,i)=>`<div style="margin-top:${i?10:6}px${
+      i?";border-top:1px solid var(--line);padding-top:8px":""}">
+      <div style="font-weight:700;font-size:13px;margin-bottom:2px">Klasse ${esc(e.klasse)}</div>
+      ${standKlasseZeilen(e)}</div>`).join("")}
+    ${(g.soll||st.zusatzstoff_unklar)?`<div style="margin-top:10px;border-top:1px solid var(--line);padding-top:8px">
+      ${g.soll?standZeile("Theorie Grundstoff (gemeinsam)",g.ist,g.soll):""}
+      ${st.zusatzstoff_unklar?standZeile("Zusatzstoff (Klasse unklar)",st.zusatzstoff_unklar,0):""}</div>`:""}
+    ${nt.einheiten>0?`<div style="font-size:11.5px;color:#B07800;margin-top:7px">${
+      nt.einheiten} Std. ohne Klasse – nicht trennbar${nt.anzahl?" ("+nt.anzahl+" Fahrstunden)":""}</div>`:""}
+  </div>`;
+}
 function akteStandHtml(staende){
   if(!staende||!staende.length)return "";
   return staende.map(st=>{
+    if(st.je_klasse&&st.je_klasse.length>1)return standMehrklassenKarte(st);
     const sf=st.sonderfahrten_soll||{};
     // Nur zeigen, was gefordert ist oder trotzdem gefahren wurde - B196 kennt
     // keine Sonderfahrten (Benjamin, 09.09.2026).
@@ -1049,8 +1149,8 @@ async function ladeBuchen(){
     <div id="bKlasse"></div>
     <div class="row">
       <input id="bDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${heute}">
-      <input id="bZeit" type="time" class="app-input" style="text-align:left;width:120px" value="${zeit}">
     </div>
+    ${zeitFeld("bZeit", zeit)}
     <div class="row">
       <select id="bArt" class="app-select" style="flex:1">${arten}</select>
       <input id="bDauer" type="number" class="app-input" inputmode="numeric" min="5" max="600" step="5"
@@ -1158,10 +1258,13 @@ function skZeichnen(feldId,s,nachWahl){
   const el=document.getElementById(feldId); if(!el)return;
   const alle=skKlassen(s);
   if(alle.length<2){SK_WAHL[feldId]="";el.innerHTML="";return;}
-  if(!alle.includes(SK_WAHL[feldId]))SK_WAHL[feldId]=alle[0];
+  // KEINE Vorauswahl mehr. Vorher stand die Hauptklasse vorgewaehlt da; wer
+  // nichts antippte, buchte still auf sie - die Motorradstunde eines B+A-
+  // Schuelers landete so bei B (11.09.2026). Jetzt muss getippt werden.
+  if(!alle.includes(SK_WAHL[feldId]))SK_WAHL[feldId]="";
   const jetzt=SK_WAHL[feldId];
-  el.innerHTML=`<div class="card" style="cursor:default;display:block">
-      <div class="eyebrow">Klasse dieser Fahrstunde</div>
+  el.innerHTML=`<div class="card" style="cursor:default;display:block${jetzt?"":";border-color:var(--gold)"}">
+      <div class="eyebrow">Klasse dieser Fahrstunde${jetzt?"":' <span style="color:var(--gold)">– bitte wählen</span>'}</div>
       <div style="display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 4px">${alle.map(k=>
         `<button type="button" class="${k===jetzt?"btn-primary":"btn-ghost"}" data-sk="${esc(k)}"
            style="padding:7px 14px;width:auto;margin:0">${esc(k)}</button>`).join("")}</div>
@@ -1172,6 +1275,16 @@ function skZeichnen(feldId,s,nachWahl){
   });
 }
 function skSchueler(liste,id){return (liste||[]).find(x=>String(x.id)===String(id))||null;}
+// Bei mehreren Klassen ist die Wahl Pflicht - sonst laesst sich spaeter nicht
+// mehr sagen, zu welcher Ausbildung die Stunde gehoert. Liefert den Fehlertext
+// oder "" (dann ist alles in Ordnung).
+function skFehlt(feldId,s){
+  const alle=skKlassen(s);
+  if(alle.length<2)return "";
+  if(SK_WAHL[feldId])return "";
+  return "Bitte die Klasse dieser Fahrstunde wählen – "
+    +((s&&s.name)?s.name:"dieser Fahrschüler")+" macht "+alle.join(" + ")+".";
+}
 
 function dArtText(sel){
   const o=sel&&sel.selectedOptions&&sel.selectedOptions[0];
@@ -1221,6 +1334,8 @@ async function buchungSpeichern(){
   if(!schueler_id){err.textContent="Bitte einen Schüler wählen.";return;}
   if(!datum||!beginn){err.textContent="Bitte Datum und Uhrzeit angeben.";return;}
   if(sigLeer){err.textContent="Bitte lass den Schüler unterschreiben.";return;}
+  const kFehlt=skFehlt("bKlasse",skSchueler(W_SCHUELER,schueler_id));
+  if(kFehlt){err.textContent=kFehlt;return;}
   const unterschrift=sigCanvas.toDataURL("image/png");
   const btn=document.getElementById("bSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
   const berechnen=!!(document.getElementById("bBerechnen")||{}).checked;
@@ -1940,9 +2055,8 @@ function viewFreigeben(datum,zeit){
     <div class="row" style="display:flex;gap:9px">
       <input id="fDatum" type="date" class="app-input" style="text-align:left;flex:1"
         value="${vorgabe}" min="${heute}">
-      <input id="fZeit" type="time" class="app-input" style="text-align:left;width:120px"
-        value="${zeit||"09:00"}">
     </div>
+    ${zeitFeld("fZeit", zeit||"09:00")}
     <div class="row" style="display:flex;gap:9px;align-items:center">
       <div class="meta" style="flex:1">Dauer in Minuten – <b>80</b> ist Standard und zugleich
         die kürzeste Freigabe. Für eine 120-Minuten-Stunde einfach höher stellen.</div>
@@ -2233,8 +2347,8 @@ async function viewPlanen(datum,zeit){
     </div>
     <div class="row" style="display:flex;gap:9px">
       <input id="pDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${datum}">
-      <input id="pZeit" type="time" class="app-input" style="text-align:left;width:120px" value="${zeit}">
     </div>
+    ${zeitFeld("pZeit", zeit)}
     <div class="row" style="display:flex;gap:9px">
       <select id="pArt" class="app-select" style="flex:1">
         <optgroup label="Mit Schüler">${W_ARTEN.map(a=>`<option value="${a[0]}">${esc(a[1])}</option>`).join("")}</optgroup>
@@ -2342,6 +2456,10 @@ async function planenSpeichern(trotzdem){
   const blocker=W_BLOCKER.some(a=>a[0]===art);
   const schueler_id=blocker?"":document.getElementById("pSchueler").value;
   if(!blocker&&!schueler_id){err.textContent="Bitte einen Schüler wählen.";return;}
+  if(!blocker){
+    const kFehlt=skFehlt("pKlasse",skSchueler(W_SCHUELER,schueler_id));
+    if(kFehlt){err.textContent=kFehlt;return;}
+  }
   const btn=document.getElementById("pSpeichern");btn.disabled=true;btn.textContent="Speichert …";
   const datum=document.getElementById("pDatum").value;
   // Gruppenschulung B96: eigene Route, ein Termin fuer alle Teilnehmer.
@@ -2600,9 +2718,18 @@ function signStunde(id){
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
     <canvas id="bSig" width="640" height="220" style="width:100%;height:250px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;display:block"></canvas>
     <button class="btn-ghost" onclick="sigLoeschen()">Unterschrift löschen</button>
+    <div id="sKlasse"></div>
     <button class="btn-primary" id="sSpeichern">Fahrstunde bestätigen</button>
     <div class="meta" id="sFehler" style="color:#D64545;min-height:16px"></div>`;
   sigInit(document.getElementById("bSig"));
+  // Steht am Termin schon eine Klasse, bleibt sie unberuehrt - sie wurde beim
+  // Einplanen gewaehlt. Nur wenn keine da ist (Termine von vor dem 11.09.2026)
+  // und die Kartei mehrere Klassen hat, wird hier nachgefragt.
+  SK_WAHL["sKlasse"]=String(s.klasse_gesetzt||"").trim();
+  if(!SK_WAHL["sKlasse"]){
+    skZeichnen("sKlasse",{name:s.schueler||"",klasse:s.schueler_klasse||"",
+      weitere_klassen:s.schueler_weitere_klassen||""});
+  }
   const sPreisNeu=preisLader("s",()=>({schueler_id:s.schueler_id,
     art:document.getElementById("sArt").value,
     dauer:document.getElementById("sDauer").value,
@@ -2641,8 +2768,12 @@ async function stundeBestaetigen(){
   const unterschrift=sigCanvas.toDataURL("image/png");
   const btn=document.getElementById("sSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
   const berechnen=!!(document.getElementById("sBerechnen")||{}).checked;
+  const kFehlt=skFehlt("sKlasse",{name:AKT_STUNDE.schueler||"",klasse:AKT_STUNDE.schueler_klasse||"",
+    weitere_klassen:AKT_STUNDE.schueler_weitere_klassen||""});
+  if(kFehlt){if(err)err.textContent=kFehlt;btn.textContent=alt;btn.disabled=false;return;}
   const d=await jpost("fahrlehrer/stunde-buchen",{fl:FL,stunde_id:AKT_STUNDE.id,schueler_id:AKT_STUNDE.schueler_id,
     datum:AKT_STUNDE.datum_iso,beginn:AKT_STUNDE.uhrzeit,dauer,art,unterschrift,berechnen,
+    klasse:SK_WAHL["sKlasse"]||"",
     fahrzeug_id:AKT_STUNDE.fahrzeug_id||null});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){toast("Fahrstunde gebucht ✓");const s=AKT_STUNDE;AKT_STUNDE=null;
@@ -2838,7 +2969,7 @@ async function verschiebenPanel(id){
     <div style="font-weight:700;font-size:14px;margin:6px 0 4px">Neues Datum</div>
     <input id="vDatum" type="date" class="app-select" value="${esc(s.datum_iso||"")}" style="width:100%;box-sizing:border-box">
     <div style="font-weight:700;font-size:14px;margin:12px 0 4px">Neue Uhrzeit</div>
-    <input id="vZeit" type="time" class="app-select" value="${esc(s.uhrzeit||"")}" style="width:100%;box-sizing:border-box">
+    ${zeitFeld("vZeit", s.uhrzeit||"")}
     ${vDauerFeld(s.dauer)}
     <div style="font-weight:700;font-size:14px;margin:12px 0 4px">Fahrzeug</div>
     <select id="vFz" class="app-select" style="width:100%;box-sizing:border-box">
