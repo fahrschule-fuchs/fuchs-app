@@ -2306,7 +2306,18 @@ async function renderLernbereich() {
         </div>
         <div class="sd-balken" style="margin-top:10px;"><div style="width:${d.prozent}%"></div></div>
         <div class="sd-meta">${d.offen} noch nie beantwortet · ${d.zu_ueben} noch nicht sicher</div>
-        <div class="sd-meta">Grundstoff ${d.grundstoff} Fragen · Zusatzstoff Klasse ${esc(d.klasse)} ${d.zusatzstoff} Fragen</div>
+        ${(d.je_klasse && d.je_klasse.length > 1)
+          // Zwei Ausbildungen auf einer Handynummer: der Stand steht je Frage,
+          // die Anzeige rechnet ihn je Klasse aus (14.09.2026).
+          ? `<div class="sd-meta">Grundstoff ${d.grundstoff} Fragen · Zusatzstoff ${d.zusatzstoff} Fragen</div>`
+            + d.je_klasse.map(k => `<div class="sd-meta" style="display:flex; align-items:center; gap:8px;">
+                <b style="color:var(--dark);">Klasse ${esc(k.klasse)}</b>
+                <span style="white-space:nowrap;">${k.sicher} von ${k.gesamt} sicher</span>
+                <span style="flex:1; min-width:40px;"><span style="display:block; height:5px; border-radius:99px;
+                  background:var(--line); overflow:hidden;"><span style="display:block; height:100%;
+                  width:${k.prozent}%; background:var(--orange);"></span></span></span>
+              </div>`).join("")
+          : `<div class="sd-meta">Grundstoff ${d.grundstoff} Fragen · Zusatzstoff Klasse ${esc(d.klasse)} ${d.zusatzstoff} Fragen</div>`}
       </div>`
     + `<div class="lb-knopfreihe">
         <button class="lb-knopf voll" onclick="lbUeben('alle','','Fragen üben')">Weiter üben</button>
@@ -2367,10 +2378,27 @@ async function lbUeben(was, gebiet, titel) {
 }
 
 // ── Prüfung ──────────────────────────────────────────────────
-async function lbPruefungStarten() {
-  const kopf = lbKopf("Prüfungssimulation", "renderLernbereich()");
+async function lbPruefungStarten(klasse) {
+  // In der echten Pruefung wird immer GENAU EINE Klasse geprueft. Wer zwei
+  // Ausbildungen hat, sagt vorher, welche (Benjamin, 14.09.2026). Bei nur
+  // einer Klasse wird nicht gefragt - da bleibt alles wie bisher.
+  const wahl = (lbStand && lbStand.klassen_wahl) || [];
+  if (wahl.length > 1 && !klasse) {
+    main.innerHTML = lbKopf("Prüfungssimulation", "renderLernbereich()")
+      + `<div class="sd-karte">
+          <div class="sd-eyebrow">Welche Prüfung?</div>
+          <div class="sd-meta" style="margin-top:3px;">Im Amt wird immer genau eine Klasse
+            geprüft – der Grundstoff und der Stoff dieser Klasse.</div>
+          ${wahl.map((k, i) => `<button class="lb-knopf voll${i ? "" : " stark"}" style="margin-top:10px;"
+            onclick="lbPruefungStarten('${esc(k)}')">Prüfung Klasse ${esc(k)}</button>`).join("")}
+        </div>`;
+    main.scrollTop = 0;
+    return;
+  }
+  const titel = klasse ? "Prüfung Klasse " + klasse : "Prüfungssimulation";
+  const kopf = lbKopf(titel, "renderLernbereich()");
   lbWarten(kopf);
-  const d = await lbRuf("pruefung");
+  const d = await lbRuf("pruefung", klasse ? { pruefungsklasse: klasse } : null);
   if (!d || !d.ok || !(d.aufgaben || []).length) {
     main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">
       Die Prüfung lässt sich gerade nicht starten.</div>
@@ -2379,7 +2407,7 @@ async function lbPruefungStarten() {
   }
   lbSchluessel = d.medien_schluessel || lbSchluessel;
   lbSitzung = {
-    modus: "pruefung", titel: "Prüfungssimulation", grenze: d.grenze,
+    modus: "pruefung", titel, grenze: d.grenze,
     aufgaben: d.aufgaben, i: 0, gegeben: {}, geprueft: {}, filme: {}
   };
   lbFrageZeigen();
