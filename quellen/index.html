@@ -2737,8 +2737,17 @@ function lbAbbrechen() {
 async function lbPruefen() {
   const s = lbSitzung; if (!s) return;
   const a = s.aufgaben[s.i];
+  // Doppeltipp waehrend der Anfrage zaehlte mehrfach (22 von 20) - 29.09.2026.
+  // Je Frage nur eine Anfrage zugleich, und nur das erste Ergebnis zaehlt.
+  if (s.geprueft[a.nummer] || s.laeuft === a.nummer) return;
+  s.laeuft = a.nummer;
+  const knopf = document.querySelector('button[onclick="lbPruefen()"]');
+  if (knopf) knopf.disabled = true;
   const d = await lbRuf("antwort", { aufgabe: a.nummer, gegeben: s.gegeben[a.nummer] });
-  if (!d || !d.ok) return;
+  if (lbSitzung !== s) return;              // Runde inzwischen verlassen
+  s.laeuft = null;
+  if (!d || !d.ok) { if (knopf) knopf.disabled = false; return; }
+  if (s.geprueft[a.nummer]) return;         // nur das erste Ergebnis zaehlt
   s.geprueft[a.nummer] = d;
   if (d.richtig) s.richtig = (s.richtig || 0) + 1;
   lbFrageZeigen(true);
