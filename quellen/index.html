@@ -135,7 +135,7 @@
   .lb-medium img,.lb-medium video{width:100%; border-radius:14px; background:#000;
     border:1px solid var(--line); display:block;}
   .lb-antworten{display:flex; flex-direction:column; gap:9px;}
-  .lb-antworten.bilder{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px;}
+  .lb-antworten.bilder{display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:9px;}
   .lb-antwort{display:flex; align-items:flex-start; gap:11px; background:#fff;
     border:1.5px solid var(--line); border-radius:14px; padding:13px 14px;
     font-size:14.5px; line-height:1.4; color:var(--dark); cursor:pointer;}
@@ -159,13 +159,309 @@
   .lb-ergebnis{border-radius:12px; padding:11px 14px; font-size:13.5px; line-height:1.45;}
   .lb-ergebnis.gut{background:#EAF6EF; color:#1E6B3E;}
   .lb-ergebnis.schlecht{background:#FBEDEB; color:#8E2A1E;}
-  .lb-fuss{position:sticky; bottom:0; background:var(--bg); padding:10px 0 2px;
+  .lb-fuss{position:sticky; bottom:var(--lb-push, 0px); background:var(--bg); padding:10px 0 2px;
     margin-top:2px; display:flex; flex-direction:column; gap:0;}
   .lb-punktleiste{display:flex; flex-wrap:wrap; gap:5px;}
   .lb-punkt{width:15px; height:15px; border-radius:5px; border:1.5px solid var(--line);
     background:#fff; padding:0; cursor:pointer;}
   .lb-punkt.voll{background:var(--orange); border-color:var(--orange);}
   .lb-punkt.hier{outline:2px solid var(--dark); outline-offset:1px;}
+  /* P1 "Üben besser" (16.10.2026): Bild gross, Ziffernblock, Film wie in der
+     Pruefung, Rueckmeldung mit "Deine Antwort" und "Richtig" nebeneinander. */
+  .lb-medium img.lb-zoombar{cursor:zoom-in;}
+  .lb-zoomtipp{font-size:12px; color:var(--gray); text-align:center; margin-top:-2px;}
+  .lb-zoom{position:fixed; inset:0; z-index:10005; background:rgba(15,15,15,.94);
+    display:flex; align-items:center; justify-content:center; overflow:hidden;
+    touch-action:none; -webkit-user-select:none; user-select:none;}
+  .lb-zoom img{max-width:100%; max-height:100%; display:block; transform-origin:50% 50%;
+    -webkit-user-drag:none; -webkit-touch-callout:none; pointer-events:auto;}
+  .lb-zoom-zu{position:absolute; top:calc(env(safe-area-inset-top, 0px) + 12px); right:12px;
+    width:46px; height:46px; border-radius:50%; border:none; background:rgba(255,255,255,.18);
+    color:#fff; font-size:22px; line-height:1; cursor:pointer; font-family:inherit;}
+  .lb-zoom-tipp{position:absolute; left:0; right:0; bottom:calc(env(safe-area-inset-bottom, 0px) + 14px);
+    text-align:center; color:rgba(255,255,255,.75); font-size:12.5px; pointer-events:none;}
+  .lb-filmknoepfe{display:flex; flex-direction:column; gap:8px;}
+  .lb-lupe{align-self:flex-start; background:none; border:none; padding:2px 0; color:var(--orange);
+    font-family:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+  .lb-lupe:disabled{color:var(--gray); cursor:default;}
+  .lb-filmhinweis{background:#fff; border:1.5px dashed var(--line); border-radius:14px;
+    padding:14px; font-size:14px; line-height:1.45; color:var(--gray); text-align:center;}
+  .lb-feldgruppe{display:inline-flex; align-items:center; gap:6px; white-space:nowrap;}
+  .lb-feld{min-width:88px; min-height:44px; padding:8px 10px; border:1.5px solid var(--line);
+    border-radius:10px; font-family:inherit; font-size:18px; font-weight:700; color:var(--dark);
+    text-align:center; background:#fff; cursor:pointer;}
+  .lb-feld.aktiv{border-color:var(--orange); box-shadow:0 0 0 3px var(--orange-soft);}
+  .lb-feld.leer{color:var(--gray); font-weight:400; font-size:14px;}
+  .lb-einheit{font-weight:700;}
+  .lb-ziffern{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-top:10px;}
+  .lb-taste{height:52px; border-radius:12px; border:1.5px solid var(--line); background:#fff;
+    color:var(--dark); font-family:inherit; font-size:22px; font-weight:700; cursor:pointer;
+    -webkit-user-select:none; user-select:none; touch-action:manipulation;}
+  .lb-taste:active{background:var(--orange-soft); border-color:var(--orange);}
+  .lb-taste.loeschen{font-size:20px;}
+  .lb-spaltenkopf{display:flex; gap:8px; padding:0 15.5px; font-size:9.5px; font-weight:800;
+    letter-spacing:.02em; text-transform:uppercase; color:var(--gray); line-height:1.15;}
+  .lb-spalte{width:58px; flex:0 0 58px; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center; gap:3px;}
+  .lb-paar{display:flex; gap:8px; flex:0 0 auto;}
+  .lb-kaestchen{width:26px; height:26px; border-radius:7px; border:2px solid var(--line);
+    background:#fff; display:flex; align-items:center; justify-content:center;
+    font-size:15px; font-weight:800; color:#fff;}
+  .lb-kaestchen.du.an{background:var(--dark); border-color:var(--dark);}
+  .lb-kaestchen.soll.an{background:var(--green); border-color:var(--green);}
+  .lb-mini{font-size:9.5px; font-weight:800; text-transform:uppercase; color:var(--gray); letter-spacing:.03em;}
+  .lb-antwort.ausgewertet{cursor:default; align-items:center;}
+  .lb-antwort.stimmt{border-color:var(--green); background:#EAF6EF;}
+  .lb-antwort.stimmtnicht{border-color:#C0392B; background:#FBEDEB;}
+  .lb-antwort.bild.ausgewertet .lb-paar{width:100%; gap:2px; justify-content:space-around;}
+  .lb-antwort.bild.ausgewertet .lb-spalte{width:auto; flex:1 1 0; min-width:0;}
+  .lb-antwort.bild.ausgewertet .lb-mini{font-size:8.5px; letter-spacing:0;}
+  .lb-satz{font-size:16px; font-weight:800;}
+  .lb-zahlen{display:flex; flex-direction:column; gap:8px;}
+  .lb-zahlpaar{display:flex; gap:8px; border-radius:14px; border:1.5px solid var(--line); padding:10px; background:#fff;}
+  .lb-zahlpaar.stimmt{border-color:var(--green); background:#EAF6EF;}
+  .lb-zahlpaar.stimmtnicht{border-color:#C0392B; background:#FBEDEB;}
+  .lb-zahlpaar>div{flex:1; min-width:0; background:#fff; border:1.5px solid var(--line); border-radius:10px;
+    padding:8px 10px; text-align:center;}
+  .lb-zahlpaar b{display:block; font-size:18px; color:var(--dark); margin-top:2px; overflow-wrap:anywhere;}
+  .lb-erklaerung{background:#fff; border:1px solid var(--line); border-radius:12px; padding:11px 14px;
+    font-size:13.5px; line-height:1.5; color:var(--dark);}
+  .lb-erklaerung[hidden]{display:none;}
+  /* P2 "Prüfung wie im Amt" (16.10.2026): Regel-Dialog, Uhr, Reiter, Leiste
+     mit Nummern und Kennzeichen, Rückfrage-Dialog. */
+  .lb-regeln{display:flex; flex-direction:column; gap:0; margin-top:6px;}
+  .lb-regel{display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--line);
+    font-size:14px; line-height:1.4; color:var(--dark);}
+  .lb-regel:last-child{border-bottom:none;}
+  .lb-regel span:first-child{flex:0 0 26px; text-align:center;}
+  .lb-haken-zeile{display:flex; align-items:center; gap:10px; margin-top:12px; font-size:13.5px;
+    color:var(--dark); cursor:pointer;}
+  .lb-haken-zeile input{width:20px; height:20px; accent-color:var(--orange);}
+  .lb-pkopf{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .lb-uhr{font-variant-numeric:tabular-nums; font-weight:800; font-size:15px; padding:7px 12px;
+    border-radius:999px; background:#fff; border:1.5px solid var(--line); color:var(--dark); white-space:nowrap;}
+  .lb-uhr.knapp{border-color:#C0392B; color:#C0392B; background:#FBEDEB;}
+  .lb-reiter{display:flex; gap:6px;}
+  .lb-reiter button{flex:1; padding:9px 8px; border-radius:12px; border:1.5px solid var(--line); background:#fff;
+    font-family:inherit; font-weight:700; font-size:13.5px; color:var(--gray); cursor:pointer;}
+  .lb-reiter button.an{border-color:var(--orange); color:var(--orange); background:var(--orange-soft);}
+  .lb-reiter small{font-weight:600; opacity:.85;}
+  .lb-punktleiste.nummern{gap:6px;}
+  .lb-punktleiste.nummern .lb-punkt{width:34px; height:34px; border-radius:9px; position:relative;
+    display:inline-flex; align-items:center; justify-content:center; font-family:inherit;
+    font-size:12.5px; font-weight:700; color:var(--gray);}
+  .lb-punktleiste.nummern .lb-punkt.voll{color:#fff;}
+  .lb-punkt.markiert{border-color:#2F6FD6;}
+  .lb-punkt.markiert::after{content:""; position:absolute; top:-5px; right:-5px; width:11px; height:11px;
+    border-radius:50%; background:#2F6FD6; border:2px solid var(--bg);}
+  .lb-legende{display:flex; flex-wrap:wrap; gap:6px 14px; font-size:11.5px; color:var(--gray); align-items:center;}
+  .lb-legende i{display:inline-block; width:12px; height:12px; border-radius:4px; border:1.5px solid var(--line);
+    background:#fff; vertical-align:-2px; margin-right:4px; position:relative;}
+  .lb-legende i.voll{background:var(--orange); border-color:var(--orange);}
+  .lb-legende i.markiert{border-color:#2F6FD6;}
+  .lb-legende i.markiert::after{content:""; position:absolute; top:-4px; right:-4px; width:7px; height:7px;
+    border-radius:50%; background:#2F6FD6;}
+  .lb-legende i.hier{outline:2px solid var(--dark); outline-offset:1px;}
+  .lb-knopfreihe .lb-knopf.schmal{flex:0 0 54px;}
+  .lb-fuss.pruefung .lb-knopfreihe .lb-knopf{padding:11px 8px; white-space:nowrap; font-size:14px;}
+  .lb-fuss.pruefung > .lb-knopf.voll{padding:10px 12px;}
+  /* Unter dem Fußbereich (bis zum Push-Hinweis) keine durchscheinenden Antworten */
+  /* P8: plus 20 px - der Innenabstand von main unter dem Fußbereich bleibt sonst durchsichtig */
+  .lb-fuss{box-shadow:0 calc(var(--lb-push, 0px) + 20px) 0 var(--bg);}
+  .lb-knopf.kennz.an{border-color:#2F6FD6; color:#2F6FD6; background:#EAF1FC;}
+  .lb-knopf.stark.gefahr{background:#C0392B; border-color:#C0392B; color:#fff;}
+  .lb-dialog{position:fixed; inset:0; z-index:10010; background:rgba(0,0,0,.5); display:flex;
+    align-items:center; justify-content:center; padding:16px;}
+  .lb-dialog-karte{background:#fff; border-radius:18px; width:100%; max-width:420px; padding:18px;
+    box-shadow:0 12px 32px rgba(0,0,0,.25);}
+  .lb-dialog-titel{font-size:18px; font-weight:800; color:var(--dark);}
+  .lb-dialog-text{font-size:14px; line-height:1.5; color:var(--dark); margin-top:8px;}
+  .lb-dialog-knoepfe{display:flex; gap:9px; margin-top:16px;}
+  /* P1b (8b): Der schwebende Push-Hinweis liegt über der Leiste unten. Im
+     Lernbereich rückt der Fußbereich darüber, und am Seitenende ist Platz
+     (--lb-push setzt lbPushPlatz()). */
+  .lb-platz{height:var(--lb-push, 0px); flex:0 0 auto;}   /* main ist ein Flex-Kasten: nicht schrumpfen */
+  /* P3 "Ergebnis & Verlauf" (16.10.2026) */
+  .lb-ergkopf{position:relative; overflow:hidden; flex:0 0 auto;}   /* overflow:hidden im Flex-Kasten main würde sonst schrumpfen */
+  .lb-feier{font-size:16px; font-weight:800; color:var(--green); margin-top:8px; animation:lbPop .6s ease-out both;}
+  @keyframes lbPop{0%{transform:scale(.6); opacity:0;} 60%{transform:scale(1.08); opacity:1;} 100%{transform:scale(1);}}
+  .lb-konfetti{position:absolute; inset:0; pointer-events:none; overflow:hidden;}
+  .lb-konfetti span{position:absolute; top:-14px; width:8px; height:12px; border-radius:2px; opacity:.95;
+    animation:lbFall 1.9s ease-in forwards;}
+  @keyframes lbFall{to{transform:translateY(300px) rotate(560deg); opacity:0;}}
+  @media (prefers-reduced-motion: reduce){ .lb-konfetti{display:none;} .lb-feier{animation:none;} }
+  .lb-filter{display:flex; gap:6px; margin-top:8px;}
+  .lb-filter button{flex:1; padding:8px; border-radius:10px; border:1.5px solid var(--line); background:#fff;
+    font-family:inherit; font-weight:700; font-size:13px; color:var(--gray); cursor:pointer;}
+  .lb-filter button.an{border-color:var(--orange); color:var(--orange); background:var(--orange-soft);}
+  .lb-ergzeile{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);
+    font-size:13.5px; color:var(--dark);}
+  .lb-ergzeile:last-child{border-bottom:none;}
+  .lb-ergzeile.klickbar{cursor:pointer;}
+  .lb-ergnr{flex:0 0 30px; height:30px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:12.5px;}
+  .lb-ergzeile.gut .lb-ergnr{background:#EAF6EF; color:#1E6B3E; border:1.5px solid var(--green);}
+  .lb-ergzeile.schlecht .lb-ergnr{background:#FBEDEB; color:#8E2A1E; border:1.5px solid #C0392B;}
+  .lb-ergtext{flex:1; min-width:0;}
+  .lb-ergtext small{display:block; color:var(--gray); font-size:11.5px; margin-top:2px;}
+  .lb-ergpunkte{white-space:nowrap; color:var(--gray); font-size:12.5px;}
+  .lb-punkt.gut{background:#EAF6EF; border-color:var(--green); color:#1E6B3E !important;}
+  .lb-punkt.schlecht{background:#FBEDEB; border-color:#C0392B; color:#8E2A1E !important;}
+  .lb-verlauf-punkte{display:flex; gap:6px; margin-top:8px;}
+  .lb-verlauf-punkte i{width:14px; height:14px; border-radius:50%; display:inline-block; background:#C0392B;}
+  .lb-verlauf-punkte i.gut{background:var(--green);}
+  .lb-vzeile{display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); cursor:pointer;}
+  .lb-vzeile:last-child{border-bottom:none;}
+  .lb-vzeile b{font-size:14px; color:var(--dark);}
+  .lb-vzeile small{display:block; color:var(--gray); font-size:12px; margin-top:2px;}
+  .lb-marke{font-size:12px; font-weight:800; padding:4px 9px; border-radius:999px; white-space:nowrap;}
+  .lb-marke.gut{background:#EAF6EF; color:#1E6B3E;} .lb-marke.schlecht{background:#FBEDEB; color:#8E2A1E;}
+  /* P5 "Markieren & Frageliste" (16.10.2026) */
+  .lb-stern{flex:0 0 auto; width:44px; height:44px; padding:0; border:1.5px solid var(--line); border-radius:14px;
+    background:#fff; font-size:22px; line-height:1; color:#B9AFA5; cursor:pointer; font-family:inherit;
+    display:flex; align-items:center; justify-content:center;}
+  .lb-stern.an{color:#E8A400; border-color:#F2C94C; background:#FFF8E1;}
+  .lb-lzeile .lb-stern{width:38px; height:38px; font-size:19px; border-radius:11px;}
+  .lb-listefilter input[type=search]{width:100%; box-sizing:border-box; padding:11px 13px; border:1.5px solid var(--line);
+    border-radius:12px; font-family:inherit; font-size:16px; background:#fff; color:var(--dark);}
+  .lb-listefilter input[type=search]:focus{outline:none; border-color:var(--orange);}
+  .lb-filtergitter{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;}
+  .lb-filtergitter select{width:100%; min-width:0; padding:9px 8px; border:1.5px solid var(--line); border-radius:10px;
+    font-family:inherit; font-size:14px; background:#fff; color:var(--dark);}
+  .lb-lzeile{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);
+    font-size:13.5px; color:var(--dark); cursor:pointer;}
+  .lb-lzeile:last-child{border-bottom:none;}
+  .lb-status{flex:0 0 12px; height:12px; border-radius:50%; background:#CFC6BD;}
+  .lb-status.falsch{background:#C0392B;} .lb-status.einmal{background:#F2B705;} .lb-status.sicher{background:var(--green);}
+  .lb-statuslegende{display:flex; flex-wrap:wrap; gap:4px 12px; font-size:11.5px; color:var(--gray); margin-top:8px; align-items:center;}
+  .lb-statuslegende .lb-status{display:inline-block; width:10px; height:10px; flex:0 0 10px; vertical-align:-1px; margin-right:4px;}
+  /* P4 "Themen & Fortschritt" (16.10.2026) */
+  .lb-themanr{flex:0 0 36px; height:36px; border-radius:10px; background:var(--orange-soft); color:var(--orange);
+    font-weight:800; font-size:13px; display:flex; align-items:center; justify-content:center;}
+  .lb-themaprozent{flex:0 0 auto; min-width:44px; text-align:right; font-weight:800; font-size:15px; color:var(--dark);}
+  .lb-stapel{display:flex; height:7px; border-radius:999px; overflow:hidden; background:var(--line); margin-top:7px;}
+  .lb-stapel span{height:100%; display:block;}
+  .lb-stapel .sicher{background:var(--green);} .lb-stapel .einmal{background:#F2B705;} .lb-stapel .falsch{background:#C0392B;}
+  .lb-themazahlen{display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-top:12px; text-align:center;}
+  .lb-themazahlen div{background:#fff; border:1px solid var(--line); border-radius:12px; padding:8px 4px; font-size:11.5px; color:var(--gray);}
+  .lb-themazahlen b{display:block; font-size:18px; color:var(--dark);}
+  .lb-knopf.gefahr-rand{border-color:#C0392B; color:#C0392B;}
+  /* P7a: lange Wörter im Antworttext trennen (z. B. „Haftpflichtversicherung“ bei 320 px) */
+  .lb-antwort > span{min-width:0; overflow-wrap:anywhere; -webkit-hyphens:auto; hyphens:auto;}
+  /* P7a "Erklärungen" (17.10.2026): Knopf, Text, Daumen */
+  .lb-erkl{display:flex; flex-direction:column; gap:8px; flex:0 0 auto;}
+  .lb-erkl-par{font-size:12.5px; color:var(--gray); margin-top:6px;}
+  .lb-daumen{display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; color:var(--gray); flex-wrap:wrap;}
+  .lb-daumen span{flex:1 1 100%; min-width:0;}
+  .lb-daumen-knopf{flex:0 0 auto; width:48px; height:42px; border:1.5px solid var(--line); border-radius:12px;
+    background:#fff; font-size:20px; line-height:1; cursor:pointer; font-family:inherit; padding:0;}
+  .lb-daumen-knopf.an{border-color:var(--orange); background:var(--orange-soft);}
+  .lb-gruende{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center; font-size:12.5px; color:var(--gray);}
+  .lb-gruende span{flex:1 0 100%;}
+  .lb-gruende button{padding:7px 11px; border-radius:999px; border:1.5px solid var(--line); background:#fff;
+    font-family:inherit; font-size:13px; font-weight:600; color:var(--dark); cursor:pointer;}
+  .lb-gruende button.an{border-color:var(--orange); color:var(--orange); background:var(--orange-soft);}
+  /* P6 "Lernpfad" (16.10.2026): Stationen mit Sternen, Themen-Test, Pokal */
+  .lb-pfad{display:flex; flex-direction:column; flex:0 0 auto;}
+  .lb-station{display:flex; gap:12px; width:100%; background:none; border:none; padding:0; margin:0;
+    text-align:left; font-family:inherit; cursor:pointer; color:inherit;}
+  .lb-st-spur{flex:0 0 36px; display:flex; flex-direction:column; align-items:center;}
+  .lb-st-punkt{flex:0 0 auto; width:36px; height:36px; border-radius:50%; border:2px solid var(--line); background:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:var(--gray);}
+  .lb-st-punkt.s1{border-color:#F2B705; color:#8A6A00;}
+  .lb-st-punkt.s2{border-color:var(--orange); color:var(--orange);}
+  .lb-st-punkt.s3{background:var(--green); border-color:var(--green); color:#fff;}
+  .lb-st-punkt.test{border-color:var(--dark); color:var(--dark); font-size:17px;}
+  .lb-st-punkt.pokal{background:#FFF3C4; border-color:#E8A400;}
+  .lb-st-strich{flex:1 1 auto; width:3px; min-height:8px; background:var(--line); border-radius:2px;}
+  .lb-st-strich.voll{background:var(--green);}
+  .lb-st-karte{flex:1; min-width:0; background:#fff; border:1px solid var(--line); border-radius:14px;
+    padding:10px 12px; margin-bottom:8px; display:flex; align-items:center; gap:10px;}
+  .lb-st-karte b{display:block; font-size:14.5px; color:var(--dark);}
+  .lb-st-meta{font-size:12px; color:var(--gray); margin-top:2px; line-height:1.35;}
+  .lb-sterne{flex:0 0 auto; font-size:17px; letter-spacing:1px; color:#D9D0C7; white-space:nowrap;}
+  .lb-sterne .an{color:#E8A400;}
+  .lb-pokal{display:inline-block; font-size:12px; font-weight:800; color:#8A6A00; background:#FFF3C4;
+    border:1px solid #F2C94C; border-radius:999px; padding:2px 8px; white-space:nowrap;}
+  /* P8 "Einstellungen" (16.10.2026): Werte nur auf dem Gerät. */
+  .lb-einst{display:flex; align-items:flex-start; gap:12px; padding:13px 0; border-bottom:1px solid var(--line);}
+  .lb-einst:last-child{border-bottom:none;}
+  .lb-einst-text{flex:1; min-width:0;}
+  .lb-einst-text b{display:block; font-size:15px; color:var(--dark);}
+  .lb-einst-text small{display:block; font-size:12.5px; line-height:1.45; color:var(--gray); margin-top:3px;}
+  .lb-schalter{flex:0 0 auto; position:relative; width:52px; height:32px; margin-top:2px; border-radius:999px;
+    border:none; background:#CFC6BD; cursor:pointer; padding:0;}
+  .lb-schalter::after{content:""; position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .lb-schalter[aria-checked="true"]{background:var(--green);}
+  .lb-schalter[aria-checked="true"]::after{left:23px;}
+  .lb-schalter:disabled{opacity:.45; cursor:default;}
+  .lb-einst .lb-filter{margin-top:10px;}
+  .lb-vorschau{margin-top:12px; padding:12px; border:1px dashed var(--line); border-radius:12px;
+    display:flex; flex-direction:column; gap:9px; background:var(--bg);}
+  /* Schriftgröße: gilt für Fragen und Antworten (Üben, Prüfung, Ergebnis-Details, Vorschau). */
+  html.lb-sg-1 .lb-frage{font-size:21px;}
+  html.lb-sg-1 .lb-antwort, html.lb-sg-1 .lb-freitext{font-size:17px;}
+  html.lb-sg-1 .lb-feld{font-size:20px;}
+  html.lb-sg-2 .lb-frage{font-size:24px;}
+  html.lb-sg-2 .lb-antwort, html.lb-sg-2 .lb-freitext{font-size:19.5px;}
+  html.lb-sg-2 .lb-feld{font-size:22px;}
+  html.lb-sg-1 .lb-satz{font-size:18px;} html.lb-sg-2 .lb-satz{font-size:20px;}
+  /* Prüfungsoptik: ruhig und schlicht wie an einem Prüfrechner. Eigene
+     Gestaltung: neutrale Flächen, eine dunkelblaue Akzentfarbe, kleine Ecken,
+     keine Schatten, große Antwortkästchen, Fragenleiste unten, keine Bewegung.
+     Gilt nur in der Frage-Ansicht (main.lb-fragemodus) und in der Vorschau. */
+  html.lb-po main.lb-fragemodus, html.lb-po .lb-vorschau{--bg:#F2F3F5; --line:#C9CED4; --orange:#1F3A5F;
+    --orange-soft:#E6ECF3; background:var(--bg); font-family:Arial, Helvetica, system-ui, sans-serif;}
+  html.lb-po main.lb-fragemodus *, html.lb-po .lb-vorschau *{animation:none !important; transition:none !important;}
+  html.lb-po main.lb-fragemodus{scroll-behavior:auto;}
+  html.lb-po .lb-fragemodus .lb-frage, html.lb-po .lb-vorschau .lb-frage{font-weight:700; color:#111;}
+  html.lb-po .lb-fragemodus .lb-zaehler{text-transform:none; letter-spacing:0; font-size:13.5px; color:#333;}
+  html.lb-po .lb-fragemodus .lb-antwort, html.lb-po .lb-vorschau .lb-antwort{border-radius:4px; border-width:2px;
+    border-color:#AEB5BD; min-height:62px; padding:16px; align-items:center; gap:14px; background:#fff;}
+  html.lb-po .lb-fragemodus .lb-antwort.bild{min-height:0; padding:8px;}
+  html.lb-po .lb-fragemodus .lb-haken, html.lb-po .lb-vorschau .lb-haken{width:32px; height:32px; border-radius:3px;
+    border:2px solid #6B7580; font-size:20px;}
+  html.lb-po .lb-fragemodus .lb-antwort.gewaehlt, html.lb-po .lb-vorschau .lb-antwort.gewaehlt{border-color:#1F3A5F; background:#E6ECF3;}
+  html.lb-po .lb-fragemodus .lb-antwort.gewaehlt .lb-haken, html.lb-po .lb-vorschau .lb-antwort.gewaehlt .lb-haken{background:#1F3A5F; border-color:#1F3A5F;}
+  html.lb-po .lb-fragemodus .lb-kaestchen{border-radius:3px;}
+  html.lb-po .lb-fragemodus .lb-knopf, html.lb-po .lb-fragemodus .btn-ghost, html.lb-po .lb-fragemodus .lb-uhr,
+  html.lb-po .lb-fragemodus .lb-reiter button, html.lb-po .lb-fragemodus .lb-vorlesen, html.lb-po .lb-fragemodus .lb-stern,
+  html.lb-po .lb-fragemodus .lb-feld, html.lb-po .lb-fragemodus .lb-taste, html.lb-po .lb-fragemodus .lb-ergebnis,
+  html.lb-po .lb-fragemodus .lb-freitext, html.lb-po .lb-fragemodus .lb-medium img, html.lb-po .lb-fragemodus .lb-medium video,
+  html.lb-po .lb-fragemodus .lb-filmhinweis, html.lb-po .lb-fragemodus .lb-zahlpaar, html.lb-po .lb-fragemodus .lb-erklaerung,
+  html.lb-po .lb-vorschau .lb-vorlesen{border-radius:4px; box-shadow:none;}
+  html.lb-po .lb-fragemodus .lb-balken, html.lb-po .lb-fragemodus .lb-balken>div{border-radius:0;}
+  html.lb-po .lb-fragemodus .lb-fuss{border-top:1px solid var(--line); padding-top:8px;}
+  /* Fragenleiste unten: eine Zeile, seitlich schiebbar */
+  .lb-punktleiste.unten{flex-wrap:nowrap; overflow-x:auto; position:relative; gap:5px; padding:6px 6px 8px 2px;
+    margin-bottom:6px; -webkit-overflow-scrolling:touch; scrollbar-width:thin;}
+  .lb-punktleiste.unten .lb-punkt{flex:0 0 38px; width:38px; height:38px; border-radius:3px; display:inline-flex;
+    align-items:center; justify-content:center; font-family:inherit; font-size:13px; font-weight:700; color:#333;
+    position:relative;}
+  .lb-punktleiste.unten .lb-punkt.voll{background:#1F3A5F; border-color:#1F3A5F; color:#fff;}
+  .lb-punktleiste.unten .lb-punkt.hier{outline:3px solid #111; outline-offset:-3px;}
+  .lb-punktleiste.unten span.lb-punkt{cursor:default;}
+  .lb-punktleiste.unten .lb-punkt.gut{background:#EAF6EF; border-color:var(--green); color:#1E6B3E;}
+  .lb-punktleiste.unten .lb-punkt.schlecht{background:#FBEDEB; border-color:#C0392B; color:#8E2A1E;}
+  /* Glückwunsch-Animation aus */
+  html.lb-ohne-feier .lb-feier{animation:none;}
+  html.lb-ohne-feier .lb-konfetti{display:none;}
+  #lbDruck{display:none;}
+  @media print{
+    body > *:not(#lbDruck){display:none !important;}
+    body{background:#fff !important;}
+    #lbDruck{display:block !important; color:#000; font:11pt/1.4 system-ui, sans-serif;}
+    #lbDruck h1{font-size:16pt; margin:0 0 4pt;}
+    #lbDruck .lb-d-frage{break-inside:avoid; border-top:1px solid #999; padding:6pt 0;}
+    #lbDruck h3{font-size:11pt; margin:0 0 3pt;}
+    #lbDruck h3 span{font-weight:400; color:#444;}
+    #lbDruck table{border-collapse:collapse; width:100%;}
+    #lbDruck td, #lbDruck th{border:1px solid #bbb; padding:2pt 4pt; text-align:left; vertical-align:top;}
+    #lbDruck .lb-d-mitte{text-align:center; width:18%;}
+    #lbDruck .lb-d-medium{font-style:italic; color:#444;}
+    #lbDruck .lb-d-fuss{margin-top:10pt; font-size:9pt; color:#444;}
+  }
   /* ---- Startseite als Tagesueberblick ---- */
   .sd-kopf{display:flex; align-items:center; gap:12px; padding:2px 0 6px;}
   /* Der Bildkreis gilt ueberall, wo er benutzt wird - nicht nur in der
@@ -2241,13 +2537,28 @@ async function lbRuf(weg, extra) {
 
 // Ein Bild lädt nicht mehr? Dann ist meist der Schlüssel abgelaufen. Einmal
 // still erneuern und die Seite neu zeichnen - der Schüler merkt nichts davon.
+// P3 (16.10.2026): je ungültigem Schlüssel genau EINMAL einen neuen holen.
+// Vorher sperrte lbSchonFrisch nach dem ersten Mal jede weitere Erneuerung -
+// ein später abgelaufener Schlüssel (12 h, Bot-Neustart) blieb dann tot.
+let lbFrischFuer = null;
 async function lbBildFehlt() {
-  if (lbSchonFrisch) return;
+  if (lbFrischFuer === lbSchluessel) return;
+  lbFrischFuer = lbSchluessel;
   lbSchonFrisch = true;
+  const ansicht = lbAnsicht;
   const d = await lbRuf("uebersicht");
   if (d && d.ok && d.medien_schluessel) {
     lbSchluessel = d.medien_schluessel;
-    if (lbSitzung) lbFrageZeigen(); else renderLernbereich();
+    if (lbSitzung) lbFrageZeigen();
+    else if (lbErgebnis && ansicht === lbAnsicht) {
+      if (lbErgDetailIndex >= 0 && document.querySelector(".lb-punkt.gut, .lb-punkt.schlecht")) lbDetailZeigen(lbErgDetailIndex);
+    }
+    else if (ansicht === lbAnsicht) renderLernbereich();
+  } else if (lbSitzung && lbSitzung.aufgaben) {
+    // Kein neuer Schlüssel (kein Netz, Anmeldung abgelaufen): bei einer
+    // Videofrage die Antworten trotzdem freigeben - niemand bleibt hängen.
+    const a = lbSitzung.aufgaben[lbSitzung.i];
+    if (a && a.film && lbSitzung.filmGesehen) { lbSitzung.filmGesehen[a.nummer] = true; lbFrageZeigen(true); }
   }
 }
 
@@ -2262,12 +2573,22 @@ function lbWarten(kopf) {
 }
 
 // ── Übersicht ────────────────────────────────────────────────
+// P2: Zählt die Ansichten im Lernbereich. Kommt die Übersicht erst an, wenn
+// schon eine neuere Ansicht offen ist (z. B. der Regel-Dialog), wird nur der
+// Stand übernommen und nichts überschrieben.
+let lbAnsicht = 0;
 async function renderLernbereich() {
   aktiv = null;
   lbSitzung = null;
+  lbErgebnis = null;
+  const meine = ++lbAnsicht;
   const kopf = lbKopf("Theorie lernen", "waehleTab('home','Start')");
   if (!lbStand) lbWarten(kopf);
   const d = await lbRuf("uebersicht");
+  if (meine !== lbAnsicht) {
+    if (d && d.ok) { lbStand = d; lbSchluessel = d.medien_schluessel || lbSchluessel; }
+    return;
+  }
   if (!d || !d.ok) {
     main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">
       ${esc((d && d.fehler) || "Der Lernbereich ist gerade nicht erreichbar. Versuch es später noch einmal.")}
@@ -2278,6 +2599,7 @@ async function renderLernbereich() {
   lbStand = d;
   lbSchluessel = d.medien_schluessel || "";
   lbSchonFrisch = false;
+  if (Array.isArray(d.markiert_nummern)) lbMarkiert = new Set(d.markiert_nummern);
 
   const gebiete = (d.gebiete || []).map(g => `
     <div class="lb-gebiet" onclick="lbUeben('gebiet','${esc(g.gebiet)}','${esc(g.titel)}')">
@@ -2290,7 +2612,7 @@ async function renderLernbereich() {
     </div>`).join("");
 
   const pruefungen = (d.pruefungen || []).map(p => `
-    <div class="lb-zeile">
+    <div class="lb-zeile"${p.id ? ` style="cursor:pointer;" onclick="lbVerlaufOeffnen(${Number(p.id)})"` : ""}>
       <div style="flex:1;">${esc(lbDatum(p.wann))}</div>
       <div style="color:var(--gray);">${p.punkte} Fehlerpunkte</div>
       <div style="font-weight:700; color:${p.bestanden ? "var(--green)" : "#C0392B"};">
@@ -2326,23 +2648,34 @@ async function renderLernbereich() {
         <button class="lb-knopf" onclick="lbUeben('neu','','Neue Fragen')">Neue Fragen</button>
         <button class="lb-knopf${d.zu_ueben ? "" : " aus"}" ${d.zu_ueben ? "" : "disabled"}
           onclick="lbUeben('falsch','','Falsche wiederholen')">Falsche wiederholen${d.zu_ueben ? " (" + d.zu_ueben + ")" : ""}</button>
+      </div>
+      <div class="lb-knopfreihe">
+        <button class="lb-knopf${d.markiert ? "" : " aus"}" id="lbMarkiertUeben" ${d.markiert ? "" : "disabled"}
+          onclick="lbUeben('markiert','','Markierte Fragen')">★ Markiert (${d.markiert || 0})</button>
+        <button class="lb-knopf" id="lbListeKnopf" onclick="lbListeZeigen()">📋 Frageliste</button>
+      </div>
+      <div class="lb-knopfreihe">
+        <button class="lb-knopf voll" id="lbEinstKnopf" onclick="lbEinstellungenZeigen()">⚙️ Einstellungen</button>
       </div>`
     + `<div class="sd-karte" style="border-color:var(--orange);">
         <div class="sd-eyebrow">Prüfungssimulation</div>
-        <div class="sd-meta" style="margin-top:3px;">${d.pruefung_fragen} Fragen wie im Amt.
-          Bestanden mit höchstens ${d.pruefung_grenze} Fehlerpunkten – und nicht zwei
-          Fünf-Punkte-Fragen falsch.</div>
+        <div class="sd-meta" style="margin-top:3px;">${lbPruefungsText(d)}</div>
         <button class="lb-knopf voll" style="margin-top:12px;" onclick="lbPruefungStarten()">Prüfung starten</button>
-        ${pruefungen ? `<div class="sd-eyebrow" style="margin-top:16px;">Deine letzten Versuche</div>${pruefungen}` : ""}
+        ${lbRegelnAus() ? `<div class="sd-meta" style="text-align:center;margin-top:8px;"><a href="#" id="lbRegelnWieder"
+          style="color:var(--orange);font-weight:700;" onclick="lbRegelnWiederZeigen();return false;">Regeln vor dem Start wieder anzeigen</a></div>` : ""}
+        ${pruefungen ? `<div class="sd-eyebrow" style="margin-top:16px;">Deine letzten Versuche</div>
+          <div class="sd-meta" id="lbLetzte5Kurz" style="margin-top:2px;">${(d.pruefungen || []).filter(p => p.bestanden).length} der letzten ${(d.pruefungen || []).length} bestanden</div>${pruefungen}
+          <button class="lb-knopf voll" style="margin-top:10px;" onclick="lbVerlaufZeigen()">Alle Versuche ansehen</button>` : ""}
       </div>`
-    + `<div class="sd-eyebrow" style="margin-top:6px;">Nach Sachgebiet üben</div>`
-    + gebiete
+    + ((d.themen && d.themen.length) ? lbThemenHTML(d.themen)
+       : `<div class="sd-eyebrow" style="margin-top:6px;">Nach Sachgebiet üben</div>` + gebiete)
     + `<div class="hint" style="margin-top:6px;">ℹ️ Quelle des deutschen Textes der
         Prüfungsaufgaben sowie der Verkehrszeichen und Verkehrseinrichtungen:
         <b>TÜV | DEKRA arge tp 21</b>. Üben ersetzt nicht den Pflicht-Theorieunterricht.
         <span style="display:block;margin-top:6px;font-weight:700;color:var(--orange);cursor:pointer;"
-          onclick="renderRecht()">Rechtliches &amp; Quellen ansehen →</span></div>`;
+          onclick="renderRecht()">Rechtliches &amp; Quellen ansehen →</span></div><div class="lb-platz"></div>`;
   main.scrollTop = 0;
+  lbPushPlatz();
 }
 
 function lbDatum(sek) {
@@ -2353,48 +2686,139 @@ function lbDatum(sek) {
 }
 
 // ── Üben ─────────────────────────────────────────────────────
-async function lbUeben(was, gebiet, titel) {
-  const kopf = lbKopf(titel, "renderLernbereich()");
+async function lbUeben(was, gebiet, titel, nummern, optionen) {
+  lbAnsicht++;
+  const zurueck = optionen && (optionen.zurueck === "liste" || optionen.zurueck === "thema") ? optionen.zurueck : "";
+  const thema = optionen && optionen.thema ? String(optionen.thema) : "";
+  const modus = optionen && optionen.modus ? String(optionen.modus) : "";
+  const zurueckZu = zurueck === "liste" ? "lbListeZeigen(true)" : zurueck === "thema" ? `lbThemaZeigen('${esc(thema)}', true)` : "renderLernbereich()";
+  const kopf = lbKopf(titel, zurueckZu);
   lbWarten(kopf);
-  const d = await lbRuf("fragen", { was, gebiet: gebiet || "", anzahl: 20 });
+  const liste = Array.isArray(nummern) ? nummern.slice(0, 60) : null;
+  const d = await lbRuf("fragen", liste ? { was, gebiet: "", anzahl: liste.length, nummern: liste }
+                                 : thema ? { was: "thema", thema, modus, anzahl: 20 }
+                                 : { was, gebiet: gebiet || "", anzahl: 20 });
   if (!d || !d.ok || !(d.aufgaben || []).length) {
     main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">${
-      was === "falsch"
+      thema
+        ? (modus === "neu" ? "In diesem Thema hast du schon alle Fragen gesehen."
+           : modus === "falsch" ? "Sehr gut – in diesem Thema ist gerade keine Frage falsch."
+           : modus === "markiert" ? "In diesem Thema hast du keine Frage markiert."
+           : "In diesem Thema gibt es gerade nichts zu üben.")
+      : was === "markiert"
+        ? "Du hast noch keine Frage markiert. Tippe beim Üben auf den Stern ☆."
+      : was === "falsch"
         ? "Sehr gut – im Moment gibt es keine Frage, die du wiederholen müsstest."
         : was === "neu"
           ? "Du hast in diesem Bereich schon alle Fragen einmal gesehen. Nimm „Weiter üben“."
           : esc((d && d.fehler) || "Hier ist gerade nichts zu üben.")
       }</div>
-      <button class="lb-knopf voll" style="margin-top:12px;" onclick="renderLernbereich()">Zurück zur Übersicht</button></div>`;
+      <button class="lb-knopf voll" style="margin-top:12px;" onclick="${zurueckZu}">${thema ? "Zurück zum Thema" : zurueck === "liste" ? "Zurück zur Frageliste" : "Zurück zur Übersicht"}</button></div>`;
     main.scrollTop = 0;
     return;
   }
   lbSchluessel = d.medien_schluessel || lbSchluessel;
   lbSitzung = {
-    modus: "ueben", titel, was, gebiet: gebiet || "",
-    aufgaben: d.aufgaben, i: 0, gegeben: {}, geprueft: {}, richtig: 0, filme: {}
+    modus: "ueben", titel, was, gebiet: gebiet || "", nummern: liste, zurueck, thema, themaModus: modus,
+    aufgaben: d.aufgaben, i: 0, gegeben: {}, geprueft: {}, richtig: 0, filme: {},
+    // 16.10.2026 (P1): Film auch beim Üben wie in der Prüfung - bis zu fünfmal.
+    filmMax: Number(d.film_max || (lbStand && lbStand.film_max)) || 5,
+    reihe: {}, varianten: {}, filmGesehen: {}, wiederholt: {}, feld: 0
   };
   lbFrageZeigen();
 }
 
 // ── Prüfung ──────────────────────────────────────────────────
-async function lbPruefungStarten(klasse) {
+// 06.10.2026: Ersterwerb (30 Fragen, 10 Fehlerpunkte) und Erweiterung (20 Fragen,
+// 6 Fehlerpunkte) – die Regeln kommen vom Server. Fehlen die Felder (älterer
+// Server), bleibt der bisherige Text.
+function lbRegelText(r) {
+  return (r.pruefungsart === "erweiterung" ? "Erweiterungsprüfung: " : "")
+    + r.fragen_gesamt + " Fragen, höchstens " + r.erlaubte_fehlerpunkte + " Fehlerpunkte";
+}
+function lbPruefungsText(d) {
+  const arten = d && d.pruefungsarten;
+  const k = arten ? Object.keys(arten) : [];
+  if (!k.length) {
+    return `${d.pruefung_fragen} Fragen wie im Amt.
+          Bestanden mit höchstens ${d.pruefung_grenze} Fehlerpunkten – und nicht zwei
+          Fünf-Punkte-Fragen falsch.`;
+  }
+  const zeilen = k.length > 1
+    ? k.map(x => "Klasse " + esc(x) + ": " + esc(lbRegelText(arten[x]))).join("<br>")
+    : esc(lbRegelText(arten[k[0]]));
+  return zeilen + ".<br>Durchgefallen auch bei zwei falschen Fünf-Punkte-Fragen.";
+}
+function lbMal(n) {
+  return ({ 2: "zweimal", 3: "dreimal", 4: "viermal", 5: "fünfmal" })[n] || (n + "-mal");
+}
+// P2 (16.10.2026): Regeln der Klasse - vom Server (uebersicht.pruefungsarten),
+// sonst die bisherigen Werte. dauer_min ist die Zeit der Simulation.
+function lbRegelFuer(klasse) {
+  const arten = (lbStand && lbStand.pruefungsarten) || {};
+  const k = klasse && arten[klasse] ? klasse : Object.keys(arten)[0];
+  const r = Object.assign({ pruefungsart: "ersterwerb", fragen_gesamt: (lbStand && lbStand.pruefung_fragen) || 30,
+    grundstoff: 20, zusatzstoff: 10, erlaubte_fehlerpunkte: (lbStand && lbStand.pruefung_grenze) || 10,
+    dauer_min: 45, film_max: (lbStand && lbStand.film_max) || 5 }, k ? arten[k] : {});
+  r.klasse = klasse || (lbStand && lbStand.klasse) || "";
+  return r;
+}
+function lbRegelnAus() { return !!lade("fuchs_lb_regeln_aus", false); }
+function lbRegelnWiederZeigen() { speichere("fuchs_lb_regeln_aus", false); renderLernbereich(); }
+
+// Regel-Dialog vor dem Start (abschaltbar mit "nicht mehr anzeigen").
+function lbRegelnZeigen(klasse) {
+  lbAnsicht++;
+  const r = lbRegelFuer(klasse);
+  const erw = r.pruefungsart === "erweiterung";
+  const zeile = (z, t) => `<div class="lb-regel"><span>${z}</span><span>${t}</span></div>`;
+  main.innerHTML = lbKopf("Prüfungssimulation", "renderLernbereich()")
+    + `<div class="sd-karte" id="lbRegeln">
+        <div class="sd-eyebrow">So läuft die Prüfung</div>
+        <div class="lb-regeln">
+          ${zeile("🚗", `<b>Klasse ${esc(r.klasse)}</b> · ${erw ? "Erweiterung (du hast schon eine Fahrerlaubnis)" : "Ersterwerb"}`)}
+          ${zeile("📝", `<b>${r.fragen_gesamt} Fragen</b>: ${r.grundstoff} Grundstoff, ${r.zusatzstoff} Zusatzstoff`)}
+          ${zeile("⏱", `<b>${r.dauer_min} Minuten</b> Zeit – ist sie um, wird automatisch abgegeben`)}
+          ${zeile("✅", `Bestanden mit <b>höchstens ${r.erlaubte_fehlerpunkte} Fehlerpunkten</b> – zwei falsche Fünf-Punkte-Fragen heißen „nicht bestanden“`)}
+          ${zeile("🎬", `Videofragen: Film bis zu ${r.film_max === 5 ? "fünfmal" : r.film_max + "-mal"}, dann „Antwortvarianten anzeigen“`)}
+          ${zeile("⚑", `Mit „Kennzeichen“ merkst du dir Fragen, die du dir noch einmal ansehen willst`)}
+        </div>
+        <label class="lb-haken-zeile"><input type="checkbox" id="lbRegelnAus"> Diese Hinweise nicht mehr anzeigen</label>
+        <button class="lb-knopf voll stark" style="margin-top:14px;" onclick="lbRegelnStart('${esc(klasse || "")}')">Prüfung starten</button>
+        <button class="lb-knopf voll" style="margin-top:8px;" onclick="renderLernbereich()">Zurück</button>
+      </div><div class="lb-platz"></div>`;
+  main.scrollTop = 0;
+  lbPushPlatz();
+}
+function lbRegelnStart(klasse) {
+  const h = document.getElementById("lbRegelnAus");
+  if (h && h.checked) speichere("fuchs_lb_regeln_aus", true);
+  lbPruefungStarten(klasse || undefined, true);
+}
+
+async function lbPruefungStarten(klasse, bestaetigt) {
   // In der echten Pruefung wird immer GENAU EINE Klasse geprueft. Wer zwei
   // Ausbildungen hat, sagt vorher, welche (Benjamin, 14.09.2026). Bei nur
   // einer Klasse wird nicht gefragt - da bleibt alles wie bisher.
   const wahl = (lbStand && lbStand.klassen_wahl) || [];
   if (wahl.length > 1 && !klasse) {
+    lbAnsicht++;
     main.innerHTML = lbKopf("Prüfungssimulation", "renderLernbereich()")
       + `<div class="sd-karte">
           <div class="sd-eyebrow">Welche Prüfung?</div>
           <div class="sd-meta" style="margin-top:3px;">Im Amt wird immer genau eine Klasse
             geprüft – der Grundstoff und der Stoff dieser Klasse.</div>
           ${wahl.map((k, i) => `<button class="lb-knopf voll${i ? "" : " stark"}" style="margin-top:10px;"
-            onclick="lbPruefungStarten('${esc(k)}')">Prüfung Klasse ${esc(k)}</button>`).join("")}
-        </div>`;
+            onclick="lbPruefungStarten('${esc(k)}')">Prüfung Klasse ${esc(k)}${(lbStand && lbStand.pruefungsarten && lbStand.pruefungsarten[k])
+              ? " · " + esc(lbRegelText(lbStand.pruefungsarten[k])) : ""}</button>`).join("")}
+        </div><div class="lb-platz"></div>`;
     main.scrollTop = 0;
+    lbPushPlatz();
     return;
   }
+  if (!bestaetigt && !lbRegelnAus()) { lbRegelnZeigen(klasse); return; }
+  lbAnsicht++;
+  const regel = lbRegelFuer(klasse);
   const titel = klasse ? "Prüfung Klasse " + klasse : "Prüfungssimulation";
   const kopf = lbKopf(titel, "renderLernbereich()");
   lbWarten(kopf);
@@ -2406,12 +2830,167 @@ async function lbPruefungStarten(klasse) {
     return;
   }
   lbSchluessel = d.medien_schluessel || lbSchluessel;
+  // Reiter Grundstoff/Zusatzstoff: erst alle Grundstoff-Fragen, dann der
+  // Zusatzstoff - in der Reihenfolge, in der der Server sie gemischt hat.
+  let aufgaben = d.aufgaben;
+  const mitTeil = aufgaben.every(a => a.teil === "grundstoff" || a.teil === "zusatzstoff");
+  if (mitTeil) aufgaben = aufgaben.filter(a => a.teil === "grundstoff").concat(aufgaben.filter(a => a.teil === "zusatzstoff"));
+  const dauerMin = Number(d.dauer_min) || Number(regel.dauer_min) || 45;
+  const jetzt = Date.now();
   lbSitzung = {
     modus: "pruefung", titel, grenze: d.grenze,
-    aufgaben: d.aufgaben, i: 0, gegeben: {}, geprueft: {}, filme: {}
+    aufgaben, i: 0, gegeben: {}, geprueft: {}, filme: {},
+    // 06.10.2026: Klasse fuer die Auswertung, Film bis zu fuenfmal (Rueckfall 2).
+    klasse: d.klasse || klasse || "", filmMax: Number(d.film_max) || 2,
+    pruefungsart: d.pruefungsart || "",
+    reihe: {}, varianten: {}, filmGesehen: {}, wiederholt: {}, feld: 0,
+    mitTeil, kennzeichen: {}, dauerMin, start: jetzt, ende: jetzt + dauerMin * 60000
   };
+  lbUhrStarten(lbSitzung);
   lbFrageZeigen();
 }
+
+// ── Prüfung: Uhr ─────────────────────────────────────────────
+// Gerechnet wird mit der echten Uhrzeit (Date.now), nicht mit gezählten
+// Sekunden - ein Handy im Hintergrund bremst die Zeit also nicht.
+let lbUhrLauf = null;
+function lbUhrText(ms) {
+  const t = Math.max(0, Math.ceil(ms / 1000));
+  return String(Math.floor(t / 60)).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
+}
+function lbUhrStopp() { if (lbUhrLauf) clearInterval(lbUhrLauf); lbUhrLauf = null; }
+function lbUhrStarten(s) { lbUhrStopp(); lbUhrLauf = setInterval(function () { lbUhrTick(s); }, 500); }
+function lbUhrTick(s) {
+  if (lbSitzung !== s || s.abgegeben) { lbUhrStopp(); return; }
+  const rest = s.ende - Date.now();
+  const el = document.getElementById("lbUhr");
+  if (el) {
+    el.textContent = "⏱ " + lbUhrText(rest);
+    el.classList.toggle("knapp", rest < 5 * 60000);
+  }
+  if (rest <= 0) {
+    lbUhrStopp();
+    if (el) { lbDialogZu(); lbZoomZu(); lbAbgeben(true); }
+    else lbSitzung = null;          // die Prüfung wurde schon verlassen
+  }
+}
+
+// ── Prüfung: Hilfen für Leiste, Weiter und Abgeben ───────────
+function lbBeantwortet(s, a) {
+  const g = s.gegeben[a.nummer];
+  if (!g) return false;
+  return a.art === "freitext" ? g.some(x => String(x || "").trim()) : g.some(Boolean);
+}
+function lbNaechsteOffene(s) {
+  const n = s.aufgaben.length;
+  for (let k = 1; k < n; k++) {
+    const j = (s.i + k) % n;
+    if (!lbBeantwortet(s, s.aufgaben[j])) return j;
+  }
+  return -1;
+}
+function lbPruefungsKopf(s, a) {
+  const rest = s.ende ? s.ende - Date.now() : 0;
+  const teil = s.mitTeil ? a.teil : null;
+  const reiter = s.mitTeil ? `<div class="lb-reiter">${["grundstoff", "zusatzstoff"].map(t => {
+      const alle = s.aufgaben.filter(x => x.teil === t);
+      const fertig = alle.filter(x => lbBeantwortet(s, x)).length;
+      return `<button type="button" class="${t === teil ? "an" : ""}" data-teil="${t}" onclick="lbReiter('${t}')">
+        ${t === "grundstoff" ? "Grundstoff" : "Zusatzstoff"} <small>${fertig}/${alle.length}</small></button>`;
+    }).join("")}</div>` : "";
+  return `<div class="lb-pkopf"><button class="btn-ghost" onclick="lbAbbrechen()">← ${s.themenTest ? "Test abbrechen" : "Prüfung abbrechen"}</button>
+      ${s.ende ? `<div class="lb-uhr${rest < 5 * 60000 ? " knapp" : ""}" id="lbUhr" aria-live="off" title="Restzeit">⏱ ${lbUhrText(rest)}</div>` : ""}</div>
+    ${reiter}
+    <div class="lb-fortschritt">
+      <div class="lb-zaehler">Frage ${s.i + 1} von ${s.aufgaben.length}</div>
+      <div class="lb-punkte">${s.kennzeichen && s.kennzeichen[a.nummer] ? `<span style="color:#2F6FD6; font-weight:700;">⚑ gekennzeichnet</span> · ` : ""}${a.fehlerpunkte} ${a.fehlerpunkte === 1 ? "Punkt" : "Punkte"}</div>
+    </div>
+    ${lbEinst().pruefoptik ? "" : lbPunkteLeiste(s) + `
+    <div class="lb-legende"><span><i></i>offen</span><span><i class="voll"></i>beantwortet</span>
+      <span><i class="markiert"></i>gekennzeichnet</span><span><i class="hier"></i>aktuell</span></div>`}`;
+}
+function lbReiter(teil) {
+  const s = lbSitzung; if (!s || !s.mitTeil) return;
+  const idx = s.aufgaben.map((a, i) => i).filter(i => s.aufgaben[i].teil === teil);
+  if (!idx.length) return;
+  const offen = idx.find(i => !lbBeantwortet(s, s.aufgaben[i]));
+  lbSpringe(offen === undefined ? idx[0] : offen);
+}
+function lbKennzeichen() {
+  const s = lbSitzung; if (!s || s.modus !== "pruefung") return;
+  const a = s.aufgaben[s.i];
+  s.kennzeichen = s.kennzeichen || {};
+  if (s.kennzeichen[a.nummer]) delete s.kennzeichen[a.nummer]; else s.kennzeichen[a.nummer] = true;
+  lbFrageZeigen(true);
+}
+function lbWeiterPruefung() {
+  const s = lbSitzung; if (!s) return;
+  const j = lbNaechsteOffene(s);
+  if (j >= 0) { lbSpringe(j); return; }
+  if (lbBeantwortet(s, s.aufgaben[s.i])) lbAbgebenFragen();
+}
+async function lbAbgebenFragen() {
+  const s = lbSitzung; if (!s || s.abgegeben) return;
+  const offen = s.aufgaben.filter(a => !lbBeantwortet(s, a)).length;
+  const kz = Object.keys(s.kennzeichen || {}).length;
+  if (offen || kz) {
+    const teile = [];
+    if (offen) teile.push(`Noch <b>${offen} ${offen === 1 ? "Frage ist" : "Fragen sind"} unbeantwortet</b> – sie zählen als falsch.`);
+    if (kz) teile.push(`<b>${kz} ${kz === 1 ? "Frage hast" : "Fragen hast"} du gekennzeichnet</b>.`);
+    const ok = await lbDialog({ titel: s.themenTest ? "Test jetzt abgeben?" : "Prüfung jetzt abgeben?", html: teile.join("<br>"),
+                                ja: "Jetzt abgeben", nein: s.themenTest ? "Zurück zum Test" : "Zurück zur Prüfung" });
+    if (!ok || lbSitzung !== s) return;
+  }
+  lbAbgeben();
+}
+
+// ── Rückfrage-Dialog (Abgeben, Abbrechen) ────────────────────
+let lbDialogEnde = null;
+function lbDialog(o) {
+  lbDialogZu();
+  return new Promise(function (fertig) {
+    const d = document.createElement("div");
+    d.id = "lbDialog";
+    d.className = "lb-dialog";
+    d.setAttribute("role", "alertdialog");
+    d.setAttribute("aria-modal", "true");
+    d.innerHTML = `<div class="lb-dialog-karte">
+        <div class="lb-dialog-titel">${esc(o.titel)}</div>
+        <div class="lb-dialog-text">${o.html || esc(o.text || "")}</div>
+        <div class="lb-dialog-knoepfe">
+          <button type="button" class="lb-knopf" data-wahl="nein">${esc(o.nein)}</button>
+          <button type="button" class="lb-knopf stark${o.gefahr ? " gefahr" : ""}" data-wahl="ja">${esc(o.ja)}</button>
+        </div></div>`;
+    lbDialogEnde = function (wert) { lbDialogEnde = null; d.remove(); fertig(wert); };
+    d.addEventListener("click", function (ev) {
+      const b = ev.target.closest ? ev.target.closest("button[data-wahl]") : null;
+      if (b) lbDialogEnde && lbDialogEnde(b.dataset.wahl === "ja");
+      else if (ev.target === d) lbDialogEnde && lbDialogEnde(false);
+    });
+    document.body.appendChild(d);
+    try { d.querySelector('[data-wahl="nein"]').focus(); } catch (e) {}
+  });
+}
+function lbDialogZu() { if (lbDialogEnde) lbDialogEnde(false); }
+
+// P1b (8b): Platz für den schwebenden Push-Hinweis. Er liegt fest über der
+// Leiste unten; der Lernbereich rückt seinen Fußbereich um genau so viel nach
+// oben, wie der Hinweis in die Seite hineinragt.
+function lbPushPlatz() {
+  try {
+    const b = document.getElementById("fuchsPushBtn") || document.getElementById("fuchsPushHint");
+    let px = 0;
+    if (b && getComputedStyle(b).display !== "none") {
+      const r = b.getBoundingClientRect(), m = main.getBoundingClientRect();
+      if (r.height > 0) px = Math.max(0, Math.round(m.bottom - r.top + 8));
+    }
+    document.documentElement.style.setProperty("--lb-push", px + "px");
+  } catch (e) {}
+}
+try {
+  new MutationObserver(function () { lbPushPlatz(); }).observe(document.body, { childList: true });
+  window.addEventListener("resize", lbPushPlatz);
+} catch (e) {}
 
 // ── Eine Frage anzeigen ──────────────────────────────────────
 function lbFrageZeigen(halten) {
@@ -2429,6 +3008,16 @@ function lbFrageZeigen(halten) {
       : [false, false, false];
   }
   const g = s.gegeben[a.nummer];
+  s.reihe = s.reihe || {}; s.varianten = s.varianten || {};
+  s.filmGesehen = s.filmGesehen || {}; s.wiederholt = s.wiederholt || {};
+  if (!halten) {
+    // Neue Anzeige: kein Film laeuft mehr (das alte <video> ist gleich weg),
+    // der Ziffernblock beginnt im ersten Feld, ein offenes Grossbild geht zu.
+    s.filmLaeuft = null;
+    s.feld = 0;
+    lbZoomZu();
+  }
+  lbReihe(s, a);
 
   // Bei einer NEUEN Frage schweigt die Stimme wieder. Beim blossen Neuzeichnen
   // derselben Frage (Antwort angetippt oder geprueft) laeuft sie weiter - der
@@ -2450,20 +3039,21 @@ function lbFrageZeigen(halten) {
     }
   }
 
-  const kopf = `<button class="btn-ghost" onclick="lbAbbrechen()">← ${pruefung ? "Prüfung abbrechen" : "Zurück"}</button>
+  const kopf = pruefung ? lbPruefungsKopf(s, a) : `<button class="btn-ghost" onclick="lbAbbrechen()">← Zurück</button>
     <div class="lb-fortschritt">
       <div class="lb-zaehler">Frage ${s.i + 1} von ${s.aufgaben.length}</div>
       <div class="lb-punkte">${a.fehlerpunkte} ${a.fehlerpunkte === 1 ? "Punkt" : "Punkte"}</div>
     </div>
     <div class="lb-balken duenn"><div style="width:${Math.round((s.i + 1) * 100 / s.aufgaben.length)}%"></div></div>`;
 
+  main.classList.add("lb-fragemodus");    // P8: Prüfungsoptik gilt nur hier
   main.innerHTML = kopf
-    + (pruefung ? lbPunkteLeiste(s) : "")
-    + `<div class="lb-fragezeile"><div class="lb-frage">${esc(a.frage)}</div>${lbVorleseKnopf()}</div>`
+    + `<div class="lb-fragezeile" data-lbfrage="${esc(a.nummer)}"><div class="lb-frage">${esc(a.frage)}</div>${pruefung ? "" : lbSternKnopf(a.nummer)}${lbVorleseKnopf()}</div>`
     + (a.zusatz ? `<div class="sd-meta" style="margin-top:-6px;">${esc(a.zusatz)}</div>` : "")
     + lbMedienHTML(a, s)
-    + lbAntwortenHTML(a, g, e)
-    + lbFussHTML(a, s, e);
+    + lbAntwortenHTML(a, g, e, s)
+    + lbFussHTML(a, s, e)
+    + `<div class="lb-platz"></div>`;
 
   // Der gerettete Film kommt an die Stelle, die lbMedienHTML() dafuer
   // freigehalten hat - und zwar BEVOR lbFilmVorbereiten() ihn sucht.
@@ -2475,24 +3065,74 @@ function lbFrageZeigen(halten) {
 
   lbFilmVorbereiten(a, s);
   main.scrollTop = stand;
+  lbPushPlatz();
+  lbLeisteMitte();
+  // P8: "Vorlesen automatisch" - jede NEUE Frage liest sich selbst vor.
+  if (!halten && lbEinst().vorlesenAuto) lbVorlesenAuto();
 }
 
-function lbPunkteLeiste(s) {
-  return `<div class="lb-punktleiste">` + s.aufgaben.map((a, i) => {
-    const g = s.gegeben[a.nummer];
-    const beantwortet = g && (a.art === "freitext"
-      ? g.some(x => String(x || "").trim())
-      : g.some(Boolean));
-    return `<button class="lb-punkt${beantwortet ? " voll" : ""}${i === s.i ? " hier" : ""}"
-      onclick="lbSpringe(${i})" aria-label="Frage ${i + 1}"></button>`;
+function lbPunkteLeiste(s, unten) {
+  // P2: Nummern, je Reiter (Grundstoff/Zusatzstoff) eine eigene Leiste.
+  // P8: In der Prüfungsoptik steht sie als eine Zeile unten (unten = true).
+  const teil = s.mitTeil ? s.aufgaben[s.i].teil : null;
+  const idx = s.aufgaben.map((a, i) => i).filter(i => !teil || s.aufgaben[i].teil === teil);
+  return `<div class="lb-punktleiste nummern${unten ? " unten" : ""}" id="${unten ? "lbLeisteUnten" : "lbLeiste"}">` + idx.map((i, k) => {
+    const a = s.aufgaben[i];
+    const voll = lbBeantwortet(s, a);
+    const kz = !!(s.kennzeichen && s.kennzeichen[a.nummer]);
+    return `<button class="lb-punkt${voll ? " voll" : ""}${kz ? " markiert" : ""}${i === s.i ? " hier" : ""}"
+      data-i="${i}" onclick="lbSpringe(${i})"
+      aria-label="Frage ${k + 1}${voll ? ", beantwortet" : ", offen"}${kz ? ", gekennzeichnet" : ""}">${k + 1}</button>`;
   }).join("") + `</div>`;
+}
+
+// ── P1 "Üben besser" (16.10.2026) ─────────────────────────────
+// B6 Antworten mischen: s.reihe[nummer] sagt, welche Antwort der Lieferung an
+// welcher Stelle steht (Stelle -> Index der Lieferung). Gemerkt und
+// abgeschickt wird IMMER in der Reihenfolge der Lieferung - Server, Auswertung
+// und Lernstand merken vom Mischen nichts. Gemischt wird bei jeder neuen
+// Runde (Üben, Prüfung, "Nochmal üben"); innerhalb einer Prüfung bleibt die
+// Reihenfolge beim Vor- und Zurückblättern stehen.
+function lbReihe(s, a) {
+  if (!s || !a || a.art === "freitext") return null;
+  s.reihe = s.reihe || {};
+  const n = (a.antworten || []).length;
+  let r = s.reihe[a.nummer];
+  if (!r || r.length !== n) {
+    r = [];
+    for (let i = 0; i < n; i++) r.push(i);
+    for (let i = n - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const t = r[i]; r[i] = r[j]; r[j] = t;
+    }
+    s.reihe[a.nummer] = r;
+  }
+  return r;
+}
+
+// B12 Videofragen wie in der Prüfung: erst der Film (bis zu fünfmal), dann
+// "Antwortvarianten anzeigen" - ab da ist der Film gesperrt.
+function lbVariantenOffen(s, a) {
+  return !a.film || !!(s && s.varianten && s.varianten[a.nummer]);
+}
+function lbFilmRest(s, a) {
+  return Math.max(0, (s.filmMax || 5) - (s.filme[a.nummer] || 0));
+}
+function lbDarfVarianten(s, a) {
+  return !lbVariantenOffen(s, a) && (!!s.filmGesehen[a.nummer] || lbFilmRest(s, a) <= 0);
 }
 
 function lbMedienHTML(a, s) {
   if (a.film) {
-    const grenze = s.modus === "pruefung" ? 2 : 0;   // 0 = unbegrenzt
-    const gesehen = s.filme[a.nummer] || 0;
-    const rest = grenze ? grenze - gesehen : 0;
+    const max = s.filmMax || 5;
+    const rest = lbFilmRest(s, a);
+    const offen = lbVariantenOffen(s, a);
+    const laeuft = s.filmLaeuft === a.nummer;
+    const darfFilm = !offen && rest > 0 && !laeuft;
+    const knopf = offen ? "🔒 Film gesperrt"
+      : laeuft ? "Film läuft …"
+      : rest > 0 ? `▶ Film abspielen · noch ${rest}× ansehen`
+      : "Film schon " + lbMal(max) + " gesehen";
     return `<div class="lb-medium">
       ${lbFilmGerettet
         // Der Film von eben wird gleich hier eingehaengt. Ein zweites <video>
@@ -2500,20 +3140,26 @@ function lbMedienHTML(a, s) {
         ? `<div id="lbFilmPlatz"></div>`
         : `<video id="lbFilm" data-frage="${esc(a.nummer)}" playsinline preload="metadata"
         ${a.standbild ? `poster="${esc(lbMedien(a.standbild))}"` : ""}
-        src="${esc(lbMedien(a.film))}" onerror="lbBildFehlt()"></video>`}
-      <button class="lb-knopf voll" id="lbFilmKnopf" onclick="lbFilmStarten()"
-        ${grenze && rest <= 0 ? "disabled" : ""}>
-        ${grenze
-          ? (rest > 0 ? `▶ Film ansehen (noch ${rest}×)` : "Film schon zweimal gesehen")
-          : "▶ Film ansehen"}</button>
-      <div class="sd-meta">${grenze
-        ? "In der echten Prüfung darfst du den Film zweimal ansehen."
-        : "Beim Üben darfst du den Film so oft ansehen, wie du willst."}</div>
+        src="${esc(lbMedien(a.film))}" onerror="lbFilmFehler()"></video>`}
+      ${a.standbild ? `<button type="button" class="lb-lupe" onclick="lbZoomStandbild()"
+        ${laeuft ? "disabled" : ""}>🔍 Standbild vergrößern</button>` : ""}
+      <div class="lb-filmknoepfe">
+        <button class="lb-knopf voll${offen ? "" : " stark"}" id="lbFilmKnopf" onclick="lbFilmStarten()"
+          ${darfFilm ? "" : "disabled"}>${knopf}</button>
+        ${offen ? "" : `<button class="lb-knopf voll" id="lbVariantenKnopf" onclick="lbVariantenZeigen()"
+          ${lbDarfVarianten(s, a) ? "" : "disabled"}>Antwortvarianten anzeigen</button>`}
+      </div>
+      <div class="sd-meta">${offen
+        ? "Der Film ist jetzt gesperrt – wie in der Prüfung."
+        : "Wie in der Prüfung: Du darfst den Film bis zu " + (max === 5 ? "fünfmal" : max + "-mal")
+          + " ansehen. Danach tippst du auf „Antwortvarianten anzeigen“ – ab dann ist der Film gesperrt."}</div>
     </div>`;
   }
   if (a.bild) {
     return `<div class="lb-medium">
-      <img src="${esc(lbMedien(a.bild))}" alt="Bild zur Frage" onerror="lbBildFehlt()">
+      <img class="lb-zoombar" src="${esc(lbMedien(a.bild))}" alt="Bild zur Frage" onerror="lbBildFehlt()"
+        onclick="lbZoomAuf(this.src)">
+      <div class="lb-zoomtipp">Bild antippen zum Vergrößern</div>
       ${a.bildunter ? `<div class="sd-meta">${esc(a.bildunter)}</div>` : ""}
     </div>`;
   }
@@ -2521,23 +3167,193 @@ function lbMedienHTML(a, s) {
 }
 
 // Der Film läuft ohne Bedienleiste: in der Prüfung soll niemand zurückspulen.
+// Gezählt wird jeder Start; ein Start, der nicht klappt, zählt nicht.
 function lbFilmVorbereiten(a, s) {
   const v = document.getElementById("lbFilm");
   if (!v) return;
   v.onended = function () {
-    s.filme[a.nummer] = (s.filme[a.nummer] || 0) + 1;
-    const k = document.getElementById("lbFilmKnopf");
-    if (!k) return;
-    if (s.modus === "pruefung") {
-      const rest = 2 - s.filme[a.nummer];
-      k.textContent = rest > 0 ? "▶ Film ansehen (noch " + rest + "×)" : "Film schon zweimal gesehen";
-      k.disabled = rest <= 0;
-    }
+    if (s.filmLaeuft === a.nummer) s.filmLaeuft = null;
+    s.filmGesehen[a.nummer] = true;
+    if (lbSitzung === s && s.aufgaben[s.i] === a) lbFrageZeigen(true);
   };
 }
 function lbFilmStarten() {
+  const s = lbSitzung; if (!s) return;
+  const a = s.aufgaben[s.i];
+  if (!a || !a.film || lbVariantenOffen(s, a) || lbFilmRest(s, a) <= 0 || s.filmLaeuft === a.nummer) return;
   const v = document.getElementById("lbFilm");
-  if (v) { try { v.currentTime = 0; v.play(); } catch (e) {} }
+  if (!v) return;
+  s.filme[a.nummer] = (s.filme[a.nummer] || 0) + 1;
+  s.filmLaeuft = a.nummer;
+  try { v.currentTime = 0; } catch (e) {}
+  let p;
+  try { p = v.play(); } catch (e) { p = Promise.reject(e); }
+  Promise.resolve(p).catch(function () {
+    if (lbSitzung !== s) return;
+    s.filme[a.nummer] = Math.max(0, (s.filme[a.nummer] || 1) - 1);
+    if (s.filmLaeuft === a.nummer) s.filmLaeuft = null;
+    if (s.aufgaben[s.i] === a) lbFrageZeigen(true);
+  });
+  lbFrageZeigen(true);
+}
+// Laesst sich der Film nicht laden, soll niemand an der Frage haengen bleiben:
+// dann duerfen die Antwortvarianten auch ohne Film gezeigt werden. Ein
+// abgelaufener Medienschluessel wird wie bei den Bildern still erneuert.
+function lbFilmFehler() {
+  // P3 (16.10.2026): Die Quelle sofort entfernen. Sonst fragt der Player mancher
+  // Geräte die abgewiesene Adresse immer wieder an (Bot-Neustart 16.10.: 702
+  // Abrufe in 26 s), und ein neu eingehängtes Video lädt sie erneut.
+  const v = document.getElementById("lbFilm");
+  if (v) { try { v.removeAttribute("src"); v.removeAttribute("poster"); v.load(); } catch (e) {} }
+  const erneuern = lbFrischFuer !== lbSchluessel;   // noch nicht für diesen Schlüssel versucht
+  const s = lbSitzung;
+  if (s) {
+    const a = s.aufgaben[s.i];
+    if (a && a.film) {
+      if (s.filmLaeuft === a.nummer) s.filmLaeuft = null;
+      // Klappt es auch mit frischem Schlüssel nicht, darf niemand hängen bleiben.
+      if (!erneuern) s.filmGesehen[a.nummer] = true;
+    }
+  }
+  lbBildFehlt();                       // höchstens einmal je Schlüssel, zeichnet danach neu
+  if (s && !erneuern) lbFrageZeigen(true);
+}
+function lbVariantenZeigen() {
+  const s = lbSitzung; if (!s) return;
+  const a = s.aufgaben[s.i];
+  if (!a || !a.film || !lbDarfVarianten(s, a)) return;
+  const v = document.getElementById("lbFilm");
+  if (v) { try { v.pause(); } catch (e) {} }
+  s.filmLaeuft = null;
+  s.varianten[a.nummer] = true;
+  lbFrageZeigen(true);
+  // P8: Jetzt sind die Antworten sichtbar - beim automatischen Vorlesen auch hören.
+  if (lbEinst().vorlesenAuto) { lbVorleseStoppen(); lbVorlesenAuto(); }
+}
+
+// B11 Bild vergrößern: Vollbild mit Zoom (zwei Finger spreizen, Doppeltipp,
+// am Rechner Mausrad oder Doppelklick). Zu per ✕, Tippen daneben oder Esc.
+// Das Bild kommt über denselben 12-h-Schlüssel wie sonst - es gibt keinen
+// Download und keinen Direktlink.
+let lbZoomZustand = null;
+function lbZoomStandbild() {
+  const s = lbSitzung; if (!s) return;
+  const a = s.aufgaben[s.i];
+  if (a && a.standbild && s.filmLaeuft !== a.nummer) lbZoomAuf(lbMedien(a.standbild));
+}
+function lbZoomAuf(src) {
+  if (!src) return;
+  lbZoomZu();
+  const o = document.createElement("div");
+  o.id = "lbZoom";
+  o.className = "lb-zoom";
+  o.setAttribute("role", "dialog");
+  o.setAttribute("aria-label", "Bild vergrößert");
+  o.innerHTML = `<img id="lbZoomBild" alt="Bild vergrößert" draggable="false">
+    <button type="button" class="lb-zoom-zu" aria-label="Schließen">✕</button>
+    <div class="lb-zoom-tipp">Mit zwei Fingern oder Doppeltipp vergrößern</div>`;
+  const img = o.querySelector("img");
+  img.src = src;
+  img.oncontextmenu = function () { return false; };
+  o.querySelector(".lb-zoom-zu").addEventListener("click", function (ev) { ev.stopPropagation(); lbZoomZu(); });
+  document.body.appendChild(o);
+  const z = lbZoomZustand = { o, img, s: 1, x: 0, y: 0, zeiger: new Map(), start: null,
+                              tippZeit: 0, tippX: 0, tippY: 0, bewegt: false, zuUhr: null };
+  o.addEventListener("pointerdown", function (ev) { lbZoomRunter(z, ev); });
+  o.addEventListener("pointermove", function (ev) { lbZoomZieh(z, ev); });
+  o.addEventListener("pointerup", function (ev) { lbZoomHoch(z, ev); });
+  o.addEventListener("pointercancel", function (ev) { z.zeiger.delete(ev.pointerId); z.start = null; z.bewegt = true; });
+  o.addEventListener("wheel", function (ev) {
+    ev.preventDefault();
+    lbZoomUm(z, z.s * (ev.deltaY < 0 ? 1.2 : 1 / 1.2), ev.clientX, ev.clientY);
+  }, { passive: false });
+  o.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
+}
+function lbZoomZu() {
+  const z = lbZoomZustand;
+  lbZoomZustand = null;
+  if (z && z.zuUhr) clearTimeout(z.zuUhr);
+  const o = document.getElementById("lbZoom");
+  if (o) o.remove();
+}
+function lbZoomSetzen(z) {
+  // Nicht weiter schieben, als das vergroesserte Bild ueber den Rand reicht.
+  const r = z.o.getBoundingClientRect();
+  const mx = Math.max(0, (z.img.offsetWidth * z.s - r.width) / 2);
+  const my = Math.max(0, (z.img.offsetHeight * z.s - r.height) / 2);
+  z.x = Math.max(-mx, Math.min(mx, z.x));
+  z.y = Math.max(-my, Math.min(my, z.y));
+  z.img.style.transform = "translate(" + z.x + "px, " + z.y + "px) scale(" + z.s + ")";
+}
+// Auf Massstab s2 gehen und dabei den Bildpunkt unter (px, py) festhalten.
+function lbZoomUm(z, s2, px, py, s0, x0, y0, qx, qy) {
+  const r = z.o.getBoundingClientRect();
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  s0 = s0 || z.s; x0 = x0 === undefined ? z.x : x0; y0 = y0 === undefined ? z.y : y0;
+  qx = qx === undefined ? px : qx; qy = qy === undefined ? py : qy;
+  s2 = Math.max(1, Math.min(5, s2));
+  z.x = px - cx - s2 * (qx - cx - x0) / s0;
+  z.y = py - cy - s2 * (qy - cy - y0) / s0;
+  z.s = s2;
+  if (z.s <= 1.001) { z.s = 1; z.x = 0; z.y = 0; }
+  lbZoomSetzen(z);
+}
+function lbZoomRunter(z, ev) {
+  try { z.o.setPointerCapture(ev.pointerId); } catch (e) {}
+  z.zeiger.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  const p = Array.from(z.zeiger.values());
+  if (p.length === 1) {
+    z.bewegt = false;
+    z.start = { typ: "zieh", px: ev.clientX, py: ev.clientY, x0: z.x, y0: z.y, ziel: ev.target };
+  } else if (p.length === 2) {
+    z.bewegt = true;
+    z.start = { typ: "spreiz", d0: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1,
+                mx: (p[0].x + p[1].x) / 2, my: (p[0].y + p[1].y) / 2, s0: z.s, x0: z.x, y0: z.y };
+  }
+}
+function lbZoomZieh(z, ev) {
+  if (!z.zeiger.has(ev.pointerId)) return;
+  z.zeiger.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  const p = Array.from(z.zeiger.values());
+  const st = z.start;
+  if (!st) return;
+  if (st.typ === "spreiz" && p.length >= 2) {
+    const d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1;
+    const mx = (p[0].x + p[1].x) / 2, my = (p[0].y + p[1].y) / 2;
+    lbZoomUm(z, st.s0 * d / st.d0, mx, my, st.s0, st.x0, st.y0, st.mx, st.my);
+  } else if (st.typ === "zieh" && p.length === 1) {
+    const dx = ev.clientX - st.px, dy = ev.clientY - st.py;
+    if (Math.hypot(dx, dy) > 8) z.bewegt = true;
+    if (z.s > 1) { z.x = st.x0 + dx; z.y = st.y0 + dy; lbZoomSetzen(z); }
+  }
+}
+function lbZoomHoch(z, ev) {
+  const st = z.start;
+  z.zeiger.delete(ev.pointerId);
+  if (z.zeiger.size === 1) {
+    // Ein Finger bleibt liegen: mit ihm weiterschieben.
+    const q = Array.from(z.zeiger.values())[0];
+    z.start = { typ: "zieh", px: q.x, py: q.y, x0: z.x, y0: z.y, ziel: null };
+    return;
+  }
+  if (z.zeiger.size > 1) return;
+  z.start = null;
+  if (z.bewegt || !st) return;
+  // Ein Tippen. Zwei kurz hintereinander = Doppeltipp: vergroessern oder zurueck.
+  const jetzt = Date.now();
+  if (jetzt - z.tippZeit < 320 && Math.hypot(ev.clientX - z.tippX, ev.clientY - z.tippY) < 40) {
+    z.tippZeit = 0;
+    if (z.zuUhr) { clearTimeout(z.zuUhr); z.zuUhr = null; }
+    if (z.s > 1) lbZoomUm(z, 1, ev.clientX, ev.clientY);
+    else lbZoomUm(z, 2.5, ev.clientX, ev.clientY);
+    return;
+  }
+  z.tippZeit = jetzt; z.tippX = ev.clientX; z.tippY = ev.clientY;
+  // Tippen neben das Bild schliesst - mit kurzer Wartezeit, falls es der
+  // Anfang eines Doppeltipps ist.
+  if (st.ziel !== z.img) {
+    z.zuUhr = setTimeout(function () { if (lbZoomZustand === z) lbZoomZu(); }, 330);
+  }
 }
 
 // Bei manchen Fragen ist die Antwort die Fortsetzung des Fragesatzes
@@ -2551,7 +3367,8 @@ function lbAntwortText(x) {
 // Frage und Antworten laut vorlesen - fuer alle, denen langes Lesen auf dem
 // Telefon schwerfaellt. Das macht der Browser selbst (speechSynthesis): kein
 // Serverdienst, keine Kosten, keine zusaetzliche Abhaengigkeit. Vorgelesen
-// wird NUR auf Knopfdruck, nie von allein.
+// wird auf Knopfdruck - oder, wenn in den Einstellungen "Vorlesen automatisch"
+// an ist (P8), bei jeder neuen Frage von selbst.
 let lbFilmGerettet = null;   // siehe lbFrageZeigen()
 let lbSpricht = false;
 let lbSprachLauf = 0;        // zaehlt die Vorlesevorgaenge durch
@@ -2594,15 +3411,21 @@ function lbVorleseStoppen() {
 // einzeln. Jeder Teil ist eine eigene Aeusserung - so entsteht dazwischen
 // eine Pause, und lange Texte werden von manchen Browsern nicht abgeschnitten.
 function lbVorleseTeile(a) {
+  const s = lbSitzung;
   const teile = [String(a.frage || ""), String(a.zusatz || "")];
-  if (a.art === "freitext") {
+  if (!lbVariantenOffen(s, a)) {
+    // Videofrage: die Antworten sind noch verdeckt - also auch nicht vorlesen.
+    teile.push("Sieh dir zuerst den Film an. Danach kannst du die Antwortvarianten anzeigen.");
+  } else if (a.art === "freitext") {
     const t = (a.textteile || []).filter(x => String(x || "").trim());
     teile.push(t.length ? t.join(" Lücke ") : "Bitte die Lücke ausfüllen.");
   } else if (a.art === "abbildungsauswahl") {
     teile.push("Die Antworten sind Bilder - sie lassen sich nicht vorlesen.");
   } else {
-    (a.antworten || []).forEach((x, i) => {
-      teile.push("Antwort " + (i + 1) + ": " + lbAntwortText(x));
+    // Vorgelesen wird in der Reihenfolge, in der die Antworten zu sehen sind.
+    const reihe = lbReihe(s, a) || (a.antworten || []).map((x, i) => i);
+    reihe.forEach((o, j) => {
+      teile.push("Antwort " + (j + 1) + ": " + lbAntwortText((a.antworten || [])[o]));
     });
   }
   return teile.filter(t => String(t).trim());
@@ -2636,85 +3459,308 @@ function lbVorlesen() {
   }
 }
 
-function lbAntwortenHTML(a, g, e) {
-  if (a.art === "freitext") {
-    const t = a.textteile || [];
-    let h = `<div class="lb-freitext">`;
-    h += t[0] ? `<span>${esc(t[0])}</span>` : "";
-    for (let i = 0; i < (a.luecken || 1); i++) {
-      h += `<input type="text" inputmode="text" autocomplete="off" value="${esc(g[i] || "")}"
-        ${e ? "disabled" : ""} oninput="lbText(${i}, this.value)">`;
-      if (i === 0 && t[1]) h += `<span>${esc(t[1])}</span>`;
-    }
-    h += t[2] ? `<span>${esc(t[2])}</span>` : "";
-    h += `</div>`;
-    if (e) h += `<div class="lb-ergebnis ${e.richtig ? "gut" : "schlecht"}">${
-      e.richtig ? "✓ Richtig." : "✗ Leider falsch. Richtig ist: <b>" + esc((e.loesung || []).join(" / ")) + "</b>"}</div>`;
-    return h;
+function lbAntwortenHTML(a, g, e, s) {
+  if (!lbVariantenOffen(s, a)) {
+    return `<div class="lb-filmhinweis">Sieh dir zuerst den Film an.<br>
+      Danach tippst du auf „Antwortvarianten anzeigen“.</div>`;
   }
+  if (a.art === "freitext") return lbFreitextHTML(a, g, e, s);
   const bilder = a.art === "abbildungsauswahl";
-  const antworten = (a.antworten || []).map((x, i) => {
-    const gewaehlt = !!g[i];
-    let klasse = "lb-antwort" + (bilder ? " bild" : "") + (gewaehlt ? " gewaehlt" : "");
-    if (e) {
-      const soll = !!(e.loesung || [])[i];
-      if (soll) klasse += " richtig";
-      else if (gewaehlt) klasse += " falsch";
-    }
+  const reihe = lbReihe(s, a);
+  const loesung = e ? (e.loesung || []) : null;
+  const zeilen = reihe.map((o, j) => {
+    const gewaehlt = !!g[o];
     const inhalt = bilder
-      ? `<img src="${esc(lbMedien((a.antwortbilder || {})[String(i + 1)] || ""))}" alt="Antwort ${i + 1}" onerror="lbBildFehlt()">`
-      : `<span>${esc(lbAntwortText(x))}</span>`;
-    return `<div class="${klasse}" ${e ? "" : `onclick="lbWaehle(${i})"`}>
-      <div class="lb-haken">${e && (e.loesung || [])[i] ? "✓" : gewaehlt ? "✓" : ""}</div>
-      ${inhalt}</div>`;
+      ? `<img src="${esc(lbMedien((a.antwortbilder || {})[String(o + 1)] || ""))}" alt="Antwort ${j + 1}" onerror="lbBildFehlt()">`
+      : `<span>${esc(lbAntwortText((a.antworten || [])[o]))}</span>`;
+    if (!e) {
+      return `<div class="lb-antwort${bilder ? " bild" : ""}${gewaehlt ? " gewaehlt" : ""}" data-stelle="${j}"
+        onclick="lbWaehle(${j})"><div class="lb-haken">${gewaehlt ? "✓" : ""}</div>${inhalt}</div>`;
+    }
+    // Nach dem Prüfen: je Antwort "Deine Antwort" und "Richtig" nebeneinander.
+    // Grün = deine Antwort passt zur Lösung, rot = hier lag sie daneben.
+    const soll = !!loesung[o];
+    const passt = soll === gewaehlt;
+    const paar = `<div class="lb-paar">
+        <div class="lb-spalte">${bilder ? `<span class="lb-mini">Du</span>` : ""}
+          <span class="lb-kaestchen du${gewaehlt ? " an" : ""}" role="img"
+            aria-label="Deine Antwort: ${gewaehlt ? "angekreuzt" : "nicht angekreuzt"}">${gewaehlt ? "✓" : ""}</span></div>
+        <div class="lb-spalte">${bilder ? `<span class="lb-mini">Richtig</span>` : ""}
+          <span class="lb-kaestchen soll${soll ? " an" : ""}" role="img"
+            aria-label="Richtig: ${soll ? "ankreuzen" : "nicht ankreuzen"}">${soll ? "✓" : ""}</span></div>
+      </div>`;
+    return `<div class="lb-antwort ausgewertet${bilder ? " bild" : ""} ${passt ? "stimmt" : "stimmtnicht"}"
+      data-stelle="${j}">${bilder ? inhalt + paar : paar + inhalt}</div>`;
   }).join("");
-  let h = `<div class="lb-antworten${bilder ? " bilder" : ""}">${antworten}</div>`;
-  if (e) h += `<div class="lb-ergebnis ${e.richtig ? "gut" : "schlecht"}">${
-    e.richtig
-      ? (e.sitzt ? "✓ Richtig – die Frage sitzt." : "✓ Richtig.")
-      : "✗ Leider falsch. Die grün umrandeten Antworten wären richtig gewesen."}</div>`;
+  let h = "";
+  if (e && !bilder) {
+    h += `<div class="lb-spaltenkopf"><div class="lb-spalte">Deine Antwort</div><div class="lb-spalte">Richtig</div></div>`;
+  }
+  h += `<div class="lb-antworten${bilder ? " bilder" : ""}">${zeilen}</div>`;
+  if (e) h += lbRueckmeldungHTML(a, e);
   return h;
 }
+
+// Ein Satz zum Ergebnis - und Platz für eine Erklärung. Den Platz gibt es
+// schon, er bleibt aber leer und unsichtbar, solange der Server keine
+// Erklärung mitschickt (Feld "erklaerung", kommt später).
+function lbRueckmeldungHTML(a, e) {
+  const fp = Number(a.fehlerpunkte) || 0;
+  const satz = e.richtig
+    ? "✓ Richtig!" + (e.sitzt ? " Die Frage sitzt." : "")
+    : "✗ Leider falsch – " + fp + " " + (fp === 1 ? "Fehlerpunkt" : "Fehlerpunkte");
+  const erkl = String(e.erklaerung || "").trim();
+  return `<div class="lb-ergebnis lb-satz ${e.richtig ? "gut" : "schlecht"}">${esc(satz)}</div>`
+    + (e.lokal ? `<div class="sd-meta" style="margin-top:-4px;">Übungsdurchgang – zählt nicht für deinen Lernstand.</div>` : "")
+    + `<div class="lb-erklaerung" id="lbErklaerung"${erkl ? "" : " hidden"}>${esc(erkl)}</div>`
+    + lbErklKnopfHTML(a, e);
+}
+
+// ── P7a: Erklärungen + Daumen (17.10.2026) ───────────────────
+// Der Server schickt "erklaerung_frei" ({text, paragraf, meine}) NUR für frei-
+// gegebene Erklärungen und erst nach dem Beantworten: an der Antwort beim Üben,
+// im Ergebnis einer abgegebenen Prüfung/eines Themen-Tests und in den Details.
+// Während Prüfung und Themen-Test gibt es kein Ergebnis je Frage - also auch
+// keinen Knopf. Ohne Feld (älterer Server) bleibt alles wie bisher.
+const lbErklDaten = {};
+const lbErklOffen = new Set();
+function lbErklSel(nr) { return '[data-erkl="' + String(nr).replace(/["\\\]\[]/g, "") + '"]'; }
+const LB_GRUENDE = [["falsch", "falsch"], ["unverstaendlich", "unverständlich"], ["zu_kurz", "zu kurz"]];
+function lbErklKnopfHTML(a, e) {
+  const x = e && e.erklaerung_frei;
+  if (!x || !String(x.text || "").trim()) return "";
+  const nr = String(a.nummer);
+  lbErklDaten[nr] = x;
+  const offen = lbErklOffen.has(nr);
+  return `<div class="lb-erkl" data-erkl="${esc(nr)}">
+      <button type="button" class="lb-knopf voll" id="lbErklKnopf" aria-expanded="${offen}" aria-controls="lbErklFrei"
+        onclick="lbErklUmschalten(this.closest('[data-erkl]').dataset.erkl)">${offen ? "💡 Erklärung ausblenden" : "💡 Erklärung"}</button>
+      <div class="lb-erklaerung" id="lbErklFrei"${offen ? "" : " hidden"}>
+        <div>${esc(x.text)}</div>
+        ${x.paragraf ? `<div class="lb-erkl-par">${esc(x.paragraf)}</div>` : ""}
+        <div id="lbErklBewertung">${lbErklBewertungHTML(nr)}</div>
+      </div>
+    </div>`;
+}
+function lbErklBewertungHTML(nr) {
+  const x = lbErklDaten[nr] || {};
+  const w = x.meine ? Number(x.meine.wert) : 0;
+  const g = x.meine ? x.meine.grund : null;
+  return `<div class="lb-daumen"><span>War die Erklärung hilfreich?</span>
+      <button type="button" class="lb-daumen-knopf${w === 1 ? " an" : ""}" data-wert="1" aria-pressed="${w === 1}" aria-label="Ja, hilfreich"
+        onclick="lbErklBewerten(this.closest('[data-erkl]').dataset.erkl, 1)">👍</button>
+      <button type="button" class="lb-daumen-knopf${w === -1 ? " an" : ""}" data-wert="-1" aria-pressed="${w === -1}" aria-label="Nicht hilfreich"
+        onclick="lbErklBewerten(this.closest('[data-erkl]').dataset.erkl, -1)">👎</button></div>`
+    + (w === -1 ? `<div class="lb-gruende"><span>Was passt nicht? (freiwillig)</span>${LB_GRUENDE.map(([k, t]) =>
+        `<button type="button" data-grund="${k}" class="${g === k ? "an" : ""}" aria-pressed="${g === k}"
+          onclick="lbErklBewerten(this.closest('[data-erkl]').dataset.erkl, -1, '${k}')">${t}</button>`).join("")}</div>` : "")
+    + (w ? `<div class="sd-meta" id="lbErklDanke" style="margin-top:8px;">Danke für deine Rückmeldung.</div>` : "");
+}
+function lbErklUmschalten(nr) {
+  nr = String(nr);
+  if (lbErklOffen.has(nr)) lbErklOffen.delete(nr); else lbErklOffen.add(nr);
+  const box = document.querySelector(lbErklSel(nr));
+  if (!box) return;
+  const offen = lbErklOffen.has(nr);
+  box.querySelector("#lbErklFrei").hidden = !offen;
+  const k = box.querySelector("#lbErklKnopf");
+  k.setAttribute("aria-expanded", String(offen));
+  k.textContent = offen ? "💡 Erklärung ausblenden" : "💡 Erklärung";
+}
+async function lbErklBewerten(nr, wert, grund) {
+  nr = String(nr);
+  const x = lbErklDaten[nr]; if (!x) return;
+  const vorher = x.meine;
+  x.meine = { wert: wert, grund: wert === -1 ? (grund || null) : null };
+  const zeichnen = () => { const b = document.querySelector(lbErklSel(nr) + " #lbErklBewertung"); if (b) b.innerHTML = lbErklBewertungHTML(nr); };
+  zeichnen();
+  const d = await lbRuf("rueckmeldung", { aufgabe: nr, wert: wert, grund: grund || "" });
+  if (!d || !d.ok) {
+    x.meine = vorher; zeichnen();
+    try { fsToast("Die Rückmeldung hat nicht geklappt."); } catch (e) {}
+  }
+}
+
+// B13 Zahlenfragen: eigener Ziffernblock statt Handy-Tastatur. Die Felder
+// sind Knöpfe - dadurch geht die Handy-Tastatur gar nicht erst auf. Die
+// Einheit steht direkt neben dem Feld.
+function lbFreitextHTML(a, g, e, s) {
+  const t = a.textteile || [];
+  const n = a.luecken || 1;
+  const feld = Math.min(s.feld || 0, n - 1);
+  const nach = i => String((n > 1 ? (i === 0 ? t[1] : t[2]) : [t[1], t[2]].filter(Boolean).join(" ")) || "").trim();
+  const vor = String(t[0] || "").trim();
+  if (!e) {
+    let h = `<div class="lb-freitext">` + (vor ? `<span>${esc(vor)}</span>` : "");
+    for (let i = 0; i < n; i++) {
+      const w = String(g[i] || "");
+      h += `<span class="lb-feldgruppe"><button type="button" class="lb-feld${i === feld ? " aktiv" : ""}${w ? "" : " leer"}"
+          data-feld="${i}" onclick="lbFeldWahl(${i})" aria-label="${n > 1 ? "Feld " + (i + 1) : "Antwortfeld"}${w ? ": " + esc(w) : ""}"
+          >${w ? esc(w) : (n > 1 ? "Feld " + (i + 1) : "Zahl")}</button>${nach(i) ? `<span class="lb-einheit">${esc(nach(i))}</span>` : ""}</span>`;
+    }
+    h += `</div>`;
+    if (n > 1) h += `<div class="sd-meta" style="margin-top:-2px;">Tippe auf ein Feld, um es zu füllen.</div>`;
+    return h + lbZiffernHTML();
+  }
+  const loesung = e.loesung || [];
+  // Bei zwei Feldern ("von 7 Uhr bis 20 Uhr") steht die ganze Angabe in einem
+  // Kasten - so liest sie sich als Satz und nicht als "7 Uhr bis".
+  const satz = werte => n > 1
+    ? werte.map((w, i) => (w || "–") + (nach(i) ? " " + nach(i) : "")).join(" ")
+    : (werte[0] || "–") + (nach(0) ? " " + nach(0) : "");
+  const du = [], soll = [];
+  for (let i = 0; i < n; i++) {
+    du.push(String(g[i] || "").trim());
+    soll.push(String(loesung[i] === undefined ? "" : loesung[i]));
+  }
+  const passt = du.every((x, i) => lbZahlGleich(x, soll[i]));
+  return `<div class="lb-zahlen"><div class="lb-zahlpaar ${passt ? "stimmt" : "stimmtnicht"}">
+      <div><span class="lb-mini">Deine Antwort</span><b>${esc(satz(du))}</b></div>
+      <div><span class="lb-mini">Richtig</span><b>${esc(satz(soll))}</b></div>
+    </div></div>` + lbRueckmeldungHTML(a, e);
+}
+// Wie der Server vergleicht (theorie_lernen._stimmt): Leerzeichen weg, Komma = Punkt.
+function lbZahlSauber(x) {
+  return String(x === undefined || x === null ? "" : x).replace(/\s+/g, "").replace(/,/g, ".").toLowerCase();
+}
+// P1b (8a): Zahlen als Zahlen - "3" ist dasselbe wie "3,0".
+function lbZahlGleich(a, b) {
+  a = lbZahlSauber(a); b = lbZahlSauber(b);
+  if (a === b) return true;
+  const z = /^[+-]?(\d+(\.\d*)?|\.\d+)$/;
+  return z.test(a) && z.test(b) && Math.abs(parseFloat(a) - parseFloat(b)) < 1e-9;
+}
+function lbStimmtLokal(art, soll, ist) {
+  if (!Array.isArray(soll)) return false;
+  if (art === "freitext") {
+    const i = Array.isArray(ist) ? ist : [ist];
+    return i.length === soll.length && i.every((x, k) => lbZahlGleich(x, soll[k]));
+  }
+  return Array.isArray(ist) && ist.length === soll.length && soll.every((x, k) => !!x === !!ist[k]);
+}
+function lbZiffernHTML() {
+  const tasten = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ",", "0", "⌫"];
+  return `<div class="lb-ziffern" role="group" aria-label="Ziffernblock">${tasten.map(k =>
+    `<button type="button" class="lb-taste${k === "⌫" ? " loeschen" : ""}" data-taste="${k}" onclick="lbTaste('${k}')"
+      aria-label="${k === "⌫" ? "Löschen" : k === "," ? "Komma" : k}">${k}</button>`).join("")}</div>`;
+}
+function lbFeldWahl(i) {
+  const s = lbSitzung; if (!s) return;
+  const a = s.aufgaben[s.i];
+  if (!a || a.art !== "freitext") return;
+  s.feld = Math.max(0, Math.min(i, (a.luecken || 1) - 1));
+  lbFrageZeigen(true);
+}
+function lbTaste(k) {
+  const s = lbSitzung; if (!s) return;
+  const a = s.aufgaben[s.i];
+  if (!a || a.art !== "freitext" || s.geprueft[a.nummer] || !lbVariantenOffen(s, a)) return;
+  const g = s.gegeben[a.nummer];
+  const i = Math.min(s.feld || 0, (a.luecken || 1) - 1);
+  let w = String(g[i] || "");
+  if (k === "⌫") w = w.slice(0, -1);
+  else if (k === ",") { if (w.indexOf(",") < 0) w = (w || "0") + ","; }
+  else if (/^[0-9]$/.test(k)) {
+    if (w.replace(",", "").length >= 6) return;
+    w = (w === "0" ? "" : w) + k;          // keine fuehrende Null: "07" waere falsch
+  } else return;
+  g[i] = w;
+  lbFrageZeigen(true);
+}
+// Am Rechner (PWA) geht auch die echte Tastatur: Ziffern, Komma/Punkt,
+// Rücktaste, Tab wechselt das Feld. Esc schließt das Großbild.
+document.addEventListener("keydown", function (ev) {
+  if (lbDialogEnde) { if (ev.key === "Escape") { ev.preventDefault(); lbDialogZu(); } return; }
+  if (lbZoomZustand) { if (ev.key === "Escape") { ev.preventDefault(); lbZoomZu(); } return; }
+  const s = lbSitzung; if (!s || !s.aufgaben) return;
+  const a = s.aufgaben[s.i];
+  if (!a || a.art !== "freitext" || s.geprueft[a.nummer]) return;
+  const ziel = ev.target;
+  if (ziel && /^(INPUT|TEXTAREA|SELECT)$/.test(ziel.tagName || "")) return;
+  if (ev.ctrlKey || ev.metaKey || ev.altKey) return;
+  if (ev.key === "Tab" && (a.luecken || 1) > 1) {
+    ev.preventDefault();
+    lbFeldWahl(((s.feld || 0) + 1) % (a.luecken || 1));
+    return;
+  }
+  let k = null;
+  if (/^[0-9]$/.test(ev.key)) k = ev.key;
+  else if (ev.key === "," || ev.key === ".") k = ",";
+  else if (ev.key === "Backspace") k = "⌫";
+  if (!k) return;
+  ev.preventDefault();
+  lbTaste(k);
+});
 
 function lbFussHTML(a, s, e) {
   const pruefung = s.modus === "pruefung";
   const letzte = s.i >= s.aufgaben.length - 1;
+  const po = lbEinst().pruefoptik;      // P8: Fragenleiste unten
   if (pruefung) {
-    const offen = s.aufgaben.filter(x => {
-      const g = s.gegeben[x.nummer];
-      if (!g) return true;
-      return x.art === "freitext" ? !g.some(y => String(y || "").trim()) : !g.some(Boolean);
-    }).length;
-    return `<div class="lb-fuss">
+    // P2: "Weiter" springt zur nächsten offenen Frage; ist alles beantwortet,
+    // heißt er "Fertig". Abgeben fragt nach, wenn noch etwas offen ist.
+    const offen = s.aufgaben.filter(x => !lbBeantwortet(s, x)).length;
+    const kz = Object.keys(s.kennzeichen || {}).length;
+    const naechste = lbNaechsteOffene(s);
+    const fertig = offen === 0;
+    const nurDiese = !fertig && naechste < 0;
+    const an = !!(s.kennzeichen && s.kennzeichen[a.nummer]);
+    return `<div class="lb-fuss pruefung">${po ? lbPunkteLeiste(s, true) : ""}
       <div class="lb-knopfreihe">
-        <button class="lb-knopf${s.i ? "" : " aus"}" ${s.i ? "" : "disabled"} onclick="lbSpringe(${s.i - 1})">←</button>
-        <button class="lb-knopf${letzte ? " aus" : ""}" ${letzte ? "disabled" : ""} onclick="lbSpringe(${s.i + 1})">Weiter →</button>
+        <button class="lb-knopf schmal${s.i ? "" : " aus"}" ${s.i ? "" : "disabled"} onclick="lbSpringe(${s.i - 1})" aria-label="Vorige Frage">←</button>
+        <button class="lb-knopf kennz${an ? " an" : ""}" onclick="lbKennzeichen()" aria-pressed="${an}"
+          title="${an ? "Kennzeichen entfernen" : "Frage kennzeichnen"}">⚑ Kennzeichen</button>
+        <button class="lb-knopf stark${nurDiese ? " aus" : ""}" id="lbWeiterKnopf" ${nurDiese ? "disabled" : ""}
+          onclick="lbWeiterPruefung()">${fertig ? "Fertig ✓" : "Weiter →"}</button>
       </div>
-      <button class="lb-knopf voll stark" style="margin-top:8px;" onclick="lbAbgeben()">Prüfung abgeben</button>
-      ${offen ? `<div class="sd-meta" style="text-align:center;">Noch ${offen} ${offen === 1 ? "Frage ist" : "Fragen sind"} unbeantwortet.</div>` : ""}
+      <button class="lb-knopf voll" style="margin-top:8px;" onclick="lbAbgebenFragen()">${s.themenTest ? "Test abgeben" : "Prüfung abgeben"}</button>
+      <div class="sd-meta" style="text-align:center;">${fertig ? "Alle Fragen beantwortet."
+        : nurDiese ? "Nur noch diese Frage ist offen."
+        : "Noch " + offen + " " + (offen === 1 ? "Frage" : "Fragen") + " offen."}${kz ? " · " + kz + " gekennzeichnet" : ""}</div>
     </div>`;
   }
   if (!e) {
-    return `<div class="lb-fuss">
+    // Videofrage: solange die Antworten verdeckt sind, gibt es nichts zu prüfen.
+    if (!lbVariantenOffen(s, a)) return po ? `<div class="lb-fuss">${lbUebenLeiste(s)}</div>` : "";
+    return `<div class="lb-fuss">${po ? lbUebenLeiste(s) : ""}
       <button class="lb-knopf voll stark" onclick="lbPruefen()">Antwort prüfen</button>
     </div>`;
   }
-  return `<div class="lb-fuss">
+  return `<div class="lb-fuss">${po ? lbUebenLeiste(s) : ""}
+    ${a.film ? `<button class="lb-knopf voll" style="margin-bottom:8px;" onclick="lbNochmal()">↺ Nochmal üben</button>` : ""}
     <button class="lb-knopf voll stark" onclick="lbWeiter()">${letzte ? "Auswertung ansehen" : "Weiter →"}</button>
   </div>`;
 }
 
 // ── Eingaben ─────────────────────────────────────────────────
+// i ist die STELLE auf dem Bildschirm; gemerkt wird die Antwort der Lieferung.
 function lbWaehle(i) {
   const s = lbSitzung; if (!s) return;
   const a = s.aufgaben[s.i];
-  if (s.geprueft[a.nummer]) return;
-  s.gegeben[a.nummer][i] = !s.gegeben[a.nummer][i];
+  if (s.geprueft[a.nummer] || !lbVariantenOffen(s, a)) return;
+  const reihe = lbReihe(s, a);
+  const o = reihe ? reihe[i] : i;
+  if (o === undefined) return;
+  s.gegeben[a.nummer][o] = !s.gegeben[a.nummer][o];
   lbFrageZeigen(true);
 }
-function lbText(i, wert) {
-  const s = lbSitzung; if (!s) return;
-  s.gegeben[s.aufgaben[s.i].nummer][i] = wert;
+// Videofrage beim Üben noch einmal von vorn: Film wieder fünfmal, Antworten
+// neu gemischt. Der zweite Durchgang wird in der App geprüft und NICHT an den
+// Server geschickt - sonst gälte eine Frage als "sitzt", nur weil man die
+// Lösung eben gesehen hat.
+function lbNochmal() {
+  const s = lbSitzung; if (!s || s.modus === "pruefung") return;
+  const a = s.aufgaben[s.i];
+  const e = s.geprueft[a.nummer];
+  if (!a || !a.film || !e) return;
+  if (Array.isArray(e.loesung)) s.wiederholt[a.nummer] = e.loesung;
+  delete s.geprueft[a.nummer];
+  delete s.gegeben[a.nummer];
+  delete s.reihe[a.nummer];
+  s.filme[a.nummer] = 0;
+  s.filmGesehen[a.nummer] = false;
+  s.varianten[a.nummer] = false;
+  lbFrageZeigen();
 }
 function lbSpringe(i) {
   const s = lbSitzung; if (!s) return;
@@ -2728,9 +3774,22 @@ function lbWeiter() {
   s.i++;
   lbFrageZeigen();
 }
-function lbAbbrechen() {
+async function lbAbbrechen() {
+  const s = lbSitzung;
+  if (s && s.modus === "pruefung" && !s.abgegeben) {
+    const ok = await lbDialog(s.themenTest
+      ? { titel: "Themen-Test abbrechen?", text: "Der Test wird nicht gewertet.", ja: "Abbrechen", nein: "Weiter testen", gefahr: true }
+      : { titel: "Prüfung abbrechen?",
+      text: "Dein Fortschritt geht verloren – diese Prüfung wird nicht gewertet.",
+      ja: "Abbrechen", nein: "Weiter prüfen", gefahr: true });
+    if (!ok || lbSitzung !== s) return;
+    lbUhrStopp();
+  }
   lbVorleseStoppen();
+  lbZoomZu();
   lbStand = null;          // Stand hat sich geändert - neu holen
+  if (s && s.zurueck === "liste") { lbListeZeigen(true); return; }
+  if (s && s.zurueck === "thema") { lbThemaZeigen(s.thema, true); return; }
   renderLernbereich();
 }
 
@@ -2740,6 +3799,16 @@ async function lbPruefen() {
   // Doppeltipp waehrend der Anfrage zaehlte mehrfach (22 von 20) - 29.09.2026.
   // Je Frage nur eine Anfrage zugleich, und nur das erste Ergebnis zaehlt.
   if (s.geprueft[a.nummer] || s.laeuft === a.nummer) return;
+  if (!lbVariantenOffen(s, a)) return;
+  // "Nochmal üben" bei einer Videofrage: nur in der App prüfen (siehe lbNochmal).
+  const soll = s.wiederholt && s.wiederholt[a.nummer];
+  if (soll) {
+    s.geprueft[a.nummer] = { ok: true, lokal: true, loesung: soll,
+                             richtig: lbStimmtLokal(a.art, soll, s.gegeben[a.nummer]),
+                             erklaerung_frei: (s.erkl || {})[a.nummer] };
+    lbFrageZeigen(true);
+    return;
+  }
   s.laeuft = a.nummer;
   const knopf = document.querySelector('button[onclick="lbPruefen()"]');
   if (knopf) knopf.disabled = true;
@@ -2749,13 +3818,20 @@ async function lbPruefen() {
   if (!d || !d.ok) { if (knopf) knopf.disabled = false; return; }
   if (s.geprueft[a.nummer]) return;         // nur das erste Ergebnis zaehlt
   s.geprueft[a.nummer] = d;
+  if (d.erklaerung_frei) { s.erkl = s.erkl || {}; s.erkl[a.nummer] = d.erklaerung_frei; }   // P7a
   if (d.richtig) s.richtig = (s.richtig || 0) + 1;
   lbFrageZeigen(true);
 }
 
+let lbLetzteRunde = null;
+function lbNaechsteRunde() {
+  const r = lbLetzteRunde || { was: "alle", gebiet: "", titel: "Fragen üben", nummern: null };
+  lbUeben(r.was || "alle", r.gebiet || "", r.titel || "Fragen üben", r.nummern || undefined, { zurueck: r.zurueck, thema: r.thema, modus: r.modus });
+}
 function lbUebungFertig() {
   lbVorleseStoppen();
   const s = lbSitzung;
+  lbLetzteRunde = { was: s.was, gebiet: s.gebiet, titel: s.titel, nummern: s.nummern, zurueck: s.zurueck, thema: s.thema, modus: s.themaModus };
   const geprueft = Object.keys(s.geprueft).length;
   const richtig = s.richtig || 0;
   lbStand = null;
@@ -2765,21 +3841,36 @@ function lbUebungFertig() {
         <div style="font-size:30px; font-weight:800; color:var(--dark); margin-top:6px;">
           ${richtig} von ${geprueft} richtig</div>
         <div class="sd-meta">Dein Stand ist gespeichert – du kannst jederzeit weitermachen.</div>
-        <button class="lb-knopf voll stark" style="margin-top:14px;"
-          onclick="lbUeben('${esc(s.was || "alle")}','${esc(s.gebiet || "")}','${esc(s.titel)}')">Nächste Runde</button>
+        ${s.zurueck === "thema"
+          ? `<button class="lb-knopf voll stark" style="margin-top:14px;" onclick="lbNaechsteRunde()">Nächste Runde</button>
+             <button class="lb-knopf voll" style="margin-top:8px;" id="lbZumThema" onclick="lbThemaZeigen('${esc(s.thema)}', true)">Zurück zum Thema</button>`
+          : s.zurueck === "liste"
+          ? `<button class="lb-knopf voll stark" style="margin-top:14px;" id="lbZurListe" onclick="lbListeZeigen(true)">Zurück zur Frageliste</button>
+             <button class="lb-knopf voll" style="margin-top:8px;" onclick="lbNaechsteRunde()">Diese Frage noch einmal</button>`
+          : `<button class="lb-knopf voll stark" style="margin-top:14px;" onclick="lbNaechsteRunde()">Nächste Runde</button>`}
         <button class="lb-knopf voll" style="margin-top:8px;" onclick="renderLernbereich()">Zurück zur Übersicht</button>
-      </div>`;
+      </div><div class="lb-platz"></div>`;
   lbSitzung = null;
   main.scrollTop = 0;
+  lbPushPlatz();
 }
 
 // ── Prüfung abgeben ──────────────────────────────────────────
-async function lbAbgeben() {
-  const s = lbSitzung; if (!s) return;
+async function lbAbgeben(zeitUm) {
+  const s = lbSitzung; if (!s || s.abgegeben) return;
+  s.abgegeben = true;                       // nur einmal abgeben (Doppeltipp, Uhr)
+  lbUhrStopp(); lbDialogZu(); lbZoomZu(); lbVorleseStoppen();
+  if (s.themenTest) { lbThemenTestAbgeben(s); return; }
   const kopf = lbKopf("Auswertung", "renderLernbereich()");
   lbWarten(kopf);
-  const antworten = s.aufgaben.map(a => ({ nummer: a.nummer, gegeben: s.gegeben[a.nummer] }));
-  const d = await lbRuf("pruefung-abgeben", { antworten });
+  // P2: Kennzeichen und Dauer gehen mit (für den Verlauf in P3).
+  const dauer = s.start ? Math.min(Math.round((Date.now() - s.start) / 1000), (s.dauerMin || 45) * 60) : null;
+  const antworten = s.aufgaben.map(a => ({ nummer: a.nummer, gegeben: s.gegeben[a.nummer],
+                                           kennzeichen: !!(s.kennzeichen && s.kennzeichen[a.nummer]) }));
+  const extra = { antworten };
+  if (s.klasse) extra.pruefungsklasse = s.klasse;
+  if (dauer !== null) extra.dauer_s = dauer;
+  const d = await lbRuf("pruefung-abgeben", extra);
   lbStand = null;
   if (!d || !d.ok) {
     main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">
@@ -2787,34 +3878,733 @@ async function lbAbgeben() {
       <button class="lb-knopf voll" style="margin-top:12px;" onclick="renderLernbereich()">Zurück</button></div>`;
     return;
   }
-  const falsche = (d.einzeln || []).filter(x => !x.richtig);
-  main.innerHTML = kopf
-    + `<div class="sd-karte" style="border-color:${d.bestanden ? "var(--green)" : "#C0392B"};">
-        <div class="sd-eyebrow" style="color:${d.bestanden ? "var(--green)" : "#C0392B"};">
-          ${d.bestanden ? "Bestanden" : "Nicht bestanden"}</div>
-        <div style="font-size:34px; font-weight:800; color:var(--dark); margin-top:4px; line-height:1.1;">
-          ${d.punkte} Fehlerpunkte</div>
-        <div class="sd-meta">${d.richtig} von ${d.gesamt} Fragen richtig · erlaubt sind ${d.grenze} Fehlerpunkte</div>
-        ${d.zwei_fuenfer ? `<div class="lb-ergebnis schlecht" style="margin-top:10px;">
-          Zwei Fragen mit fünf Fehlerpunkten waren falsch – das allein führt zum Durchfallen.</div>` : ""}
-      </div>`
-    + (falsche.length ? `<div class="sd-karte">
-        <div class="sd-eyebrow">Diese Fragen waren falsch</div>
-        <div class="sd-meta" style="margin-top:3px;">Du findest sie jetzt unter „Falsche wiederholen“.</div>
-        <div style="margin-top:8px;">${falsche.map(x => {
-          const q = s.aufgaben.find(y => y.nummer === x.nummer);
-          const text = q ? q.frage : x.nummer;
-          return `<div class="lb-zeile">
-            <div style="flex:1; min-width:0;">${esc(text.length > 78 ? text.slice(0, 78) + "…" : text)}</div>
-            <div style="color:var(--gray); white-space:nowrap;">${x.fehlerpunkte} ${x.fehlerpunkte === 1 ? "Punkt" : "Punkte"}</div>
-          </div>`;
-        }).join("")}</div>
-      </div>` : "")
-    + `<button class="lb-knopf voll stark" style="margin-top:12px;"
-        onclick="lbUeben('falsch','','Falsche wiederholen')">Falsche Fragen jetzt üben</button>
-       <button class="lb-knopf voll" style="margin-top:8px;" onclick="renderLernbereich()">Zurück zur Übersicht</button>`;
+  // P3: Ergebnis mit allen Fragen, Detailansicht, Verlauf und Drucken.
+  lbErgNurFalsche = false;
+  lbErgebnisZeigen(lbErgebnisAusSitzung(s, d, zeitUm, dauer));
+}
+
+// P6: Themen-Test abgeben - eigener Weg, gleiche Ergebnisseite wie die Prüfung.
+async function lbThemenTestAbgeben(s) {
+  const zurueck = `lbThemaZeigen('${esc(s.thema)}', true)`;
+  const kopf = lbKopf("Themen-Test", zurueck);
+  lbWarten(kopf);
+  const antworten = s.aufgaben.map(a => ({ nummer: a.nummer, gegeben: s.gegeben[a.nummer] }));
+  const d = await lbRuf("themen-test-abgeben", { test_id: s.testId, antworten });
+  lbStand = null;
+  if (!d || !d.ok) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">${esc((d && d.fehler) || "Die Auswertung hat nicht geklappt.")}</div>
+      <button class="lb-knopf voll" style="margin-top:12px;" onclick="${zurueck}">Zurück zum Thema</button></div>`;
+    return;
+  }
+  const ein = {};
+  (d.einzeln || []).forEach(e => { ein[e.nummer] = e; });
+  lbErgNurFalsche = false;
+  lbErgebnisZeigen({
+    themenTest: true, thema: s.thema, themaTitel: s.themaTitel, wann: Math.floor(Date.now() / 1000),
+    fehler: d.fehler, erlaubteFehler: d.erlaubte_fehler, bestanden: !!d.bestanden, pokal: !!d.pokal,
+    richtig: d.richtig, gesamt: d.anzahl, details: true, frisch: true,
+    fragen: s.aufgaben.filter(a => ein[a.nummer]).map(a => ({
+      aufgabe: Object.assign({}, a, { loesung: ein[a.nummer].loesung }), gegeben: s.gegeben[a.nummer],
+      richtig: !!ein[a.nummer].richtig, fehlerpunkte: ein[a.nummer].fehlerpunkte,
+      kennzeichen: !!(s.kennzeichen && s.kennzeichen[a.nummer]), erklaerung_frei: ein[a.nummer].erklaerung_frei }))
+  });
+}
+
+// ── P3: Ergebnis & Verlauf (16.10.2026) ──────────────────────
+// Ein "Ergebnis" ist eine abgegebene Prüfung: frisch aus der Sitzung oder aus
+// dem Verlauf (Server: /theorie/pruefung-details, nur die eigene Kartei).
+let lbErgebnis = null;
+let lbErgNurFalsche = false;
+
+function lbArtText(art) { return art === "erweiterung" ? "Erweiterung" : art === "ersterwerb" ? "Ersterwerb" : ""; }
+function lbDatumZeit(sek) {
+  try {
+    const d = new Date(sek * 1000);
+    return lbDatum(sek) + ", " + ("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2);
+  } catch (e) { return ""; }
+}
+function lbKurz(t, n) { t = String(t || ""); return t.length > n ? t.slice(0, n - 1) + "…" : t; }
+function lbGegebenOder(a, g) {
+  if (Array.isArray(g)) return g;
+  return a.art === "freitext" ? new Array(a.luecken || 1).fill("") : [false, false, false];
+}
+function lbErgebnisAusSitzung(s, d, zeitUm, dauer) {
+  const ein = {};
+  (d.einzeln || []).forEach(e => { ein[e.nummer] = e; });
+  return {
+    id: d.pruefung_id || null, wann: Math.floor(Date.now() / 1000), klasse: s.klasse,
+    pruefungsart: d.pruefungsart || s.pruefungsart, dauer_s: dauer, dauerMin: s.dauerMin,
+    punkte: d.punkte, grenze: d.grenze, bestanden: !!d.bestanden, zwei_fuenfer: !!d.zwei_fuenfer,
+    richtig: d.richtig, gesamt: d.gesamt, details: true, frisch: true, zeitUm: !!zeitUm,
+    fragen: s.aufgaben.filter(a => ein[a.nummer]).map(a => ({
+      aufgabe: Object.assign({}, a, { loesung: ein[a.nummer].loesung }), gegeben: s.gegeben[a.nummer],
+      richtig: !!ein[a.nummer].richtig, fehlerpunkte: ein[a.nummer].fehlerpunkte,
+      kennzeichen: !!(s.kennzeichen && s.kennzeichen[a.nummer]), erklaerung_frei: ein[a.nummer].erklaerung_frei }))
+  };
+}
+function lbErgebnisAusDetails(d) {
+  const p = d.pruefung || {};
+  return { id: p.id, wann: p.wann, klasse: p.klasse, pruefungsart: p.pruefungsart, dauer_s: p.dauer_s,
+    punkte: p.punkte, grenze: p.grenze, bestanden: !!p.bestanden, zwei_fuenfer: !!p.zwei_fuenfer,
+    richtig: p.richtig, gesamt: p.anzahl, details: !!p.details, frisch: false, fragen: d.fragen || [] };
+}
+
+function lbErgebnisZeigen(erg, ohneFeier) {
+  lbAnsicht++;
   lbSitzung = null;
+  lbErgebnis = erg;
+  lbErgDetailIndex = -1;
+  if (!erg.details) lbErgNurFalsche = true;
+  const falsche = erg.fragen.filter(f => !f.richtig);
+  const liste = erg.fragen.map((f, i) => ({ f, i })).filter(x => !lbErgNurFalsche || !x.f.richtig);
+  const tt = !!erg.themenTest;       // P6: Themen-Test
+  const zurueck = tt ? `lbThemaZeigen('${esc(erg.thema)}', true)` : erg.frisch ? "renderLernbereich()" : "lbVerlaufZeigen()";
+  const farbe = erg.bestanden ? "var(--green)" : "#C0392B";
+  const zeilen = liste.map(({ f, i }) => {
+    const a = f.aufgabe;
+    return `<div class="lb-ergzeile ${f.richtig ? "gut" : "schlecht"}${erg.details ? " klickbar" : ""}" data-i="${i}"
+        ${erg.details ? `onclick="lbDetailZeigen(${i})"` : ""}>
+      <span class="lb-ergnr">${erg.details ? i + 1 : "✗"}</span>
+      <div class="lb-ergtext">${esc(lbKurz(a.frage, 72))}<small>${esc(a.nummer)}${a.teil ? " · " + (a.teil === "grundstoff" ? "Grundstoff" : "Zusatzstoff") : ""}${f.kennzeichen ? " · ⚑" : ""}${a.film ? " · 🎬" : a.bild ? " · 🖼" : ""}</small></div>
+      <span class="lb-ergpunkte">${f.fehlerpunkte} P</span>
+      <span style="font-weight:800; color:${f.richtig ? "var(--green)" : "#C0392B"};" aria-label="${f.richtig ? "richtig" : "falsch"}">${f.richtig ? "✓" : "✗"}</span>
+    </div>`;
+  }).join("");
+  main.innerHTML = lbKopf(tt ? "Themen-Test " + erg.thema : erg.frisch ? "Auswertung" : "Prüfung vom " + lbDatumZeit(erg.wann), zurueck)
+    + (erg.zeitUm ? `<div class="lb-ergebnis schlecht" id="lbZeitUm" style="margin-top:4px;">⏱ Die Zeit ist abgelaufen –
+        deine Prüfung wurde automatisch abgegeben.</div>` : "")
+    + `<div class="sd-karte lb-ergkopf" id="lbErgKopf" style="border-color:${farbe};">
+        <div class="sd-eyebrow" style="color:${farbe};">${erg.bestanden ? "Bestanden" : "Nicht bestanden"}</div>
+        ${tt ? `<div style="font-size:34px; font-weight:800; color:var(--dark); margin-top:4px; line-height:1.1;">${erg.fehler} ${erg.fehler === 1 ? "Fehler" : "Fehler"}</div>
+        <div class="sd-meta">${erg.richtig} von ${erg.gesamt} Fragen richtig · ${lbTestRegel(erg.erlaubteFehler)}</div>
+        ${erg.themaTitel ? `<div class="sd-meta">Thema ${esc(erg.thema)}: ${esc(erg.themaTitel)}</div>` : ""}`
+        : `<div style="font-size:34px; font-weight:800; color:var(--dark); margin-top:4px; line-height:1.1;">${erg.punkte} Fehlerpunkte</div>
+        <div class="sd-meta">${erg.richtig !== null && erg.richtig !== undefined ? erg.richtig + " von " + erg.gesamt + " Fragen richtig" : erg.gesamt + " Fragen"}${erg.grenze ? " · erlaubt sind " + erg.grenze + " Fehlerpunkte" : ""}</div>`}
+        ${erg.klasse || erg.pruefungsart ? `<div class="sd-meta">${erg.klasse ? "Klasse " + esc(erg.klasse) : ""}${erg.klasse && erg.pruefungsart ? " · " : ""}${esc(lbArtText(erg.pruefungsart))}</div>` : ""}
+        ${erg.dauer_s !== null && erg.dauer_s !== undefined ? `<div class="sd-meta">Zeit: ${lbUhrText(erg.dauer_s * 1000)}${erg.dauerMin ? " von " + erg.dauerMin + ":00" : ""} Minuten</div>` : ""}
+        ${erg.zwei_fuenfer ? `<div class="lb-ergebnis schlecht" style="margin-top:10px;">
+          Zwei Fragen mit fünf Fehlerpunkten waren falsch – das allein führt zum Durchfallen.</div>` : ""}
+        ${erg.bestanden && erg.frisch ? `<div class="lb-feier" id="lbFeier">${tt ? "🏆 Glückwunsch – der Pokal für Thema " + esc(erg.thema) + " gehört dir!" : "🎉 Glückwunsch – so sieht eine bestandene Prüfung aus!"}</div>` : ""}
+      </div>`
+    + `<div class="lb-knopfreihe" style="margin-top:2px;">
+        ${falsche.length ? `<button class="lb-knopf stark" id="lbFalscheUeben" onclick="lbFalscheUeben()">Falsche jetzt üben (${falsche.length})</button>` : ""}
+        ${erg.details && !tt ? `<button class="lb-knopf" id="lbDruckKnopf" onclick="lbDrucken()" style="flex:0 0 auto;">🖨 Drucken</button>` : ""}
+      </div>`
+    + `<div class="sd-karte">
+        <div class="sd-eyebrow">${erg.details ? "Alle Fragen" : "Diese Fragen waren falsch"}</div>
+        ${erg.details ? `<div class="lb-filter">
+            <button type="button" class="${lbErgNurFalsche ? "" : "an"}" onclick="lbErgFilter(false)">Alle (${erg.fragen.length})</button>
+            <button type="button" class="${lbErgNurFalsche ? "an" : ""}" onclick="lbErgFilter(true)">Nur falsche (${falsche.length})</button>
+          </div>`
+          : `<div class="sd-meta" style="margin-top:3px;">Bei älteren Versuchen sind nur die falschen Fragen gespeichert.</div>`}
+        <div style="margin-top:6px;" id="lbErgListe">${zeilen || `<div class="sd-meta">Keine falschen Fragen – alles richtig!</div>`}</div>
+      </div>`
+    + `<button class="lb-knopf voll" style="margin-top:8px;" id="lbErgZurueck" onclick="${zurueck}">${tt ? "Zurück zum Thema" : erg.frisch ? "Zurück zur Übersicht" : "Zurück zum Verlauf"}</button>
+       ${erg.frisch && !tt ? `<button class="lb-knopf voll" style="margin-top:8px;" onclick="lbVerlaufZeigen()">Alle Versuche ansehen</button>` : ""}
+       <div class="lb-platz"></div>`;
   main.scrollTop = 0;
+  lbPushPlatz();
+  if (erg.bestanden && erg.frisch && !ohneFeier) lbGlueckwunsch();
+}
+function lbErgFilter(nurFalsche) {
+  lbErgNurFalsche = !!nurFalsche;
+  if (lbErgebnis) lbErgebnisZeigen(lbErgebnis, true);
+}
+
+// Kurzes Glückwunsch-Erlebnis. Bei "Bewegung reduzieren" nur der Text.
+function lbGlueckwunsch() {
+  let ruhig = false;
+  try { ruhig = window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
+  const k = document.getElementById("lbErgKopf");
+  if (!k || ruhig || !lbEinst().feier) return;   // P8: Schalter; "Bewegung reduzieren" hat Vorrang
+  const b = document.createElement("div");
+  b.className = "lb-konfetti";
+  b.id = "lbKonfetti";
+  b.setAttribute("aria-hidden", "true");
+  const farben = ["#F67B32", "#2E9E5B", "#F2B705", "#2F6FD6", "#E2610E"];
+  let h = "";
+  for (let i = 0; i < 26; i++) {
+    h += `<span style="left:${Math.round(Math.random() * 96)}%; background:${farben[i % farben.length]};
+      animation-delay:${(Math.random() * 0.5).toFixed(2)}s; transform:rotate(${Math.round(Math.random() * 180)}deg);"></span>`;
+  }
+  b.innerHTML = h;
+  k.appendChild(b);
+  setTimeout(function () { b.remove(); }, 2700);
+}
+
+// ── P8 "Einstellungen" (16.10.2026) ──────────────────────────
+// Die Werte liegen NUR auf diesem Gerät (localStorage), nichts geht an den
+// Server. Ohne gespeicherte Werte sieht alles aus wie bisher.
+const LB_EINST_STANDARD = { pruefoptik: false, schrift: 0, vorlesenAuto: false, feier: true };
+function lbEinst() {
+  const r = Object.assign({}, LB_EINST_STANDARD);
+  const e = lade("fuchs_lb_einstellungen", null);
+  if (e && typeof e === "object") {
+    if (typeof e.pruefoptik === "boolean") r.pruefoptik = e.pruefoptik;
+    if (e.schrift === 0 || e.schrift === 1 || e.schrift === 2) r.schrift = e.schrift;
+    if (typeof e.vorlesenAuto === "boolean") r.vorlesenAuto = e.vorlesenAuto;
+    if (typeof e.feier === "boolean") r.feier = e.feier;
+  }
+  return r;
+}
+function lbEinstSetzen(name, wert) {
+  const e = lbEinst();
+  e[name] = wert;
+  speichere("fuchs_lb_einstellungen", e);
+  lbEinstAnwenden();
+}
+function lbEinstAnwenden() {
+  try {
+    const e = lbEinst(), h = document.documentElement;
+    h.classList.toggle("lb-po", e.pruefoptik);
+    h.classList.toggle("lb-sg-1", e.schrift === 1);
+    h.classList.toggle("lb-sg-2", e.schrift === 2);
+    h.classList.toggle("lb-ohne-feier", !e.feier);
+  } catch (x) {}
+}
+lbEinstAnwenden();
+// Die Prüfungsoptik gilt nur, solange eine Frage zu sehen ist: lbFrageZeigen()
+// setzt main.lb-fragemodus, jede andere Ansicht nimmt es hier wieder weg.
+try {
+  new MutationObserver(function () {
+    if (!main.querySelector("[data-lbfrage]")) main.classList.remove("lb-fragemodus");
+  }).observe(main, { childList: true });
+} catch (e) {}
+
+function lbBewegungReduziert() {
+  try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+}
+
+// Fragenleiste unten beim Üben (Prüfungsoptik): nur zum Ansehen, nicht zum
+// Springen - beim Üben gilt die Reihenfolge der Runde.
+function lbUebenLeiste(s) {
+  return `<div class="lb-punktleiste nummern unten" id="lbLeisteUnten" aria-label="Fragen dieser Runde">`
+    + s.aufgaben.map((a, i) => {
+      const e = s.geprueft[a.nummer];
+      const k = e ? (e.richtig ? " gut" : " schlecht") : "";
+      return `<span class="lb-punkt${k}${i === s.i ? " hier" : ""}" data-i="${i}">${i + 1}</span>`;
+    }).join("") + `</div>`;
+}
+// Die aktuelle Nummer steht in der Mitte der Leiste (ohne die Seite zu bewegen).
+function lbLeisteMitte() {
+  try {
+    const l = document.getElementById("lbLeisteUnten");
+    const h = l && l.querySelector(".hier");
+    if (h) l.scrollLeft = Math.max(0, h.offsetLeft - (l.clientWidth - h.offsetWidth) / 2);
+  } catch (e) {}
+}
+function lbVorlesenAuto() {
+  if (!lbVorlesenGeht() || lbSpricht) return;
+  try { lbVorlesen(); } catch (e) {}
+}
+
+function lbEinstellungenZeigen() {
+  lbAnsicht++;
+  lbSitzung = null;
+  lbErgebnis = null;
+  lbVorleseStoppen();
+  const e = lbEinst();
+  const kannVorlesen = lbVorlesenGeht();
+  const ruhig = lbBewegungReduziert();
+  const schalter = (name, an, aus) => `<button type="button" role="switch" class="lb-schalter" id="lbE_${name}"
+    aria-checked="${an ? "true" : "false"}" aria-labelledby="lbE_${name}_t" ${aus ? "disabled" : ""}
+    onclick="lbEinstUmschalten('${name}')"></button>`;
+  main.innerHTML = lbKopf("⚙️ Einstellungen", "renderLernbereich()")
+    + `<div class="sd-meta" style="margin-top:-6px;">Gilt nur auf diesem Gerät. Nichts davon wird an die Fahrschule geschickt.</div>`
+    + `<div class="sd-karte" id="lbEinstKarte">
+        <div class="lb-einst">
+          <div class="lb-einst-text"><b id="lbE_pruefoptik_t">Prüfungsoptik</b>
+            <small>Üben und Prüfung sehen so ruhig und schlicht aus wie am Prüfrechner:
+            große Antwortkästchen, Fragenleiste unten, keine Animationen.</small></div>
+          ${schalter("pruefoptik", e.pruefoptik)}
+        </div>
+        <div class="lb-einst" style="display:block;">
+          <div class="lb-einst-text"><b id="lbE_schrift_t">Schriftgröße</b><small>Für Fragen und Antworten.</small></div>
+          <div class="lb-filter" role="radiogroup" aria-labelledby="lbE_schrift_t" id="lbE_schrift">
+            ${["normal", "groß", "sehr groß"].map((t, i) => `<button type="button" role="radio" data-sg="${i}"
+              class="${e.schrift === i ? "an" : ""}" aria-checked="${e.schrift === i ? "true" : "false"}"
+              onclick="lbEinstSchrift(${i})">${t}</button>`).join("")}
+          </div>
+          <div class="lb-vorschau" id="lbVorschau" aria-hidden="true">
+            <div class="lb-fragezeile"><div class="lb-frage">So sieht eine Frage aus.</div></div>
+            <div class="lb-antworten">
+              <div class="lb-antwort gewaehlt"><div class="lb-haken">✓</div><span>So sieht eine angekreuzte Antwort aus.</span></div>
+              <div class="lb-antwort"><div class="lb-haken"></div><span>So eine Antwort, die nicht angekreuzt ist.</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="lb-einst">
+          <div class="lb-einst-text"><b id="lbE_vorlesenAuto_t">Vorlesen automatisch</b>
+            <small>${kannVorlesen
+              ? "Jede neue Frage wird von selbst vorgelesen. Der Lautsprecher-Knopf hält an. Manche Geräte sprechen erst, nachdem du einmal getippt hast."
+              : "Dieses Gerät kann nicht vorlesen."}</small></div>
+          ${schalter("vorlesenAuto", e.vorlesenAuto && kannVorlesen, !kannVorlesen)}
+        </div>
+        <div class="lb-einst">
+          <div class="lb-einst-text"><b id="lbE_feier_t">Glückwunsch-Animation</b>
+            <small>Kurzes Konfetti, wenn du eine Prüfungssimulation bestanden hast.${ruhig
+              ? " Auf diesem Gerät ist „Bewegung reduzieren“ eingeschaltet – deshalb gibt es keine Animation."
+              : ""}</small></div>
+          ${schalter("feier", e.feier)}
+        </div>
+      </div>`
+    + `<button class="lb-knopf voll" onclick="renderLernbereich()">Zurück zur Übersicht</button>
+       <div class="lb-platz"></div>`;
+  main.scrollTop = 0;
+  lbPushPlatz();
+}
+function lbEinstUmschalten(name) {
+  if (!(name in LB_EINST_STANDARD) || name === "schrift") return;
+  if (name === "vorlesenAuto" && !lbVorlesenGeht()) return;
+  const an = !lbEinst()[name];
+  lbEinstSetzen(name, an);
+  const k = document.getElementById("lbE_" + name);
+  if (k) k.setAttribute("aria-checked", an ? "true" : "false");
+  // Kurze Ansage beim Einschalten - das Antippen gibt manchen Geräten
+  // (iPhone) zugleich die Erlaubnis, später von selbst zu sprechen.
+  if (name === "vorlesenAuto") {
+    try {
+      window.speechSynthesis.cancel();
+      if (an) {
+        const u = new SpeechSynthesisUtterance("Vorlesen ist eingeschaltet.");
+        u.lang = "de-DE";
+        u.rate = 0.95;
+        window.speechSynthesis.speak(u);
+      }
+    } catch (e) {}
+  }
+}
+function lbEinstSchrift(i) {
+  i = Number(i);
+  if (i !== 0 && i !== 1 && i !== 2) return;
+  lbEinstSetzen("schrift", i);
+  document.querySelectorAll("#lbE_schrift button").forEach(b => {
+    const an = Number(b.dataset.sg) === i;
+    b.classList.toggle("an", an);
+    b.setAttribute("aria-checked", an ? "true" : "false");
+  });
+}
+
+// Eine Frage des Ergebnisses: eigene Antwort neben der Lösung (wie P1).
+function lbDetailZeigen(i) {
+  const erg = lbErgebnis; if (!erg || !erg.details || !erg.fragen.length) return;
+  i = Math.max(0, Math.min(i, erg.fragen.length - 1));
+  lbAnsicht++;
+  lbZoomZu();
+  const f = erg.fragen[i];
+  const a = f.aufgabe;
+  const s = { modus: "rueckblick", reihe: {}, varianten: {}, filmGesehen: {}, filme: {}, wiederholt: {}, feld: 0 };
+  s.reihe[a.nummer] = (a.antworten || []).map((x, k) => k);   // Lieferreihenfolge
+  s.varianten[a.nummer] = true;
+  const g = lbGegebenOder(a, f.gegeben);
+  const leer = a.art === "freitext" ? !g.some(x => String(x || "").trim()) : !g.some(Boolean);
+  const e = { richtig: f.richtig, loesung: a.loesung || [], erklaerung_frei: f.erklaerung_frei };
+  const n = erg.fragen.length;
+  const bild = a.bild || (a.film && a.standbild) ? (a.bild || a.standbild) : "";
+  main.innerHTML = lbKopf("Frage " + (i + 1) + " von " + n, "lbErgebnisZeigen(lbErgebnis, true)")
+    + `<div class="lb-punktleiste nummern">${erg.fragen.map((x, k) => `<button class="lb-punkt ${x.richtig ? "gut" : "schlecht"}${k === i ? " hier" : ""}"
+        data-i="${k}" onclick="lbDetailZeigen(${k})" aria-label="Frage ${k + 1}, ${x.richtig ? "richtig" : "falsch"}">${k + 1}</button>`).join("")}</div>
+    <div class="lb-fortschritt"><div class="lb-zaehler">${esc(a.nummer)}</div>
+      <div class="lb-punkte">${f.kennzeichen ? `<span style="color:#2F6FD6; font-weight:700;">⚑ gekennzeichnet</span> · ` : ""}${f.fehlerpunkte} ${f.fehlerpunkte === 1 ? "Punkt" : "Punkte"}</div></div>
+    <div class="lb-fragezeile"><div class="lb-frage">${esc(a.frage)}</div>${lbSternKnopf(a.nummer)}</div>`
+    + (a.zusatz ? `<div class="sd-meta" style="margin-top:-6px;">${esc(a.zusatz)}</div>` : "")
+    + (bild ? `<div class="lb-medium"><img class="lb-zoombar" src="${esc(lbMedien(bild))}" alt="Bild zur Frage" onerror="lbBildFehlt()"
+        onclick="lbZoomAuf(this.src)"><div class="lb-zoomtipp">${a.film ? "🎬 Videofrage – hier das Standbild. Den Film siehst du beim Üben." : "Bild antippen zum Vergrößern"}</div></div>` : "")
+    + (leer ? `<div class="lb-ergebnis schlecht">Diese Frage hast du nicht beantwortet.</div>` : "")
+    + lbAntwortenHTML(a, g, e, s)
+    + `<div class="lb-knopfreihe" style="margin-top:4px;">
+        <button class="lb-knopf${i ? "" : " aus"}" ${i ? "" : "disabled"} onclick="lbDetailZeigen(${i - 1})">← Vorige</button>
+        <button class="lb-knopf${i < n - 1 ? "" : " aus"}" ${i < n - 1 ? "" : "disabled"} onclick="lbDetailZeigen(${i + 1})">Nächste →</button>
+      </div>
+      <button class="lb-knopf voll" style="margin-top:8px;" onclick="lbErgebnisZeigen(lbErgebnis, true)">Zur Liste</button>
+      <div class="lb-platz"></div>`;
+  main.scrollTop = 0;
+  lbErgDetailIndex = i;
+  lbPushPlatz();
+}
+let lbErgDetailIndex = -1;
+
+// "Falsche jetzt üben": genau die falschen Fragen dieser Prüfung.
+function lbFalscheUeben() {
+  const erg = lbErgebnis; if (!erg) return;
+  const nummern = erg.fragen.filter(f => !f.richtig).map(f => f.aufgabe.nummer);
+  if (!nummern.length) return;
+  if (erg.themenTest) { lbUeben("nummern", "", "Falsche aus dem Themen-Test", nummern, { zurueck: "thema", thema: erg.thema }); return; }
+  lbUeben("nummern", "", "Falsche aus der Prüfung", nummern);
+}
+
+// ── Verlauf ──────────────────────────────────────────────────
+async function lbVerlaufZeigen() {
+  const meine = ++lbAnsicht;
+  lbSitzung = null;
+  lbErgebnis = null;
+  lbErgNurFalsche = false;
+  const kopf = lbKopf("Deine Prüfungssimulationen", "renderLernbereich()");
+  lbWarten(kopf);
+  const d = await lbRuf("verlauf");
+  if (meine !== lbAnsicht) return;
+  if (!d || !d.ok) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">Der Verlauf ist gerade nicht abrufbar.</div></div>`;
+    return;
+  }
+  const liste = d.pruefungen || [];
+  const l5 = d.letzte5 || { anzahl: 0, bestanden: 0 };
+  main.innerHTML = kopf
+    + (liste.length ? `<div class="sd-karte" id="lbLetzte5">
+        <div class="sd-eyebrow">Die letzten ${l5.anzahl}</div>
+        <div style="font-size:22px; font-weight:800; color:var(--dark); margin-top:4px;">${l5.bestanden} von ${l5.anzahl} bestanden</div>
+        <div class="lb-verlauf-punkte">${liste.slice(0, 5).map(p => `<i class="${p.bestanden ? "gut" : ""}" title="${p.bestanden ? "bestanden" : "nicht bestanden"}"></i>`).join("")}</div>
+      </div>` : "")
+    + `<div class="sd-karte">
+        <div class="sd-eyebrow">Alle Versuche (${liste.length})</div>
+        ${liste.length ? liste.map(p => `<div class="lb-vzeile" data-id="${p.id}" onclick="lbVerlaufOeffnen(${Number(p.id)})">
+            <div style="flex:1; min-width:0;"><b>${esc(lbDatumZeit(p.wann))}</b>
+              <small>${[p.klasse ? "Klasse " + esc(p.klasse) : "", esc(lbArtText(p.pruefungsart)), p.punkte + " Fehlerpunkte",
+                p.dauer_s !== null && p.dauer_s !== undefined ? lbUhrText(p.dauer_s * 1000) + " min" : ""].filter(Boolean).join(" · ")}${p.details ? "" : " · nur Liste"}</small></div>
+            <span class="lb-marke ${p.bestanden ? "gut" : "schlecht"}">${p.bestanden ? "bestanden" : "nicht bestanden"}</span>
+            <div class="sd-pfeil">›</div></div>`).join("")
+          : `<div class="sd-meta" style="margin-top:4px;">Noch keine Prüfungssimulation. Probier es aus!</div>`}
+      </div>
+      <div class="lb-platz"></div>`;
+  main.scrollTop = 0;
+  lbPushPlatz();
+}
+async function lbVerlaufOeffnen(id) {
+  const meine = ++lbAnsicht;
+  const kopf = lbKopf("Prüfungssimulation", "lbVerlaufZeigen()");
+  lbWarten(kopf);
+  const d = await lbRuf("pruefung-details", { id });
+  if (meine !== lbAnsicht) return;
+  if (!d || !d.ok) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">${esc((d && d.fehler) || "Dieser Versuch lässt sich gerade nicht öffnen.")}</div></div>`;
+    return;
+  }
+  lbSchluessel = d.medien_schluessel || lbSchluessel;
+  lbErgNurFalsche = false;
+  lbErgebnisZeigen(lbErgebnisAusDetails(d), true);
+}
+
+// ── Drucken ──────────────────────────────────────────────────
+// Browser-Druck mit Fragetext, eigener Antwort und Lösung - OHNE Bilder und
+// Filme (Vertrag mit der arge tp 21, Ziff. 3.4): dort steht nur ein Hinweis.
+function lbDruckHTML(erg) {
+  const kreuz = b => b ? "☒" : "☐";
+  const kopf = `<h1>Prüfungssimulation – Auswertung</h1>
+    <div>${esc(lbDatumZeit(erg.wann))}${erg.klasse ? " · Klasse " + esc(erg.klasse) : ""}${erg.pruefungsart ? " · " + esc(lbArtText(erg.pruefungsart)) : ""}${erg.dauer_s !== null && erg.dauer_s !== undefined ? " · Zeit " + lbUhrText(erg.dauer_s * 1000) + " min" : ""}</div>
+    <p><b>${erg.bestanden ? "Bestanden" : "Nicht bestanden"}</b> – ${erg.punkte} Fehlerpunkte${erg.grenze ? " (erlaubt " + erg.grenze + ")" : ""}${erg.richtig !== null && erg.richtig !== undefined ? " · " + erg.richtig + " von " + erg.gesamt + " Fragen richtig" : ""}</p>`;
+  const fragen = erg.fragen.map((f, i) => {
+    const a = f.aufgabe;
+    const g = lbGegebenOder(a, f.gegeben);
+    const soll = a.loesung || [];
+    let h = `<section class="lb-d-frage"><h3>${i + 1}. ${esc(a.frage)} <span>(${esc(a.nummer)} · ${f.fehlerpunkte} Punkte · ${f.richtig ? "richtig" : "falsch"})</span></h3>`;
+    if (a.zusatz) h += `<div>${esc(a.zusatz)}</div>`;
+    if (a.film) h += `<div class="lb-d-medium">[Film – in der App ansehen]</div>`;
+    else if (a.bild) h += `<div class="lb-d-medium">[Bild – in der App ansehen]</div>`;
+    if (a.art === "freitext") {
+      const t = a.textteile || [];
+      const n = a.luecken || 1;
+      const nach = k => String((n > 1 ? (k === 0 ? t[1] : t[2]) : [t[1], t[2]].filter(Boolean).join(" ")) || "").trim();
+      const satz = w => w.map((x, k) => (String(x || "").trim() || "–") + (nach(k) ? " " + nach(k) : "")).join(" ");
+      h += `<div>${esc(String(t[0] || "").trim())}</div><div>Deine Antwort: <b>${esc(satz(g.slice(0, n)))}</b> · Lösung: <b>${esc(satz(soll.slice(0, n)))}</b></div>`;
+    } else {
+      h += `<table><tr><th>Antwort</th><th class="lb-d-mitte">Deine Antwort</th><th class="lb-d-mitte">Lösung</th></tr>`
+        + (a.antworten || []).map((x, k) => `<tr><td>${a.art === "abbildungsauswahl" ? "Bild-Antwort " + (k + 1) + " – in der App ansehen" : esc(lbAntwortText(x))}</td>
+            <td class="lb-d-mitte">${kreuz(!!g[k])}</td><td class="lb-d-mitte">${kreuz(!!soll[k])}</td></tr>`).join("")
+        + `</table>`;
+    }
+    return h + `</section>`;
+  }).join("");
+  return kopf + fragen + `<div class="lb-d-fuss">Quelle des deutschen Textes der Prüfungsaufgaben: TÜV | DEKRA arge tp 21.
+    Nur zur eigenen Prüfungsvorbereitung. Bilder und Filme gibt es nur in der App.</div>`;
+}
+function lbDrucken() {
+  const erg = lbErgebnis; if (!erg || !erg.details) return;
+  let box = document.getElementById("lbDruck");
+  if (!box) { box = document.createElement("div"); box.id = "lbDruck"; document.body.appendChild(box); }
+  box.innerHTML = lbDruckHTML(erg);
+  const weg = function () { box.innerHTML = ""; window.removeEventListener("afterprint", weg); };
+  window.addEventListener("afterprint", weg);
+  try { window.print(); } catch (e) {}
+}
+
+// ── P5: Markieren & Frageliste (16.10.2026) ──────────────────
+// Der Stern ist das eigene Merkzeichen beim Üben (in der laufenden Prüfung
+// gibt es dafür "Kennzeichen"). Gespeichert wird auf dem Server, je Kartei.
+let lbMarkiert = new Set();
+function lbSternKnopf(nr) {
+  const an = lbMarkiert.has(nr);
+  return `<button type="button" class="lb-stern${an ? " an" : ""}" data-stern="${esc(nr)}" aria-pressed="${an}"
+    aria-label="${an ? "Markierung entfernen" : "Frage markieren"}" title="${an ? "Markierung entfernen" : "Frage markieren"}"
+    onclick="lbStern(event, this.dataset.stern)">${an ? "★" : "☆"}</button>`;
+}
+function lbSternZeigen(nr) {
+  const an = lbMarkiert.has(nr);
+  document.querySelectorAll(".lb-stern").forEach(function (b) {
+    if (b.dataset.stern !== nr) return;
+    b.classList.toggle("an", an);
+    b.textContent = an ? "★" : "☆";
+    b.setAttribute("aria-pressed", String(an));
+    b.setAttribute("aria-label", an ? "Markierung entfernen" : "Frage markieren");
+  });
+}
+async function lbStern(ev, nr) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  if (!nr) return;
+  const an = !lbMarkiert.has(nr);
+  if (an) lbMarkiert.add(nr); else lbMarkiert.delete(nr);      // sofort zeigen
+  lbSternZeigen(nr);
+  const d = await lbRuf("markieren", { aufgabe: nr, an });
+  if (!d || !d.ok) {                                           // zurücknehmen
+    if (an) lbMarkiert.delete(nr); else lbMarkiert.add(nr);
+    lbSternZeigen(nr);
+    return;
+  }
+  if (lbListe && lbListeF.markiert && document.getElementById("lbListeErg")) lbListeZeichnen();
+}
+
+// ── Frageliste ───────────────────────────────────────────────
+let lbListe = null;
+let lbListeF = { q: "", status: "", typ: "", teil: "", gebiet: "", thema: "", markiert: false, mehr: 200 };
+let lbListeScroll = 0;
+let lbListeUhr = null;
+const LB_STATUS = { neu: "neu", falsch: "falsch", einmal: "1× richtig", sicher: "sicher" };
+const LB_TYP = { video: "Video", bild: "Bild", zahl: "Zahl", zeichen: "Verkehrszeichen", text: "Nur Text" };
+async function lbListeZeigen(zurueck) {
+  const meine = ++lbAnsicht;
+  lbSitzung = null;
+  lbErgebnis = null;
+  const kopf = lbKopf("Frageliste", "renderLernbereich()");
+  lbWarten(kopf);
+  const d = await lbRuf("frageliste");
+  if (meine !== lbAnsicht) return;
+  if (!d || !d.ok) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">Die Frageliste ist gerade nicht abrufbar.</div></div>`;
+    return;
+  }
+  lbListe = d;
+  lbMarkiert = new Set(d.fragen.filter(f => f.markiert).map(f => f.nummer));
+  if (!zurueck) lbListeF.mehr = 200;
+  const opt = (wert, text, akt) => `<option value="${esc(wert)}"${wert === akt ? " selected" : ""}>${esc(text)}</option>`;
+  main.innerHTML = kopf
+    + `<div class="sd-karte lb-listefilter">
+        <input type="search" id="lbListeSuche" placeholder="Im Fragetext suchen …" value="${esc(lbListeF.q)}"
+          oninput="lbListeSuche(this.value)" enterkeyhint="search" autocomplete="off" aria-label="Im Fragetext suchen">
+        <div class="lb-filtergitter">
+          <select id="lbFStatus" aria-label="Status" onchange="lbListeFilter('status', this.value)">${opt("", "Alle Status", lbListeF.status)}${Object.keys(LB_STATUS).map(k => opt(k, LB_STATUS[k][0].toUpperCase() + LB_STATUS[k].slice(1), lbListeF.status)).join("")}</select>
+          <select id="lbFTyp" aria-label="Typ" onchange="lbListeFilter('typ', this.value)">${opt("", "Alle Typen", lbListeF.typ)}${Object.keys(LB_TYP).map(k => opt(k, LB_TYP[k], lbListeF.typ)).join("")}</select>
+          <select id="lbFTeil" aria-label="Grund- oder Zusatzstoff" onchange="lbListeFilter('teil', this.value)">${opt("", "Grund- und Zusatzstoff", lbListeF.teil)}${opt("grundstoff", "Grundstoff", lbListeF.teil)}${opt("zusatzstoff", "Zusatzstoff", lbListeF.teil)}</select>
+          <select id="lbFGebiet" aria-label="Sachgebiet" onchange="lbListeFilter('gebiet', this.value)">${opt("", "Alle Sachgebiete", lbListeF.gebiet)}${(d.gebiete || []).map(g => opt(g.gebiet, g.titel, lbListeF.gebiet)).join("")}</select>
+          ${(d.themen_liste && d.themen_liste.length) ? `<select id="lbFThema" aria-label="Thema" style="grid-column:1 / -1;" onchange="lbListeFilter('thema', this.value)">${opt("", "Alle Themen", lbListeF.thema)}${d.themen_liste.map(t => opt(t.thema, "Thema " + t.thema + ": " + t.titel, lbListeF.thema)).join("")}</select>` : ""}
+        </div>
+        <label class="lb-haken-zeile"><input type="checkbox" id="lbFMarkiert" ${lbListeF.markiert ? "checked" : ""}
+          onchange="lbListeFilter('markiert', this.checked)"> Nur markierte ★</label>
+        <div class="lb-statuslegende"><span><span class="lb-status"></span>neu</span><span><span class="lb-status falsch"></span>falsch</span>
+          <span><span class="lb-status einmal"></span>1× richtig</span><span><span class="lb-status sicher"></span>sicher</span></div>
+      </div>
+      <div class="sd-meta" id="lbListeZahl" style="margin:2px 2px 0;"></div>
+      <div class="sd-karte" id="lbListeErg" style="margin-top:6px;"></div>
+      <div class="lb-platz"></div>`;
+  lbListeZeichnen();
+  main.scrollTop = zurueck ? lbListeScroll : 0;
+  lbPushPlatz();
+}
+function lbListeTreffer() {
+  if (!lbListe) return [];
+  const f = lbListeF;
+  const q = String(f.q || "").trim().toLowerCase();
+  return lbListe.fragen.filter(x => (!q || (x.frage + " " + x.zusatz + " " + x.nummer).toLowerCase().includes(q))
+    && (!f.status || x.status === f.status) && (!f.typ || (x.typen || []).includes(f.typ))
+    && (!f.teil || x.teil === f.teil) && (!f.gebiet || x.gebiet === f.gebiet)
+    && (!f.thema || (x.themen || []).includes(f.thema))
+    && (!f.markiert || lbMarkiert.has(x.nummer)));
+}
+function lbListeZeichnen() {
+  const box = document.getElementById("lbListeErg"); if (!box || !lbListe) return;
+  const t = lbListeTreffer();
+  const zeige = t.slice(0, lbListeF.mehr);
+  const typIcon = { video: "🎬", bild: "🖼", zahl: "🔢", zeichen: "🚸" };
+  document.getElementById("lbListeZahl").textContent = t.length + " von " + lbListe.fragen.length + " Fragen";
+  box.innerHTML = zeige.length ? zeige.map(x => `<div class="lb-lzeile" data-nr="${esc(x.nummer)}" onclick="lbListeUeben(this.dataset.nr)">
+      <span class="lb-status ${x.status}" role="img" aria-label="${esc(LB_STATUS[x.status] || "")}" title="${esc(LB_STATUS[x.status] || "")}"></span>
+      <div class="lb-ergtext">${esc(lbKurz(x.frage, 90))}<small>${esc(x.nummer)} · ${x.fehlerpunkte} P${(x.typen || []).filter(k => typIcon[k]).map(k => " · " + typIcon[k]).join("")}</small></div>
+      ${lbSternKnopf(x.nummer)}</div>`).join("")
+      + (t.length > zeige.length ? `<button class="lb-knopf voll" id="lbListeMehr" style="margin-top:10px;" onclick="lbListeMehr()">Weitere ${Math.min(200, t.length - zeige.length)} anzeigen (${t.length - zeige.length} übrig)</button>` : "")
+    : `<div class="sd-meta">Keine Frage passt zu Suche und Filter.</div>`;
+}
+function lbListeSuche(v) {
+  lbListeF.q = v; lbListeF.mehr = 200;
+  clearTimeout(lbListeUhr);
+  lbListeUhr = setTimeout(lbListeZeichnen, 150);
+}
+function lbListeFilter(was, wert) { lbListeF[was] = wert; lbListeF.mehr = 200; lbListeZeichnen(); }
+function lbListeMehr() { lbListeF.mehr += 200; lbListeZeichnen(); }
+// Eine Frage aus der Liste einzeln üben - zählt normal für den Lernstand.
+function lbListeUeben(nr) {
+  if (!nr) return;
+  lbListeScroll = main.scrollTop;
+  lbUeben("nummern", "", "Frage " + nr, [nr], { zurueck: "liste" });
+}
+
+// ── P4: Themen & Fortschritt (16.10.2026) ────────────────────
+// Unterrichtsthemen 1–12, dann 13–14 (Klasse B) bzw. A1–A4 (Motorrad). Die
+// Zuordnung je amtlicher Lektion steht in theorie_inhalte.db (Server).
+function lbStapelHTML(t) {
+  const g = t.gesamt || 1;
+  const w = n => (n * 100 / g).toFixed(2) + "%";
+  return `<div class="lb-stapel" role="img" aria-label="${t.sicher} sicher, ${t.einmal} einmal richtig, ${t.falsch} falsch, ${t.neu} neu">
+    <span class="sicher" style="width:${w(t.sicher)}"></span><span class="einmal" style="width:${w(t.einmal)}"></span><span class="falsch" style="width:${w(t.falsch)}"></span></div>`;
+}
+function lbThemaKarteHTML(t) {
+  return `<div class="lb-gebiet lb-thema" data-thema="${esc(t.thema)}" onclick="lbThemaZeigen(this.dataset.thema)">
+    <div class="lb-themanr">${esc(t.thema)}</div>
+    <div style="flex:1; min-width:0;"><b>${esc(t.titel)}</b>
+      <div class="lb-gebiet-meta">neu ${t.neu} · falsch ${t.falsch} · 1× richtig ${t.einmal} · sicher ${t.sicher}</div>
+      ${t.stationen ? `<div class="lb-gebiet-meta lb-stationenzahl">${t.stationen_3}/${t.stationen} Stationen ★★★${t.pokal ? ` · <span class="lb-pokal">🏆 Pokal</span>` : ""}</div>` : ""}
+      ${lbStapelHTML(t)}</div>
+    <div class="lb-themaprozent">${t.pokal ? `<div aria-label="Pokal" title="Themen-Test bestanden">🏆</div>` : ""}${t.prozent} %</div></div>`;
+}
+function lbThemenHTML(themen) {
+  const zahl = themen.filter(t => /^\d+$/.test(t.thema) && Number(t.thema) <= 12);
+  const b = themen.filter(t => t.thema === "13" || t.thema === "14");
+  const mot = themen.filter(t => /^A\d$/.test(t.thema));
+  return `<div class="sd-eyebrow" style="margin-top:6px;">Nach Thema üben</div>`
+    + (zahl.length ? `<div class="sd-meta" style="margin:-2px 0 0;">Unterrichtsthemen 1–12</div>` + zahl.map(lbThemaKarteHTML).join("") : "")
+    + (b.length ? `<div class="sd-meta" style="margin:6px 0 0;">Klasse B</div>` + b.map(lbThemaKarteHTML).join("") : "")
+    + (mot.length ? `<div class="sd-meta" style="margin:6px 0 0;">Motorrad</div>` + mot.map(lbThemaKarteHTML).join("") : "");
+}
+async function lbThemaZeigen(thema, neuLaden) {
+  const meine = ++lbAnsicht;
+  lbSitzung = null;
+  lbErgebnis = null;
+  thema = String(thema);
+  const kopf = lbKopf("Thema " + thema, "renderLernbereich()");
+  if (neuLaden || !lbStand || !lbStand.themen) {
+    lbWarten(kopf);
+    const d = await lbRuf("uebersicht");
+    if (meine !== lbAnsicht) return;
+    if (d && d.ok) {
+      lbStand = d;
+      lbSchluessel = d.medien_schluessel || lbSchluessel;
+      if (Array.isArray(d.markiert_nummern)) lbMarkiert = new Set(d.markiert_nummern);
+    }
+  }
+  const t = ((lbStand && lbStand.themen) || []).find(x => x.thema === thema);
+  if (!t) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">Dieses Thema gibt es für dich nicht.</div></div>`;
+    return;
+  }
+  // P6: Lernpfad dieses Themas (Stationen, Sterne, Themen-Test). Ein älterer
+  // Server kennt den Weg nicht - dann bleibt die Seite wie in P4.
+  const pf = await lbRuf("thema-pfad", { thema });
+  if (meine !== lbAnsicht) return;
+  lbPfad = pf && pf.ok && Array.isArray(pf.stationen) ? pf : null;
+  if (lbPfad) t.pokal = !!lbPfad.pokal;
+  const knopf = (modus, text, n, stark) => `<button class="lb-knopf voll${stark ? " stark" : ""}${n ? "" : " aus"}" style="margin-top:8px;"
+      data-modus="${modus}" ${n ? "" : "disabled"} onclick="lbThemaUeben('${esc(t.thema)}','${modus}')">${text} (${n})</button>`;
+  main.innerHTML = kopf
+    + `<div class="sd-karte" id="lbThemaKarte">
+        <div class="sd-eyebrow">${esc(t.titel)}</div>
+        <div style="display:flex; align-items:baseline; gap:10px; margin-top:4px;">
+          <div style="font-size:34px; font-weight:800; color:var(--dark); line-height:1;">${t.prozent} %</div>
+          <div class="sd-meta" style="margin:0;">${t.sicher} von ${t.gesamt} Fragen sitzen sicher</div></div>
+        ${lbStapelHTML(t)}
+        <div class="lb-themazahlen"><div><b>${t.neu}</b>neu</div><div><b style="color:#C0392B;">${t.falsch}</b>falsch</div>
+          <div><b style="color:#B88A00;">${t.einmal}</b>1× richtig</div><div><b style="color:var(--green);">${t.sicher}</b>sicher</div></div>
+        ${t.pokal ? `<div style="margin-top:10px;"><span class="lb-pokal" id="lbThemaPokal">🏆 Pokal – Themen-Test bestanden</span></div>` : ""}
+      </div>`
+    + (lbPfad ? lbPfadHTML(lbPfad) : "")
+    + (lbPfad ? `<div class="sd-eyebrow" style="margin-top:6px;">Nach Stand üben</div>` : "")
+    + knopf("alle", "Alle Fragen üben", t.gesamt, !lbPfad)
+    + knopf("neu", "Neue Fragen", t.neu)
+    + knopf("falsch", "Fehlerhafte Fragen", t.falsch)
+    + knopf("markiert", "★ Markierte Fragen", t.markiert || 0)
+    + `<button class="lb-knopf voll gefahr-rand" id="lbThemaReset" style="margin-top:16px;" onclick="lbThemaReset('${esc(t.thema)}')">↺ Thema zurücksetzen</button>
+       <div class="sd-meta" style="text-align:center;">Setzt nur den Lernstand dieses Themas zurück. Markierungen, Prüfungen und Pokale bleiben.</div>
+       <div class="lb-platz"></div>`;
+  main.scrollTop = 0;
+  lbPushPlatz();
+}
+function lbThemaUeben(thema, modus) {
+  const t = ((lbStand && lbStand.themen) || []).find(x => x.thema === String(thema));
+  const name = { alle: "", neu: "Neue · ", falsch: "Fehlerhafte · ", markiert: "Markierte · " }[modus] || "";
+  lbUeben("thema", "", name + "Thema " + thema + (t ? ": " + t.titel : ""), undefined, { zurueck: "thema", thema: String(thema), modus });
+}
+async function lbThemaReset(thema) {
+  const t = ((lbStand && lbStand.themen) || []).find(x => x.thema === String(thema));
+  if (!t) return;
+  const ok = await lbDialog({ titel: "Thema " + t.thema + " zurücksetzen?",
+    text: "Dein Lernstand für die " + t.gesamt + " Fragen dieses Themas wird gelöscht. Markierungen, Prüfungsergebnisse und Pokale bleiben.",
+    ja: "Zurücksetzen", nein: "Abbrechen", gefahr: true });
+  if (!ok) return;
+  const d = await lbRuf("thema-zuruecksetzen", { thema: t.thema });
+  lbThemaZeigen(t.thema, true);
+  if (!d || !d.ok) { try { fsToast("Das Zurücksetzen hat nicht geklappt."); } catch (e) {} }
+}
+
+// ── P6: Lernpfad (16.10.2026) ────────────────────────────────
+// Station = amtliche Lektion im Thema (über 15 Fragen in Teile geteilt). Die
+// Sterne rechnet der Server aus dem Lernstand: ★ jede Frage einmal richtig,
+// ★★ dazu mindestens 80 % sicher, ★★★ alle sicher.
+let lbPfad = null;
+// Kleine Themen (unter 10 Fragen) gelten nur ohne Fehler als bestanden.
+function lbTestRegel(n) { return Number(n) > 0 ? "bestanden bei höchstens " + n + " Fehler" : "bestanden nur ohne Fehler"; }
+function lbSterneHTML(n) {
+  n = Math.max(0, Math.min(3, Number(n) || 0));
+  return `<span class="lb-sterne" role="img" aria-label="${n} von 3 Sternen"><span class="an">${"★".repeat(n)}</span>${"★".repeat(3 - n)}</span>`;
+}
+function lbPfadHTML(p) {
+  const st = p.stationen || [];
+  const zeilen = st.map((x, i) => {
+    const naechsteVoll = x.sterne === 3;
+    return `<button type="button" class="lb-station" data-station="${i}" data-sterne="${x.sterne}" onclick="lbStationUeben(${i})"
+        aria-label="Station ${i + 1}: ${esc(x.titel)}${x.teile > 1 ? ", Teil " + x.teil + " von " + x.teile : ""}, ${x.sterne} von 3 Sternen">
+      <span class="lb-st-spur"><span class="lb-st-punkt s${x.sterne}">${x.sterne === 3 ? "✓" : i + 1}</span>
+        <span class="lb-st-strich${naechsteVoll ? " voll" : ""}"></span></span>
+      <span class="lb-st-karte"><span style="flex:1; min-width:0;"><b>${esc(x.titel)}${x.teile > 1 ? ` <span style="font-weight:600; color:var(--gray);">· Teil ${x.teil}/${x.teile}</span>` : ""}</b>
+        <span class="lb-st-meta" style="display:block;">${esc(x.lektion)}${x.bereich ? " · " + esc(x.bereich) : ""} · ${x.stoff === "grundstoff" ? "Grundstoff" : "Zusatzstoff"}<br>${x.gesamt} Fragen · ${x.sicher} sicher</span></span>
+        ${lbSterneHTML(x.sterne)}</span>
+    </button>`;
+  }).join("");
+  const t = p.test || {};
+  const test = `<div class="lb-station" style="cursor:default;" id="lbThemenTest">
+      <span class="lb-st-spur"><span class="lb-st-punkt test${p.pokal ? " pokal" : ""}">${p.pokal ? "🏆" : "🏁"}</span></span>
+      <span class="lb-st-karte" style="display:block;"><b>Themen-Test</b>
+        <span class="lb-st-meta" style="display:block;">${(t.fragen || 10) < 10 ? "Alle " + t.fragen + " Fragen" : (t.fragen || 10) + " zufällige Fragen"} aus diesem Thema · ${lbTestRegel(t.erlaubte_fehler === undefined ? 1 : t.erlaubte_fehler)}
+          ${p.pokal ? `<br><span class="lb-pokal">🏆 Bestanden – Pokal gewonnen</span>` : t.versuche ? `<br>${t.versuche} ${t.versuche === 1 ? "Versuch" : "Versuche"} bisher` : ""}</span>
+        <button class="lb-knopf voll stark" id="lbThemenTestKnopf" style="margin-top:10px;" onclick="lbThemenTestStarten('${esc(p.thema)}')">${p.pokal ? "Test noch einmal machen" : "Themen-Test starten"}</button></span>
+    </div>`;
+  return `<div class="sd-eyebrow" style="margin-top:6px;">Lernpfad · ${p.stationen_3 || 0}/${st.length} Stationen ★★★</div>
+    <div class="lb-pfad" id="lbPfad">${zeilen}${test}</div>`;
+}
+function lbStationUeben(i) {
+  const p = lbPfad; if (!p || !p.stationen || !p.stationen[i]) return;
+  const x = p.stationen[i];
+  const nr = (x.nummern || []).slice();
+  for (let k = nr.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); const h = nr[k]; nr[k] = nr[j]; nr[j] = h; }
+  lbUeben("nummern", "", x.titel + (x.teile > 1 ? " · Teil " + x.teil + "/" + x.teile : ""), nr, { zurueck: "thema", thema: p.thema });
+}
+async function lbThemenTestStarten(thema) {
+  lbAnsicht++;
+  thema = String(thema);
+  const kopf = lbKopf("Themen-Test", `lbThemaZeigen('${esc(thema)}', true)`);
+  lbWarten(kopf);
+  const d = await lbRuf("themen-test", { thema });
+  if (!d || !d.ok || !(d.aufgaben || []).length) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div class="sd-meta">Der Themen-Test lässt sich gerade nicht starten.</div>
+      <button class="lb-knopf voll" style="margin-top:12px;" onclick="lbThemaZeigen('${esc(thema)}', true)">Zurück zum Thema</button></div>`;
+    return;
+  }
+  lbSchluessel = d.medien_schluessel || lbSchluessel;
+  // Gleiche Ansicht wie die Prüfung (Leiste, Kennzeichen, Weiter/Fertig), aber
+  // ohne Uhr und ohne Reiter. Abgegeben wird an den eigenen Weg (lbAbgeben).
+  lbSitzung = {
+    modus: "pruefung", themenTest: true, testId: d.test_id, thema, titel: "Themen-Test " + thema,
+    themaTitel: d.titel || "", erlaubteFehler: Number(d.erlaubte_fehler === undefined ? 1 : d.erlaubte_fehler),
+    zurueck: "thema", aufgaben: d.aufgaben, i: 0, gegeben: {}, geprueft: {}, filme: {},
+    filmMax: Number(d.film_max) || 5, reihe: {}, varianten: {}, filmGesehen: {}, wiederholt: {}, feld: 0,
+    mitTeil: false, kennzeichen: {}, start: Date.now()
+  };
+  lbFrageZeigen();
 }
 
 // ── Chat (Foxy) ──────────────────────────────────────────────
@@ -3555,6 +5345,22 @@ function demoHinweis(label) {
 // Zuweisung sofort ueberschrieben wurde (Benjamin, 09.09.2026).
 function waehleTab(id, label, ansicht) {
   if (!["mediathek","chat","home","ausbildung","fahrstunden"].includes(id)) { demoHinweis(label); return; }
+  // P2 (16.10.2026): Eine laufende Prüfung über die Leiste unten verlassen?
+  // Dann dieselbe Rückfrage wie bei "Prüfung abbrechen".
+  const s = typeof lbSitzung !== "undefined" ? lbSitzung : null;
+  if (s && s.modus === "pruefung" && !s.abgegeben && (document.getElementById("lbUhr") || (s.themenTest && document.querySelector(".lb-pkopf")))) {
+    lbDialog(s.themenTest
+      ? { titel: "Themen-Test abbrechen?", text: "Der Test wird nicht gewertet.", ja: "Abbrechen", nein: "Weiter testen", gefahr: true }
+      : { titel: "Prüfung abbrechen?",
+      text: "Dein Fortschritt geht verloren – diese Prüfung wird nicht gewertet.",
+      ja: "Abbrechen", nein: "Weiter prüfen", gefahr: true }).then(function (ok) {
+      if (!ok || lbSitzung !== s) return;
+      lbUhrStopp(); lbVorleseStoppen(); lbZoomZu();
+      lbSitzung = null; lbStand = null;
+      waehleTab(id, label, ansicht);
+    });
+    return;
+  }
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("aktiv", b.dataset.tab === id));
   // Die untere Leiste gibt nichts mit und landet deshalb wie bisher in der
   // Uebersicht. Wer gezielt auf "Freie Termine" tippt, kommt dorthin.
