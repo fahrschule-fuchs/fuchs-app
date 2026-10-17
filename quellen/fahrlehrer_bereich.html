@@ -234,22 +234,23 @@ function preisLader(prefix, werte){
     // der Server wie bisher das Stammfahrzeug des Fahrlehrers.
     const anfrage={fl:FL,schueler_id:w.schueler_id,art:w.art,dauer:w.dauer};
     if(w.fahrzeug_id!==undefined)anfrage.fahrzeug_id=w.fahrzeug_id;
+    // 08.10.2026: Preis nach der Klasse DIESER Stunde - gewaehlte Klasse bzw.
+    // die am Termin. Ohne Angabe gilt wie bisher die Hauptklasse.
+    if(w.klasse)anfrage.klasse=w.klasse;
+    if(w.stunde_id)anfrage.stunde_id=w.stunde_id;
     const d=await jpost("fahrlehrer/stunde-preis",anfrage);
     if(nr!==lauf)return;
-    const box=document.getElementById(prefix+"Berechnen");
     const bez=document.getElementById(prefix+"PreisLabel");
     if(!d){feld.textContent="–";if(hin)hin.textContent="Preis gerade nicht abrufbar.";return;}
-    if(d.enthalten){
-      // Mofa, B96: die Fahrstunde steckt im Kurspreis. Kein Haken, keine Warnung.
-      if(box){ if(box.dataset.aus!=="1"){box.dataset.aus="1";box.dataset.vorher=box.checked?"1":"0";}
-               box.checked=false; box.style.display="none"; }
-      if(bez)bez.textContent="💶 Diese Fahrstunde ist ";
-      feld.textContent="im Kurspreis enthalten";
-      if(hin)hin.textContent="";
+    if(d.enthalten||d.im_paket){
+      // Mofa/B96 (Preis 0,00) oder Kurs-Kontingent/Paket (B196, 7-Tage-Fuchs):
+      // gebucht wird automatisch ein 0-€-Posten mit Vermerk.
+      if(bez)bez.textContent="💶 Diese Stunde ist ";
+      feld.textContent="im Kurspaket enthalten";
+      if(hin)hin.textContent=d.paket_name?String(d.paket_name):"";
       return;
     }
-    if(box&&box.dataset.aus==="1"){ box.style.display=""; box.checked=box.dataset.vorher!=="0"; box.dataset.aus="0"; }
-    if(bez)bez.textContent="Fahrstunde jetzt berechnen: ";
+    if(bez)bez.textContent="💶 Diese Stunde wird berechnet: ";
     feld.textContent=d.betrag_text||"–";
     if(hin)hin.textContent=d.hinweis||"";
   };
@@ -1157,10 +1158,11 @@ async function ladeBuchen(){
         style="width:120px;text-align:center" value="80">
     </div>
     <div class="meta" id="bDauerInfo" style="margin-top:-4px">Dauer in Minuten.</div>
-    <label style="display:flex;gap:10px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer">
-      <input type="checkbox" id="bBerechnen" checked style="width:19px;height:19px;flex:none">
-      <span style="font-size:14px;font-weight:600"><span id="bPreisLabel">Fahrstunde jetzt berechnen: </span><b id="bPreis">…</b></span>
-    </label>
+    <!-- 08.10.2026 (B. Methner): kein Haken "jetzt berechnen" mehr - jede
+         bestaetigte Stunde wird berechnet (Kurs/Paket automatisch 0 € mit Vermerk). -->
+    <div style="display:flex;gap:10px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px">
+      <span style="font-size:14px;font-weight:600"><span id="bPreisLabel">💶 Diese Stunde wird berechnet: </span><b id="bPreis">…</b></span>
+    </div>
     <div class="meta" id="bPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
     <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
@@ -1187,7 +1189,7 @@ async function ladeBuchen(){
   bZeigen("");
   const bPreisNeu=preisLader("b",()=>({
     schueler_id:document.getElementById("bSchueler").value,
-    art:bArt.value, dauer:bDauer.value}));
+    art:bArt.value, dauer:bDauer.value, klasse:SK_WAHL["bKlasse"]||""}));
   B_SCHUELER=d.schueler||[];
   // Vorgefiltert auf die, die noch fahren. Wer laenger pausiert, kommt ueber
   // den Schalter zurueck. Die Reihenfolge bleibt alphabetisch, so wie sie vom
@@ -1338,8 +1340,7 @@ async function buchungSpeichern(){
   if(kFehlt){err.textContent=kFehlt;return;}
   const unterschrift=sigCanvas.toDataURL("image/png");
   const btn=document.getElementById("bSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
-  const berechnen=!!(document.getElementById("bBerechnen")||{}).checked;
-  const d=await jpost("fahrlehrer/buchen",{fl:FL,schueler_id,datum,beginn,dauer,art,unterschrift,berechnen,
+  const d=await jpost("fahrlehrer/buchen",{fl:FL,schueler_id,datum,beginn,dauer,art,unterschrift,
     klasse:SK_WAHL["bKlasse"]||""});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){
@@ -2709,10 +2710,11 @@ function signStunde(id){
         style="width:120px;text-align:center" value="${dauerWert}">
     </div>
     <div class="meta" id="sDauerInfo" style="margin-top:-4px">Dauer in Minuten.</div>
-    <label style="display:flex;gap:10px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer">
-      <input type="checkbox" id="sBerechnen" checked style="width:19px;height:19px;flex:none">
-      <span style="font-size:14px;font-weight:600"><span id="sPreisLabel">Fahrstunde jetzt berechnen: </span><b id="sPreis">…</b></span>
-    </label>
+    <!-- 08.10.2026 (B. Methner): kein Haken "jetzt berechnen" mehr - jede
+         bestaetigte Stunde wird berechnet (Kurs/Paket automatisch 0 € mit Vermerk). -->
+    <div style="display:flex;gap:10px;align-items:center;background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:12px 14px">
+      <span style="font-size:14px;font-weight:600"><span id="sPreisLabel">💶 Diese Stunde wird berechnet: </span><b id="sPreis">…</b></span>
+    </div>
     <div class="meta" id="sPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
     <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
@@ -2728,11 +2730,12 @@ function signStunde(id){
   SK_WAHL["sKlasse"]=String(s.klasse_gesetzt||"").trim();
   if(!SK_WAHL["sKlasse"]){
     skZeichnen("sKlasse",{name:s.schueler||"",klasse:s.schueler_klasse||"",
-      weitere_klassen:s.schueler_weitere_klassen||""});
+      weitere_klassen:s.schueler_weitere_klassen||""},()=>sPreisNeu());
   }
   const sPreisNeu=preisLader("s",()=>({schueler_id:s.schueler_id,
     art:document.getElementById("sArt").value,
     dauer:document.getElementById("sDauer").value,
+    klasse:SK_WAHL["sKlasse"]||"", stunde_id:s.id||"",
     // Das Auto des Termins entscheidet ueber das Getriebe und damit
     // ueber den Preis - nicht das Stammfahrzeug des Fahrlehrers.
     fahrzeug_id:s.fahrzeug_id||null}));
@@ -2767,12 +2770,11 @@ async function stundeBestaetigen(){
   const dauer=document.getElementById("sDauer").value;
   const unterschrift=sigCanvas.toDataURL("image/png");
   const btn=document.getElementById("sSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
-  const berechnen=!!(document.getElementById("sBerechnen")||{}).checked;
   const kFehlt=skFehlt("sKlasse",{name:AKT_STUNDE.schueler||"",klasse:AKT_STUNDE.schueler_klasse||"",
     weitere_klassen:AKT_STUNDE.schueler_weitere_klassen||""});
   if(kFehlt){if(err)err.textContent=kFehlt;btn.textContent=alt;btn.disabled=false;return;}
   const d=await jpost("fahrlehrer/stunde-buchen",{fl:FL,stunde_id:AKT_STUNDE.id,schueler_id:AKT_STUNDE.schueler_id,
-    datum:AKT_STUNDE.datum_iso,beginn:AKT_STUNDE.uhrzeit,dauer,art,unterschrift,berechnen,
+    datum:AKT_STUNDE.datum_iso,beginn:AKT_STUNDE.uhrzeit,dauer,art,unterschrift,
     klasse:SK_WAHL["sKlasse"]||"",
     fahrzeug_id:AKT_STUNDE.fahrzeug_id||null});
   btn.textContent=alt;btn.disabled=false;
@@ -2991,6 +2993,7 @@ async function verschiebenPanel(id){
   // gespeichert wird.
   const vPreisNeu=preisLader("v",()=>({schueler_id:(AKT_STUNDE&&AKT_STUNDE.schueler_id)||"",
     art:(AKT_STUNDE&&AKT_STUNDE.art)||"uebung", dauer:vDauerWert(s.dauer),
+    stunde_id:(AKT_STUNDE&&AKT_STUNDE.id)||"",
     fahrzeug_id:(document.getElementById("vFz")||{}).value||""}));
   const fzFeld=document.getElementById("vFz");
   if(fzFeld&&!blocker){ fzFeld.onchange=vPreisNeu; vPreisNeu(); }

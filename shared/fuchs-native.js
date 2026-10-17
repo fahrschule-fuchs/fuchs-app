@@ -254,9 +254,15 @@
       }, 250);
     });
 
-    // Android-Zurueck: erst die App-eigene Historie, dann beenden
+    // Android-Zurueck: zuerst darf die App selbst entscheiden (Haken
+    // window.fuchsZurueck, gibt true zurueck, wenn erledigt - z.B. Zoom
+    // oder Rueckfrage schliessen, laufende Pruefung). Ohne Haken (Fahrlehrer-
+    // App) wie bisher: erst die App-eigene Historie, dann beenden.
     if (P.App) {
       P.App.addListener('backButton', function (z) {
+        try {
+          if (typeof window.fuchsZurueck === 'function' && window.fuchsZurueck()) return;
+        } catch (e) { /* im Zweifel wie bisher */ }
         if (z && z.canGoBack) window.history.back();
         else if (P.App.exitApp) P.App.exitApp();
       });

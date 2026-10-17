@@ -44,6 +44,18 @@
           "pflicht": true
         },
         {
+          "_zweck": "Drucken in der Store-App ausblenden: window.print() oeffnet in der iOS- und Android-Huelle keinen Druckdialog, der Knopf taete nichts (Entscheidung Benjamin, Build 1.8). Im Browser/PWA bleibt er.",
+          "suchen": "${erg.details && !tt ? `<button class=\"lb-knopf\" id=\"lbDruckKnopf\"",
+          "ersetzen": "${erg.details && !tt && !(window.FuchsNative && window.FuchsNative.istApp) ? `<button class=\"lb-knopf\" id=\"lbDruckKnopf\"",
+          "pflicht": true
+        },
+        {
+          "_zweck": "Android-Zurueck-Taste: Haken window.fuchsZurueck fuer shared/fuchs-native.js - schliesst Rueckfrage/Zoom, zeigt bei laufender Pruefung/Themen-Test die vorhandene Abbrechen-Rueckfrage (lbAbbrechen), sonst wie bisher (Build 1.8).",
+          "suchen": "function lbDialogZu() { if (lbDialogEnde) lbDialogEnde(false); }",
+          "ersetzen": "function lbDialogZu() { if (lbDialogEnde) lbDialogEnde(false); }\n// Store-App (Build 1.8): Haken fuer die Android-Zurueck-Taste (shared/fuchs-native.js).\n// true = hier erledigt. Reihenfolge: Rueckfrage/Zoom schliessen, dann bei laufender\n// Pruefung bzw. laufendem Themen-Test die vorhandene Abbrechen-Rueckfrage, sonst false.\nwindow.fuchsZurueck = function () {\n  if (document.getElementById(\"lbDialog\")) { lbDialogZu(); return true; }\n  if (document.getElementById(\"lbZoom\")) { lbZoomZu(); return true; }\n  const s = typeof lbSitzung !== \"undefined\" ? lbSitzung : null;\n  if (s && s.modus === \"pruefung\" && !s.abgegeben && (document.getElementById(\"lbUhr\") || (s.themenTest && document.querySelector(\".lb-pkopf\")))) { lbAbbrechen(); return true; }\n  return false;\n};",
+          "pflicht": true
+        },
+        {
           "_zweck": "Video-Fallback: relativer MP4-Pfad zeigt sonst ins Leere (wird vom fetch-Wrapper nicht erfasst, da <video src>)",
           "suchen": "\"videos/\" + l.datei",
           "ersetzen": "\"https://app.fahrsyn.de/app/videos/\" + l.datei",
