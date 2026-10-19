@@ -32,9 +32,15 @@
       ],
       "ersetzungen": [
         {
-          "_zweck": "Push-Erkennung: in der nativen App gibt es keinen Service Worker und kein PushManager. Ohne diese Regel haelt die App sich faelschlich fuer eine Webseite.",
+          "_zweck": "Push-Erkennung (Build 1.9): in der nativen App gibt es keinen Service Worker und kein PushManager. Ohne diese Regel haelt die App sich faelschlich fuer eine Webseite. Nur iOS (APNs) - unter Android fehlt Firebase, register() wuerde die App abstuerzen lassen.",
           "suchenRegex": "var support = \\('serviceWorker' in navigator\\) && \\('PushManager' in window\\) && \\('Notification' in window\\);",
-          "ersetzen": "var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));",
+          "ersetzen": "var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? (window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));",
+          "pflicht": true
+        },
+        {
+          "_zweck": "Store-App Android (Build 1.9): weder Knopf noch Hinweis zu Benachrichtigungen, bis Android-Push (FCM) eingebaut ist. Kein Ersatztext.",
+          "suchen": "    if (!support) {\n      hinweis(istStandalone()",
+          "ersetzen": "    if (!support && window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) { entferne(\"fuchsPushBtn\"); entferne(\"fuchsPushHint\"); return; }   // Store-App Android (Build 1.9): kein Knopf, kein Hinweis\n    if (!support) {\n      hinweis(istStandalone()",
           "pflicht": true
         },
         {
@@ -94,9 +100,9 @@
       ],
       "ersetzungen": [
         {
-          "_zweck": "Benachrichtigungen in der Store-App abschalten: Android braucht dafuer Firebase (google-services.json). Das fehlt, deshalb stuerzte die App beim Antippen von 'Benachrichtigungen aktivieren' ab. Bis Push richtig eingebaut ist, gilt in der nativen App: support = false.",
+          "_zweck": "Benachrichtigungen in der Store-App (Build 1.9): nur iOS (APNs). Android braucht dafuer Firebase (google-services.json). Das fehlt, deshalb stuerzte die App beim Antippen von 'Benachrichtigungen aktivieren' ab - unter Android bleibt support = false.",
           "suchenRegex": "var support = \\('serviceWorker' in navigator\\) && \\('PushManager' in window\\) && \\('Notification' in window\\);",
-          "ersetzen": "var support = !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) && ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window);",
+          "ersetzen": "var support = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) ? (window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window));",
           "pflicht": true
         },
         {

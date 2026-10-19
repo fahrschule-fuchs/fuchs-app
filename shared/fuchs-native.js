@@ -83,11 +83,47 @@
      nach aussen wie die Web-Push-API verhaelt, innen aber APNs bzw.
      FCM anspricht. So bleibt der bestehende Benachrichtigungs-Button
      in beiden Apps unveraendert funktionsfaehig.
+
+     Build 1.9:
+     - Nur iOS (APNs). Unter Android fehlt Firebase (google-services.json),
+       dort stuerzt register() die App ab - es wird nie aufgerufen.
+     - Stilles Erneuern: Ist die Erlaubnis schon erteilt, meldet
+       Notification.permission "granted". Dann laeuft der vorhandene
+       Erneuerungszweig der Seite ohne System-Dialog an.
+     - Die Antwort des Servers zaehlt: Erst nach einem erfolgreichen POST
+       gibt es ein (Ersatz-)Abo. Nach einem Fehlversuch 10 Min. kein
+       stiller Neuversuch, nach Erfolg in dieser Sitzung keiner mehr.
+       Ein Tippen auf den Knopf versucht es immer.
      ================================================================= */
+  var IOS = NATIV && window.FuchsNative.plattform === 'ios';
+  var PUSH_PAUSE_MS = 10 * 60 * 1000;
   var pushBereit = null;
+  var pushErlaubt = false;      // iOS: Erlaubnis lag beim Start schon vor
+  var pushGemeldet = false;     // Token in dieser Sitzung beim Server angekommen
+  var pushFehlerBis = 0;        // bis dahin kein stiller Neuversuch
+  var pushInteraktivBis = 0;    // kurz nach einem Tippen auf den Knopf (gilt fuer EINEN Versuch)
+  var pushLaeuft = null;        // laufender Versuch - wird mitbenutzt statt verdoppelt
+
+  function interaktiv() { return Date.now() < pushInteraktivBis; }
+
+  if (IOS && P.PushNotifications && P.PushNotifications.checkPermissions) {
+    P.PushNotifications.checkPermissions().then(function (s) {
+      pushErlaubt = !!(s && s.receive === 'granted');
+    }).catch(function () {});
+  }
+  if (NATIV) {
+    // Tippen auf "Benachrichtigungen aktivieren" (Schueler- bzw. Fahrlehrer-App)
+    document.addEventListener('click', function (ereignis) {
+      var z = ereignis.target;
+      if (z && z.closest && z.closest('#fuchsPushBtn, #flPushBtn')) pushInteraktivBis = Date.now() + 15000;
+    }, true);
+  }
 
   function nativenTokenHolen() {
+    // Android: ohne Firebase stuerzt register() ab - bis FCM eingebaut ist, nie.
+    if (!IOS) return Promise.reject(new Error('Benachrichtigungen gibt es in dieser App noch nicht'));
     if (pushBereit) return pushBereit;
+    var mitDialog = interaktiv();
     pushBereit = new Promise(function (aufloesen, ablehnen) {
       if (!P.PushNotifications) return ablehnen(new Error('Push-Plugin fehlt'));
       var fertig = false;
@@ -102,15 +138,20 @@
       });
       P.PushNotifications.checkPermissions().then(function (s) {
         if (s.receive === 'granted') return s;
+        // Still (ohne Tippen) nie einen System-Dialog oeffnen.
+        if (!mitDialog) throw new Error('keine Erlaubnis');
         return P.PushNotifications.requestPermissions();
       }).then(function (s) {
         if (s.receive !== 'granted') throw new Error('abgelehnt');
+        pushErlaubt = true;
         return P.PushNotifications.register();
       }).catch(ablehnen);
       setTimeout(function () {
         if (!fertig) { fertig = true; ablehnen(new Error('Zeitueberschreitung')); }
       }, 20000);
     });
+    // Abgelehnt oder abgelaufen: beim naechsten Versuch neu fragen duerfen.
+    pushBereit.catch(function () { pushBereit = null; });
     return pushBereit;
   }
 
@@ -119,41 +160,79 @@
    * enthaelt bereits die Anmeldedaten (Schueler: token, Fahrlehrer:
    * fl + pin). Wir ersetzen nur die Web-Push-Subscription durch den
    * nativen Geraete-Token und schicken das an den neuen Endpunkt.
+   * Antwortet der Server nicht mit ok, wird abgelehnt - die Seite
+   * zeigt dann "konnte nicht aktiviert werden" und laesst den Knopf stehen.
    */
   function pushAnmeldungAbfangen(optionen) {
     var koerper = {};
     try { koerper = JSON.parse((optionen && optionen.body) || '{}'); } catch (e) {}
     delete koerper.subscription;
+    var json = { 'Content-Type': 'application/json' };
+    var antwort = function (ergebnis) {
+      if (!ergebnis.ok) throw ergebnis.fehler;
+      return new Response(JSON.stringify(ergebnis.j), { status: 200, headers: json });
+    };
 
+    // Laeuft schon ein Versuch (zwei Pruefungen der Seite ueberschneiden
+    // sich), wird dessen Ergebnis mitbenutzt - kein zweiter POST.
+    if (pushLaeuft) { pushInteraktivBis = 0; return pushLaeuft.then(antwort); }
+    if (interaktiv()) {
+      pushInteraktivBis = 0;      // das Tippen gilt fuer genau diesen Versuch
+    } else {
+      if (pushGemeldet) return Promise.resolve(new Response('{"ok":true}', { status: 200, headers: json }));
+      if (Date.now() < pushFehlerBis) return Promise.reject(new Error('Pause nach Fehlversuch'));
+    }
+    pushLaeuft = versuchen(koerper, json);
+    pushLaeuft.then(function () { pushLaeuft = null; });
+    return pushLaeuft.then(antwort);
+  }
+
+  // Ein Anmeldeversuch beim Server -> {ok, j} bzw. {ok:false, fehler}
+  function versuchen(koerper, json) {
     return nativenTokenHolen().then(function (token) {
-      koerper.plattform = window.FuchsNative.plattform;   // 'ios' | 'android'
+      koerper.plattform = window.FuchsNative.plattform;   // 'ios'
       koerper.token_typ = 'nativ';
       koerper.geraete_token = token;
       return fetch(absolut(PUSH_ENDPUNKT), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: json,
         body: JSON.stringify(koerper)
       });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok || (j && j.ok === false)) {
+          throw new Error('Anmeldung abgewiesen (' + r.status + ')');
+        }
+        pushGemeldet = true;
+        pushFehlerBis = 0;
+        if (kandidat) fakeSubscription = kandidat;
+        return { ok: true, j: j || { ok: true } };
+      });
     }).catch(function (fehler) {
-      return new Response(JSON.stringify({ ok: false, fehler: String(fehler && fehler.message || fehler) }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } });
+      fakeSubscription = null;
+      pushFehlerBis = Date.now() + PUSH_PAUSE_MS;
+      return { ok: false, fehler: fehler };
     });
   }
 
+  // Ersatz-Abo: entsteht bei subscribe() als Kandidat und gilt erst,
+  // wenn der Server das Token angenommen hat.
+  var fakeSubscription = null;
+  var kandidat = null;
+
   if (NATIV) {
     // Attrappe: Service Worker + Push-Manager
-    var fakeSubscription = null;
     var fakeRegistrierung = {
       pushManager: {
         getSubscription: function () { return Promise.resolve(fakeSubscription); },
         subscribe: function () {
           return nativenTokenHolen().then(function (token) {
-            fakeSubscription = {
+            kandidat = {
               endpoint: 'nativ:' + window.FuchsNative.plattform + ':' + token,
               toJSON: function () { return { endpoint: this.endpoint, keys: {} }; },
-              unsubscribe: function () { fakeSubscription = null; return Promise.resolve(true); }
+              unsubscribe: function () { fakeSubscription = null; kandidat = null; return Promise.resolve(true); }
             };
-            return fakeSubscription;
+            return kandidat;
           });
         },
         permissionState: function () { return Promise.resolve('prompt'); }
@@ -191,10 +270,11 @@
       Object.defineProperty(window.Notification, 'permission', {
         configurable: true,
         get: function () {
-          return window.FuchsNative.pushToken ? 'granted' : 'default';
+          return (window.FuchsNative.pushToken || pushErlaubt) ? 'granted' : 'default';
         }
       });
       window.Notification.requestPermission = function (rueckruf) {
+        pushInteraktivBis = Date.now() + 15000;   // kommt nur aus dem Tippen auf den Knopf
         return nativenTokenHolen()
           .then(function () { if (rueckruf) rueckruf('granted'); return 'granted'; })
           .catch(function () { if (rueckruf) rueckruf('denied'); return 'denied'; });
