@@ -15,7 +15,7 @@ workflows:
         # Update hochzaehlen - Apple nimmt keine zweite Fassung mit derselben
         # Nummer an. Aendern laesst sich das hier oder in der
         # Codemagic-Oberflaeche unter "Environment variables".
-        APP_VERSION: "1.8"
+        APP_VERSION: "1.9"
         IOS_DIR: "apps/schueler/ios/App"
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
@@ -49,6 +49,10 @@ workflows:
               "Boot-Skript der App-Huelle": "fuchs-native.js",
               "Anmeldecode ohne Foxy-Chat": "code-anfordern",
               "Einladungs-Link vom Vertrag": "einladung/einloesen",
+              "Drucken in der App aus (1.8)": 'FuchsNative.istApp) ? `<button class="lb-knopf" id="lbDruckKnopf"',
+              "Zurueck-Haken (1.8)": "window.fuchsZurueck",
+              "Push nur iOS (1.9)": "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
+              "Android ohne Push-Knopf (1.9)": "Store-App Android (Build 1.9)",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
@@ -236,7 +240,7 @@ workflows:
         - signing-schueler
       vars:
         VERSION_OFFSET: 100
-        VERSION_NAME: "1.8"
+        VERSION_NAME: "1.9"
       node: 22
       java: 21
 
@@ -265,6 +269,10 @@ workflows:
               "Boot-Skript der App-Huelle": "fuchs-native.js",
               "Anmeldecode ohne Foxy-Chat": "code-anfordern",
               "Einladungs-Link vom Vertrag": "einladung/einloesen",
+              "Drucken in der App aus (1.8)": 'FuchsNative.istApp) ? `<button class="lb-knopf" id="lbDruckKnopf"',
+              "Zurueck-Haken (1.8)": "window.fuchsZurueck",
+              "Push nur iOS (1.9)": "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
+              "Android ohne Push-Knopf (1.9)": "Store-App Android (Build 1.9)",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
@@ -375,7 +383,11 @@ workflows:
           # 1. Steckt die neue Oberflaeche wirklich drin?
           h = z.read("base/assets/public/index.html").decode("utf-8", "ignore")
           noetig = ("renderLernbereich", "renderRecht", "arge tp 21",
-                    "code-anfordern", "einladung/einloesen")
+                    "code-anfordern", "einladung/einloesen",
+                    'FuchsNative.istApp) ? `<button class="lb-knopf" id="lbDruckKnopf"',
+                    "window.fuchsZurueck",
+                    "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
+                    "Store-App Android (Build 1.9)")
           fehlt = [w for w in noetig if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
@@ -444,7 +456,7 @@ workflows:
         - signing
       vars:
         VERSION_OFFSET: 20
-        VERSION_NAME: "1.8"
+        VERSION_NAME: "1.9"
       node: 22
       java: 21
 
@@ -518,7 +530,8 @@ workflows:
 
           # 1. Steckt die neue Oberflaeche wirklich drin?
           h = z.read("base/assets/public/index.html").decode("utf-8", "ignore")
-          fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf") if w not in h]
+          fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
+                              "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)") if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt im Paket: " + ", ".join(fehlt))
@@ -587,7 +600,7 @@ workflows:
         XCODE_PROJECT: "apps/fahrlehrer/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         INFO_PLIST: "apps/fahrlehrer/ios/App/App/Info.plist"
-        VERSION_NAME: "1.8"
+        VERSION_NAME: "1.9"
       node: 22
       xcode: latest
 
@@ -797,7 +810,8 @@ workflows:
           if not treffer:
               raise SystemExit("ABBRUCH - keine Oberflaeche in der App")
           h = z.read(treffer[0]).decode("utf-8", "ignore")
-          fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf") if w not in h]
+          fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
+                              "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)") if w not in h]
           print("Oberflaeche in der App:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt in der App: " + ", ".join(fehlt))

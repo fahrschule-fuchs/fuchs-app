@@ -2647,7 +2647,7 @@ async function renderLernbereich() {
       <div class="lb-knopfreihe">
         <button class="lb-knopf" onclick="lbUeben('neu','','Neue Fragen')">Neue Fragen</button>
         <button class="lb-knopf${d.zu_ueben ? "" : " aus"}" ${d.zu_ueben ? "" : "disabled"}
-          onclick="lbUeben('falsch','','Falsche wiederholen')">Falsche wiederholen${d.zu_ueben ? " (" + d.zu_ueben + ")" : ""}</button>
+          onclick="lbUeben('falsch','','Unsichere üben')">Unsichere üben${d.zu_ueben ? " (" + d.zu_ueben + ")" : ""}</button>
       </div>
       <div class="lb-knopfreihe">
         <button class="lb-knopf${d.markiert ? "" : " aus"}" id="lbMarkiertUeben" ${d.markiert ? "" : "disabled"}
