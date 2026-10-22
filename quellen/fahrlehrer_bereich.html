@@ -672,7 +672,7 @@ async function viewFahrzeuge(){
     const d=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
     if(!d||!d.ok){fehlerKasten("Fahrzeuge konnten nicht geladen werden.");return;}
     FZ_LISTE=d.fahrzeuge||[];
-    FZ_WAHL=FZ_WAHL||d.mein||(FZ_LISTE[0]||{}).id||null;
+    FZ_WAHL=FZ_WAHL||d.mein||d.mein_automatik||(FZ_LISTE[0]||{}).id||null;
   }
   FZ_VON=FZ_VON||fzMontag();
   fahrzeugMaske();
@@ -1369,6 +1369,8 @@ async function viewKalender(){
 
 // ---------------- Wochenplan ----------------
 let WOCHE_START=null, WOCHE_DATEN=[], FAHRZEUGE=null, FZ_MEIN=null, W_SCHUELER=[];
+// 22.10.2026: zweites Standard-Fahrzeug (Automatik). FZ_MEIN = Schaltwagen.
+let FZ_MEIN_A=null;
 // Zwei freiwillige Filter im Wochenplan: Fahrlehrer und Fahrzeug.
 let W_FL=null, W_FZ=null, W_FLLISTE=null;
 const WTAGE=["Mo","Di","Mi","Do","Fr","Sa","So"];
@@ -1453,14 +1455,15 @@ async function wFilterAufbauen(){
   const box=document.getElementById("wFilter"); if(!box)return;
   if(!FAHRZEUGE){
     const d=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
-    FAHRZEUGE=(d&&d.fahrzeuge)||[]; FZ_MEIN=(d&&d.mein)||null;
+    FAHRZEUGE=(d&&d.fahrzeuge)||[]; FZ_MEIN=(d&&d.mein)||null; FZ_MEIN_A=(d&&d.mein_automatik)||null;
   }
   if(IS_MASTER&&!W_FLLISTE){
     try{const d=await jget("ausbildung/fahrlehrer");
       W_FLLISTE=((d&&d.fahrlehrer)||[]).filter(f=>!f.master&&f.fl!==FL);}catch(e){W_FLLISTE=[];}
   }
+  const istMein=f=>String(f.id)===String(FZ_MEIN)||String(f.id)===String(FZ_MEIN_A);
   const sortiert=[...FAHRZEUGE].sort((a,b)=>
-    (String(b.id)===String(FZ_MEIN)?1:0)-(String(a.id)===String(FZ_MEIN)?1:0)
+    (istMein(b)?1:0)-(istMein(a)?1:0)
     ||String(a.bezeichnung||"").localeCompare(String(b.bezeichnung||"")));
   let html="";
   if(IS_MASTER){
@@ -1473,7 +1476,7 @@ async function wFilterAufbauen(){
     <option value="">🚗 Alle Fahrzeuge</option>`
     +sortiert.map(f=>`<option value="${f.id}">🚗 ${esc(f.bezeichnung)}`
       +`${f.kennzeichen?" · "+esc(f.kennzeichen):""}`
-      +`${String(f.id)===String(FZ_MEIN)?" · dein Auto":""}</option>`).join("")
+      +`${istMein(f)?" · dein Auto":""}</option>`).join("")
     +`</select>`;
   box.innerHTML=html;
   const fl=document.getElementById("wFl");
@@ -2328,7 +2331,7 @@ async function viewPlanen(datum,zeit){
     const d=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
     if(!d){main().innerHTML=`<button class="btn-ghost" onclick="viewWoche('${zurueckW}')">← Zurück zum Wochenplan</button>`
       +fehlerKasten("Die Fahrzeugliste konnte nicht geladen werden.");return;}
-    FAHRZEUGE=d.fahrzeuge||[];FZ_MEIN=d.mein;}
+    FAHRZEUGE=d.fahrzeuge||[];FZ_MEIN=d.mein;FZ_MEIN_A=d.mein_automatik||null;}
   if(!W_SCHUELER.length){
     const d=await jpost("fahrlehrer/fuchs-schueler",{fl:FL});
     if(!d){main().innerHTML=`<button class="btn-ghost" onclick="viewWoche('${zurueckW}')">← Zurück zum Wochenplan</button>`
@@ -2359,7 +2362,8 @@ async function viewPlanen(datum,zeit){
     </div>
     <div class="meta" id="pDauerInfo" style="margin-top:-4px">Dauer in Minuten.</div>
     <select id="pFz" class="app-select"><option value="">— Fahrzeug wie üblich —</option>${
-      FAHRZEUGE.map(f=>`<option value="${f.id}"${String(f.id)===String(W_FZ||FZ_MEIN||"")?" selected":""}>${esc(f.bezeichnung)}${f.kennzeichen?" · "+esc(f.kennzeichen):""}</option>`).join("")}</select>
+      FAHRZEUGE.map(f=>`<option value="${f.id}"${String(f.id)===String(W_FZ||FZ_MEIN||FZ_MEIN_A||"")?" selected":""}>${esc(f.bezeichnung)}${f.kennzeichen?" · "+esc(f.kennzeichen):""}${f.getriebe?" · "+(f.getriebe==="automatik"?"Automatik":"Schaltung"):""}</option>`).join("")}</select>
+    <div id="pFzHinweis" class="meta" style="margin-top:-4px"></div>
     <input id="pBem" class="app-input" style="text-align:left" placeholder="Bemerkung (freiwillig)">
     <button class="btn-primary" id="pSpeichern">🗓 Termin einplanen</button>
     <div class="meta" id="pErr" style="color:#D64545;min-height:16px"></div>`;
@@ -2377,7 +2381,7 @@ async function viewPlanen(datum,zeit){
   document.getElementById("pSchueler").addEventListener("change",pGruppeZeigen);
   pGruppeZeigen();
   const pKlasseNeu=()=>skZeichnen("pKlasse",
-    skSchueler(W_SCHUELER,document.getElementById("pSchueler").value)||{},null);
+    skSchueler(W_SCHUELER,document.getElementById("pSchueler").value)||{},()=>pFzVorbelegen());
   document.getElementById("pSchueler").addEventListener("change",pKlasseNeu);
   pKlasseNeu();
   const pArt=document.getElementById("pArt"), pDauer=document.getElementById("pDauer"),
@@ -2408,7 +2412,45 @@ async function viewPlanen(datum,zeit){
   };
   pArt.addEventListener("change",nachfuehren);
   nachfuehren();
+  // 22.10.2026: Fahrzeug nach Getriebe vorbelegen - Klasse B und Testfahrt
+  // Schaltkompetenz -> Schaltwagen, BA/B197 -> Automatik. Wechselt Schueler,
+  // Klasse oder Art, wird neu vorgeschlagen, bis von Hand gewaehlt wurde.
+  // Ist im Wochenplan ein Fahrzeug gefiltert, bleibt es bei diesem.
+  P_FZ_HAND=!!W_FZ;
+  pFz.addEventListener("change",()=>{P_FZ_HAND=true;pFzVorbelegen();});
+  pArt.addEventListener("change",()=>pFzVorbelegen());
+  document.getElementById("pSchueler").addEventListener("change",()=>pFzVorbelegen());
+  pFzVorbelegen();
   document.getElementById("pSpeichern").onclick=()=>planenSpeichern(false);
+}
+let P_FZ_HAND=false;
+function fzGetriebeW(id){const f=(FAHRZEUGE||[]).find(x=>String(x.id)===String(id));return f?(f.getriebe||""):"";}
+function getriebeFuerW(art,klasse){
+  if(art==="testfahrt")return "schaltung";
+  if(klasse==="B"||klasse==="BF17")return "schaltung";
+  if(klasse==="BA"||klasse==="B197")return "automatik";
+  return "";
+}
+function pFzVorbelegen(){
+  const pFz=document.getElementById("pFz"), hin=document.getElementById("pFzHinweis");
+  if(!pFz)return;
+  const art=(document.getElementById("pArt")||{}).value||"";
+  const s=skSchueler(W_SCHUELER,(document.getElementById("pSchueler")||{}).value)||{};
+  const klasse=SK_WAHL["pKlasse"]||s.klasse||"";
+  const soll=getriebeFuerW(art,klasse);
+  if(!P_FZ_HAND){
+    const ids=[FZ_MEIN,FZ_MEIN_A].filter(Boolean);
+    const passend=ids.find(i=>fzGetriebeW(i)===soll);
+    const wahl=soll?(passend||ids[0]||""):(FZ_MEIN||FZ_MEIN_A||"");
+    if([...pFz.options].some(o=>o.value===String(wahl)))pFz.value=String(wahl);
+  }
+  const ist=fzGetriebeW(pFz.value);
+  // B197 auf dem Schaltwagen - von Hand gewaehlt - ist eine gewollte Schaltstunde.
+  if(hin&&P_FZ_HAND&&klasse==="B197"&&ist==="schaltung"&&soll==="automatik"){
+    hin.innerHTML='<span style="color:#6b6b6b">ℹ️ Schaltwagen – zählt bei B197 als Schaltstunde.</span>';return;}
+  if(hin)hin.innerHTML=(soll&&ist&&soll!==ist)
+    ? `<span style="color:#D64545;font-weight:700">⚠️ Getriebe prüfen:</span> <span style="color:#D64545">gewählt ist ein ${ist==="automatik"?"Automatik":"Schalt"}wagen, für diese Stunde passt ${soll==="automatik"?"Automatik":"Schaltung"}.</span>`
+    : "";
 }
 let P_GRUPPE=[];
 const istB96=k=>/B96/i.test(String(k||""));
@@ -2957,7 +2999,7 @@ async function verschiebenPanel(id){
   // Fahrzeugliste einmal holen - ohne sie gaebe es hier nur ein leeres Feld.
   if(!FAHRZEUGE){
     const fz=await jpost("fahrlehrer/fahrzeuge",{fl:FL});
-    if(fz){FAHRZEUGE=fz.fahrzeuge||[];FZ_MEIN=fz.mein;}
+    if(fz){FAHRZEUGE=fz.fahrzeuge||[];FZ_MEIN=fz.mein;FZ_MEIN_A=fz.mein_automatik||null;}
   }
   main().innerHTML=`
     <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
