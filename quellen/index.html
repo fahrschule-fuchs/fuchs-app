@@ -1506,6 +1506,53 @@ function sdWertHTML(zahl, ziel, name) {
       <i>${esc(name)}</i></div>`;
 }
 
+// Theorie-Zahl als eigener Knopf: oeffnet die Themenliste (23.10.2026). Nur
+// wenn der Server die Liste mitliefert - sonst bleibt es bei der Zahl.
+function sdTheorieWertHTML(t) {
+  const fertig = t.ziel && t.erledigt >= t.ziel;
+  return `<div class="sd-wert${fertig ? " fertig" : ""}" id="sdTheorieWert" role="button" style="cursor:pointer;"
+      onclick="event.stopPropagation(); renderTheorieThemen();">
+      <b>${t.erledigt}<span style="font-size:13px;color:var(--gray);font-weight:600;">/${t.ziel}</span></b>
+      <i>Theorie · <span style="color:var(--orange);font-weight:700;">Themen ›</span></i></div>`;
+}
+
+// Theorie-Themen (23.10.2026): welche Themen besucht sind (mit Datum) und welche
+// noch fehlen - Grundstoff und klassenspezifisch getrennt. Gezaehlt wird im
+// Server (start_seite.py), dieselbe Rechnung wie die Zahl auf der Startseite.
+function ttDatum(iso) {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[3] + "." + m[2] + "." + m[1] : esc(iso || "");
+}
+function renderTheorieThemen() {
+  aktiv = null;
+  const t = startDaten && startDaten.theorie_themen;
+  const kopf = `<button class="btn-ghost" onclick="waehleTab('home','Start')">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Deine Theorie-Themen</h1>`;
+  main.scrollTop = 0;
+  if (!t || !t.gruppen || !t.gruppen.length) {
+    main.innerHTML = kopf + `<div class="sd-karte"><div style="font-size:14px; color:var(--gray);">
+      Die Themen lassen sich gerade nicht anzeigen. Frag im Büro nach.</div></div>`;
+    return;
+  }
+  const zeile = x => `<div class="tt-zeile${x.besucht ? " tt-ja" : ""}" style="display:flex; gap:10px; align-items:baseline; padding:7px 0; border-top:1px solid var(--line, #EEE);">
+      <span style="width:16px; flex-shrink:0; font-weight:800; color:${x.besucht ? "#1E7A43" : "var(--gray)"};">${x.besucht ? "✓" : "○"}</span>
+      <span style="flex:1; min-width:0; font-size:14px;"><b>${esc(x.kurz)}</b>
+        <span style="color:${x.besucht ? "var(--gray)" : (x.fehlt ? "var(--orange)" : "var(--gray)")};"> – ${
+          x.besucht ? ttDatum(x.datum) : (x.fehlt ? "fehlt noch" : "nicht nötig")}</span></span></div>`;
+  main.innerHTML = kopf
+    + `<div class="hint">${t.erledigt} von ${t.ziel} Themen besucht.${t.vorbesitz
+        ? " Weil du schon einen Führerschein hast, genügen im Grundstoff 6 Themen." : ""}</div>`
+    + t.gruppen.map(g => `<div class="sd-karte tt-gruppe">
+        <div style="display:flex; align-items:baseline; justify-content:space-between;">
+          <div class="sd-eyebrow">${esc(g.name)}${g.art === "klassenspezifisch" && g.klassen && g.klassen.length
+            ? " · " + g.klassen.map(esc).join(", ") : ""}</div>
+          <div style="font-size:13px; font-weight:800; color:${g.erledigt >= g.soll ? "#1E7A43" : "var(--orange)"};">${g.erledigt}/${g.soll}</div>
+        </div>
+        <div style="margin-top:6px;">${g.themen.map(zeile).join("")}</div>
+      </div>`).join("")
+    + `<div class="hint">Stimmt etwas nicht? Sag kurz im Büro Bescheid – dort ist jede Teilnahme eingetragen.</div>`;
+}
+
 function sdFortschrittHTML(d) {
   const f = d && d.fortschritt;
   if (!f) return "";
@@ -1520,7 +1567,7 @@ function sdFortschrittHTML(d) {
       </div>
       <div class="sd-balken"><div style="width:${Math.max(2, f.prozent)}%"></div></div>
       <div class="sd-werte">
-        ${sdWertHTML(f.theorie.erledigt, f.theorie.ziel, "Theorie")}
+        ${d.theorie_themen ? sdTheorieWertHTML(f.theorie) : sdWertHTML(f.theorie.erledigt, f.theorie.ziel, "Theorie")}
         ${sdWertHTML(f.sonderfahrten.erledigt, f.sonderfahrten.ziel, "Sonderfahrten")}
         ${u.zeigen ? sdWertHTML(u.erledigt, u.ziel, "Unterlagen") : sdWertHTML(f.uebungsstunden, 0, "Fahrstunden")}
       </div>
