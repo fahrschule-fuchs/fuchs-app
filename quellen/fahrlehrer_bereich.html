@@ -420,13 +420,15 @@ window.addEventListener("popstate",function(){
 });
 
 // ---------------- Schüler & Ausbildungsstand ----------------
-let LISTE_FEHLER="";
+let LISTE_FEHLER="", LISTE_HINWEIS="";
 async function ladeSchuelerListe(){
   const d=await jpost("ausbildung/schueler",{fl:FL});
   // Ohne Antwort NICHT so tun, als hätte der Fahrlehrer keine Schüler -
   // genau daran ist früher niemandem aufgefallen, dass der Server weg war.
-  if(!d){LISTE_FEHLER=FEHLERTEXT||"Die Schülerliste konnte nicht geladen werden.";return;}
+  if(!d||d.ok===false){LISTE_FEHLER=(d&&d.fehler)||FEHLERTEXT||"Die Schülerliste konnte nicht geladen werden.";return;}
   LISTE_FEHLER="";
+  // 23.10.2026: Ohne eigene Schueler kommt eine leere Liste mit Hinweis.
+  LISTE_HINWEIS=(d&&d.hinweis)||"";
   schuelerListe=(d.schueler)||[];
   eigeneListe=!!d.eigene;
 }
@@ -458,6 +460,11 @@ function schuelerOptions(q){
   // Angezeigt wird "Nachname, Vorname" - dann passt die Reihenfolge der
   // Liste zu dem, was man liest.
   return kopf+liste.slice(0,300).map(s=>`<option value="${esc(s.nummer)}">${esc(s.anzeige||s.name)}${s.geb?" · "+esc(s.geb):" ("+esc((s.nummer||"").slice(-4))+")"}</option>`).join("");
+}
+function listeHinweisHtml(){
+  if(!LISTE_HINWEIS||schuelerListe.length||LISTE_FEHLER)return "";
+  return `<div class="card" id="listeHinweis" style="cursor:default;border-left:5px solid var(--gray)">
+    <div style="font-size:13.5px">ℹ️ ${esc(LISTE_HINWEIS)}</div></div>`;
 }
 function viewSchueler(){
   const hint=IS_MASTER
@@ -499,6 +506,7 @@ function viewSchueler(){
       <div class="meta" style="font-size:12px;margin-top:6px">Die Liste unten ist deshalb unvollständig – bitte nicht als „keine Schüler" lesen.</div>
     </div>`:""}
     <div class="hint">${hint}</div>
+    ${listeHinweisHtml()}
     <input id="suche" class="app-input" style="text-align:left" placeholder="🔍 Suche: Vorname, Nachname oder Geburtstag">
     <select id="schueler" class="app-select">${schuelerOptions("")}</select>
     <div id="karte"></div>`;
@@ -555,6 +563,9 @@ async function ladeStand(nummer){
   // Kein Stand vom Server = Fehler, NICHT "alles auf Anfang". Sonst sieht
   // die Karte aus wie bei einem Schüler ohne jede Bewertung.
   if(!d0){ if(k)k.innerHTML=fehlerKasten("Der Ausbildungsstand konnte nicht geladen werden.");
+    stand={};katalog=null;return; }
+  // 23.10.2026: fremder Schueler (Regel 3) - klare Meldung statt leerer Karte.
+  if(d0.ok===false){ if(k)k.innerHTML=fehlerKasten(d0.fehler||"Der Ausbildungsstand konnte nicht geladen werden.");
     stand={};katalog=null;return; }
   const d=d0;
   aktFahrstunden=(fs&&fs.fahrstunden)||null;
@@ -854,6 +865,7 @@ function viewKonto(){
     <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>💶 Schülerkonto & Termine</h1></div>
     <div class="hint">Schüler suchen – du siehst Kontostand, Infos vom Büro, die kommenden
       Termine und alle bereits gefahrenen Stunden. Live aus dem Fahrschulmanager, nur zur Ansicht.</div>
+    ${listeHinweisHtml()}
     <input id="kontoSuche" class="app-input" style="text-align:left" placeholder="🔍 Suche: Vorname, Nachname oder Geburtstag">
     <select id="kontoSel" class="app-select">${schuelerOptions("")}</select>
     <div id="kontoKarte"></div>`;
@@ -1092,7 +1104,7 @@ function zeichneAkte(){
     <div class="card" style="cursor:default">
       <div class="titel" style="font-size:16px">${esc(AKTE.name||k.name||"Schüler")}</div>
       <div class="sub">${AKTE.schuelernummer?"Kartei "+esc(AKTE.schuelernummer):""}${
-        AKTE.klasse?" · Klasse "+esc(AKTE.klasse):""}</div>${
+        AKTE.klasse?" · Klasse "+esc(AKTE.klasse):""}</div>${akteTheoriePruefungHtml(AKTE.theorie_pruefung)}${
         AKTE.karteien>1?`<div class="meta" style="font-size:11.5px;margin-top:3px">${AKTE.karteien} Karteien – Konto, Termine und Stunden sind zusammengefasst.</div>`:""}
     </div>
     ${akteKontoHtml(k)}
@@ -1101,10 +1113,43 @@ function zeichneAkte(){
     ${akteTheorieHtml(AKTE.theorie_lernstand)}
     ${akteKommendHtml(AKTE.kommend)}
     ${akteGefahrenHtml(AKTE.gefahren, AKTE.zusammenfassung)}
+    ${akteAdresseHtml(AKTE.adresse)}
     ${kontaktKarteHTML(AKTE.name||"", AKTE.nummer, "")}
     ${alleTermineKnopfHTML(AKTE.nummer)}
     <div class="meta" style="font-size:11.5px;margin-top:8px">Live aus dem Fahrschulmanager · nur zur Ansicht, keine Buchung.</div>`;
   el.scrollIntoView&&el.scrollIntoView({block:"nearest"});
+}
+
+// Theoriepruefung im Kopf der Schuelerkarte (23.10.2026). Ohne Eintrag heisst
+// es "nicht eingetragen" - nicht "nicht bestanden": In manchen Karteien fehlt
+// die bestandene Theorie, obwohl die Praxispruefung schon ansteht.
+function tpDatum(iso){const m=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+"."+m[2]+"."+m[1]:esc(iso||"");}
+function theoriePruefungText(t){
+  const am=t.datum?" am "+tpDatum(t.datum):"";
+  if(t.ergebnis==="bestanden")return `<span style="color:var(--green);font-weight:700">✓ Theorie bestanden</span>${am}`;
+  if(t.ergebnis==="offen")return `📅 Theorieprüfung angesetzt${am}`;
+  if(t.ergebnis==="nicht_bestanden")return `<span style="color:#D64545;font-weight:700">✗ Theorie nicht bestanden</span> · ${t.versuche} Versuch${t.versuche===1?"":"e"}${t.datum?", zuletzt "+tpDatum(t.datum):""}`;
+  return `<span class="meta">Theorieprüfung: nicht eingetragen</span>`;
+}
+function akteTheoriePruefungHtml(tp){
+  if(!tp)return "";
+  const je=tp.je_kartei||[];
+  if(je.length>1)return je.map(t=>`<div class="tp-zeile" style="font-size:13px;margin-top:5px">${t.klasse?esc(t.klasse)+": ":""}${theoriePruefungText(t)}</div>`).join("");
+  return `<div class="tp-zeile" style="font-size:13px;margin-top:5px">${theoriePruefungText(tp)}</div>`;
+}
+// Adresse mit Karten-Link wie in der Fahrschueler-App (23.10.2026). Kommt
+// nur fuer eigene Schueler vom Server.
+function akteAdresseHtml(a){
+  if(!a)return "";
+  const ort=[a.plz,a.ort].filter(Boolean).join(" ");
+  const voll=[a.strasse,ort].filter(Boolean).join(", ");
+  if(!voll)return "";
+  return `<div class="card" id="akteAdresse" style="cursor:default;display:block">
+      <div class="eyebrow">Adresse</div>
+      <div style="font-size:14px;margin:3px 0 10px">${esc(a.strasse||"")}${a.strasse&&ort?"<br>":""}${esc(ort)}</div>
+      <div style="display:flex;gap:8px"><a class="kbtn ruf" id="akteKarte" target="_blank" rel="noopener"
+        href="https://maps.google.com/?q=${encodeURIComponent(voll)}">🗺 In Karten öffnen</a></div>
+    </div>`;
 }
 
 // Infos vom Buero - dieselbe Darstellung wie frueher auf der Ausbildungsseite.
