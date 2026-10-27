@@ -220,6 +220,13 @@ function eurTxt(n){return (Number(n)||0).toFixed(2).replace(".",",")+" €";}
 // Preisvorschau wie im Manager: aendert sich Fahrtart oder Dauer, wird neu
 // gerechnet. Die zuletzt gestartete Abfrage gewinnt - sonst ueberholt eine
 // langsame Antwort die neue Eingabe.
+// 26.10.2026: Schalter "Zusatzstunde (nicht aus dem Paket)" beim 7-Tage-Fuchs.
+// Er erscheint nur, wenn der Server die Kartei als 7-Tage-Paket meldet, und
+// kann nur "berechnen" erzwingen - nie "frei".
+function zusatzGewaehlt(prefix){
+  const z=document.getElementById(prefix+"Zusatz"), zz=document.getElementById(prefix+"ZusatzZeile");
+  return !!(z&&z.checked&&zz&&zz.style.display!=="none");
+}
 function preisLader(prefix, werte){
   let lauf=0;
   return async function(){
@@ -233,6 +240,8 @@ function preisLader(prefix, werte){
     // fahrzeug_id nur mitschicken, wenn die Maske eines nennt - sonst nimmt
     // der Server wie bisher das Stammfahrzeug des Fahrlehrers.
     const anfrage={fl:FL,schueler_id:w.schueler_id,art:w.art,dauer:w.dauer};
+    // 26.10.2026: 7-Tage-Fuchs - Schalter "Zusatzstunde" geht mit in die Vorschau.
+    if(zusatzGewaehlt(prefix))anfrage.zusatzstunde=true;
     if(w.fahrzeug_id!==undefined)anfrage.fahrzeug_id=w.fahrzeug_id;
     // 08.10.2026: Preis nach der Klasse DIESER Stunde - gewaehlte Klasse bzw.
     // die am Termin. Ohne Angabe gilt wie bisher die Hauptklasse.
@@ -241,6 +250,8 @@ function preisLader(prefix, werte){
     const d=await jpost("fahrlehrer/stunde-preis",anfrage);
     if(nr!==lauf)return;
     const bez=document.getElementById(prefix+"PreisLabel");
+    const zz=document.getElementById(prefix+"ZusatzZeile");
+    if(zz)zz.style.display=(d&&d.sieben_tage)?"flex":"none";
     if(!d){feld.textContent="–";if(hin)hin.textContent="Preis gerade nicht abrufbar.";return;}
     if(d.enthalten||d.im_paket){
       // Mofa/B96 (Preis 0,00) oder Kurs-Kontingent/Paket (B196, 7-Tage-Fuchs):
@@ -1209,6 +1220,8 @@ async function ladeBuchen(){
       <span style="font-size:14px;font-weight:600"><span id="bPreisLabel">💶 Diese Stunde wird berechnet: </span><b id="bPreis">…</b></span>
     </div>
     <div class="meta" id="bPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
+    <label id="bZusatzZeile" style="display:none;gap:9px;align-items:center;font-size:14px;margin-top:-2px">
+      <input type="checkbox" id="bZusatz" style="width:20px;height:20px"> Zusatzstunde (nicht aus dem Paket) – wird berechnet</label>
     <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
     <canvas id="bSig" width="640" height="220" style="width:100%;height:250px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;display:block"></canvas>
@@ -1235,6 +1248,7 @@ async function ladeBuchen(){
   const bPreisNeu=preisLader("b",()=>({
     schueler_id:document.getElementById("bSchueler").value,
     art:bArt.value, dauer:bDauer.value, klasse:SK_WAHL["bKlasse"]||""}));
+  {const z=document.getElementById("bZusatz");if(z)z.onchange=()=>bPreisNeu();}
   B_SCHUELER=d.schueler||[];
   // Vorgefiltert auf die, die noch fahren. Wer laenger pausiert, kommt ueber
   // den Schalter zurueck. Die Reihenfolge bleibt alphabetisch, so wie sie vom
@@ -1386,7 +1400,8 @@ async function buchungSpeichern(){
   const unterschrift=sigCanvas.toDataURL("image/png");
   const btn=document.getElementById("bSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
   const d=await jpost("fahrlehrer/buchen",{fl:FL,schueler_id,datum,beginn,dauer,art,unterschrift,
-    klasse:SK_WAHL["bKlasse"]||""});
+    klasse:SK_WAHL["bKlasse"]||"",
+    ...(zusatzGewaehlt("b")?{zusatzstunde:true}:{})});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){
     // Hat etwas beim Berechnen geklemmt, MUSS der Fahrlehrer das sehen -
@@ -2803,6 +2818,8 @@ function signStunde(id){
       <span style="font-size:14px;font-weight:600"><span id="sPreisLabel">💶 Diese Stunde wird berechnet: </span><b id="sPreis">…</b></span>
     </div>
     <div class="meta" id="sPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
+    <label id="sZusatzZeile" style="display:none;gap:9px;align-items:center;font-size:14px;margin-top:-2px">
+      <input type="checkbox" id="sZusatz" style="width:20px;height:20px"> Zusatzstunde (nicht aus dem Paket) – wird berechnet</label>
     <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
     <canvas id="bSig" width="640" height="220" style="width:100%;height:250px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;display:block"></canvas>
@@ -2826,6 +2843,7 @@ function signStunde(id){
     // Das Auto des Termins entscheidet ueber das Getriebe und damit
     // ueber den Preis - nicht das Stammfahrzeug des Fahrlehrers.
     fahrzeug_id:s.fahrzeug_id||null}));
+  {const z=document.getElementById("sZusatz");if(z)z.onchange=()=>sPreisNeu();}
   // Wird die Fahrtart hier noch geaendert, zieht die Dauer nach - die
   // Testfahrt Schaltkompetenz dauert zum Beispiel immer 15 Minuten.
   // Sobald der Fahrlehrer die Dauer selbst antippt, bleibt sie stehen.
@@ -2863,7 +2881,8 @@ async function stundeBestaetigen(){
   const d=await jpost("fahrlehrer/stunde-buchen",{fl:FL,stunde_id:AKT_STUNDE.id,schueler_id:AKT_STUNDE.schueler_id,
     datum:AKT_STUNDE.datum_iso,beginn:AKT_STUNDE.uhrzeit,dauer,art,unterschrift,
     klasse:SK_WAHL["sKlasse"]||"",
-    fahrzeug_id:AKT_STUNDE.fahrzeug_id||null});
+    fahrzeug_id:AKT_STUNDE.fahrzeug_id||null,
+    ...(zusatzGewaehlt("s")?{zusatzstunde:true}:{})});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){toast("Fahrstunde gebucht ✓");const s=AKT_STUNDE;AKT_STUNDE=null;
     // Unterschrieben wird VOR der Fahrt - das Prüfungsergebnis steht erst danach

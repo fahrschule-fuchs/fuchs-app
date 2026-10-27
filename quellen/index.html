@@ -1207,17 +1207,90 @@ function kSchonGebucht(d) {
   return ids;
 }
 
+// 27.10.2026: Eigene Buchung verwalten - Frist, Stornieren, einmal Verschieben.
+// Was erlaubt ist, entscheidet der Server (m.verwaltung); die App zeigt nur an.
+function kVerwaltungHTML(m) {
+  const v = m.verwaltung || {};
+  if (m.status !== "gebucht") return "";
+  const verlauf = (v.verlauf || []).length
+    ? `<div style="font-size:12.5px; color:var(--gray); margin-top:6px;">↪︎ verschoben von ${esc(kDatum(v.verlauf[v.verlauf.length - 1].von))}</div>` : "";
+  const knoepfe = (v.darf_verschieben || v.darf_stornieren) ? `<div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+      ${v.darf_verschieben ? `<button class="btn-ghost" style="flex:1 1 140px; border:1.5px solid #A7DCBB; border-radius:12px; padding:9px 10px;"
+        onclick="kursVerschiebenStart('${esc(m.id)}')">Termin verschieben</button>` : ""}
+      ${v.darf_stornieren ? `<button class="btn-ghost" style="flex:1 1 140px; border:1.5px solid #E7C3BF; color:#B3261E; border-radius:12px; padding:9px 10px;"
+        onclick="kursStornoStart('${esc(m.id)}')">Stornieren</button>` : ""}
+    </div>` : "";
+  return `${verlauf}
+    ${v.frist_offen && v.frist_text ? `<div style="font-size:12.5px; color:#1E7A43; margin-top:6px;">Kostenlos stornieren/verschieben bis ${esc(v.frist_text)}</div>` : ""}
+    ${v.hinweis ? `<div style="font-size:12.5px; color:var(--gray); margin-top:6px;">${esc(v.hinweis)}</div>` : ""}
+    ${knoepfe}`;
+}
+
 function kMeineHTML(d) {
-  const liste = (d.meine || []).filter(m => m.status === "gebucht" || m.status === "bezahlt");
+  const liste = (d.meine || []).filter(m => m.status === "gebucht" || m.status === "bezahlt" || m.status === "storniert");
   if (!liste.length) return "";
-  return liste.map(m => `<div class="card" style="background:#E9F7EE; border:1px solid #A7DCBB;">
+  return liste.map(m => m.status === "storniert"
+    ? `<div class="card" style="background:#F7F3EF; border:1px solid #E7D9CC;">
+    <div class="eyebrow">Storniert</div>
+    <div style="font-size:15px; font-weight:700; color:var(--gray); margin-top:3px; text-decoration:line-through;">
+      ${esc(kDatum((m.kurs || {}).datum_iso))} · ${esc((m.kurs || {}).uhrzeit || "")} Uhr</div>
+    <div style="font-size:12.5px; color:var(--gray); margin-top:4px;">${(m.verwaltung || {}).erstattet
+      ? `${kPreis((m.betrag_cent || 0) / 100)} werden auf dein Zahlungsmittel erstattet.` : "Die Erstattung läuft."}</div>
+  </div>`
+    : `<div class="card" style="background:#E9F7EE; border:1px solid #A7DCBB;">
     <div class="eyebrow" style="color:#1E7A43;">Dein Kurs</div>
     <div style="font-size:16px; font-weight:700; color:#1E7A43; margin-top:3px;">
       ${esc(kDatum((m.kurs || {}).datum_iso))} · ${esc((m.kurs || {}).uhrzeit || "")} Uhr</div>
-    <div style="font-size:13px; color:var(--gray); margin-top:3px;">${esc((m.kurs || {}).ort || "")}</div>
+    <div style="font-size:13px; color:var(--gray); margin-top:3px;">${esc((m.kurs || {}).ort || "")}${m.betrag_cent ? " · " + kPreis(m.betrag_cent / 100) : ""}</div>
     <div style="font-size:13px; color:#1E7A43; font-weight:600; margin-top:6px;">
       ${m.status === "gebucht" ? "✅ gebucht und bezahlt" : "⏳ wird gerade gebucht …"}</div>
+    ${kVerwaltungHTML(m)}
   </div>`).join("");
+}
+
+async function kAufruf(pfad, daten) {
+  try {
+    const r = await fetch(pfad, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ token }, daten)) });
+    return await r.json();
+  } catch (e) { return null; }
+}
+
+async function kursStornoStart(id) {
+  const frage = await kAufruf("kurse/stornieren", { id });
+  if (!frage || !frage.ok) { alert((frage && frage.fehler) || "Gerade nicht möglich. Bitte später noch einmal."); renderKurse(); return; }
+  if (!confirm(frage.frage)) return;
+  const d = await kAufruf("kurse/stornieren", { id, bestaetigt: true });
+  if (d && d.ok) {
+    alert("Storniert. 🦊\n\nDas Geld geht auf dein Zahlungsmittel zurück – je nach Bank dauert das ein paar Tage.");
+    try { await ladeKonto(); } catch (e) {}
+  } else alert((d && d.fehler) || "Die Stornierung konnte gerade nicht abgeschlossen werden. Wir kümmern uns darum und melden uns.");
+  renderKurse();
+}
+
+async function kursVerschiebenStart(id) {
+  const d = await kAufruf("kurse/verschieben-ziele", { id });
+  if (!d || !d.ok) { alert((d && d.fehler) || "Gerade nicht möglich."); renderKurse(); return; }
+  const ziele = d.ziele || [];
+  main.innerHTML = `<button class="btn-ghost" onclick="renderKurse()">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Termin verschieben</h1>
+    <div class="hint">Du kannst einmal kostenlos verschieben.</div>
+    ${ziele.length ? ziele.map(k => `<div class="card">
+        <div style="font-size:16px; font-weight:800; color:var(--dark);">${esc(kDatum(k.datum_iso))}</div>
+        <div style="font-size:14px; font-weight:700; color:var(--orange); margin-top:2px;">${esc(k.uhrzeit)}${k.ende ? "–" + esc(k.ende) : ""} Uhr</div>
+        <div style="font-size:13px; color:var(--gray); margin-top:4px;">📍 ${esc(k.ort || "")} · ${kPlaetze(k)}</div>
+        <button class="btn-primary" style="width:100%; margin-top:10px;" onclick="kursVerschieben('${esc(id)}', ${Number(k.id)}, '${esc(kDatum(k.datum_iso))}')">Auf diesen Termin verschieben</button>
+      </div>`).join("")
+    : `<div class="card"><div style="font-size:14px; color:var(--gray);">Zurzeit gibt es keinen passenden Termin mit freiem Platz. Schau in ein paar Tagen noch einmal vorbei.</div></div>`}`;
+  main.scrollTop = 0;
+}
+
+async function kursVerschieben(id, zielId, text) {
+  if (!confirm("Deinen Kurs auf " + text + " verschieben?\n\nDie Zahlung bleibt, wie sie ist. Du kannst nur einmal verschieben.")) return;
+  const d = await kAufruf("kurse/verschieben", { id, ziel_id: zielId });
+  if (d && d.ok) alert("Verschoben. 🦊\n\nNeuer Termin: " + kDatum((d.kurs || {}).datum_iso) + " um " + ((d.kurs || {}).uhrzeit || "") + " Uhr.");
+  else alert((d && d.fehler) || "Das Verschieben hat gerade nicht geklappt. Bitte versuch es später noch einmal.");
+  renderKurse();
 }
 
 async function renderKurse() {
@@ -1281,7 +1354,7 @@ async function renderKurse() {
     : `<div class="card"><div style="font-size:14px; color:var(--gray);">
         Zurzeit sind keine Termine ausgeschrieben. Schau in ein paar Tagen noch einmal vorbei.</div></div>`}
     <div class="hint" style="margin-top:2px;">Du bekommst die Bestätigung sofort in die App.
-      Bring bitte deinen Personalausweis mit. Wenn du doch nicht kannst, sag uns rechtzeitig Bescheid.</div>`;
+      Bring bitte deinen Personalausweis mit. ${esc(d.storno_text || "Wenn du doch nicht kannst, sag uns rechtzeitig Bescheid.")}</div>`;
   kAngabenBinden();
 }
 
@@ -1339,7 +1412,7 @@ async function kursRueckkehr(sid) {
       await ladeKonto();
       alert("Deine Zahlung ist angekommen, aber der Platz konnte nicht gebucht werden.\n\n"
         + (d.hinweis || "") + "\n\nDein Geld ist nicht weg – es liegt als Guthaben auf deinem "
-        + "Fahrschulkonto. Melde dich kurz im Büro, dann finden wir einen anderen Termin.");
+        + "Fahrschulkonto. Wir kümmern uns darum und melden uns.");
       return;
     }
     await new Promise(r => setTimeout(r, 1500));
@@ -1590,6 +1663,18 @@ function sdTheorieHTML(d) {
     </div>`;
 }
 
+// Kurspaket auf der Startseite (26.10.2026): "Paket ab TT.MM. · x von 21
+// gefahren". Den Satz rechnet der Server nach derselben Regel wie die Buchung.
+function sdPaketHTML(d) {
+  const p = d && d.konto && d.konto.paket;
+  if (!p || !(p.betrag > 0) || !p.text) return "";
+  return `<div class="sd-zeile" id="sdPaket" style="cursor:default;">
+      <div style="width:22px;height:22px;flex-shrink:0;font-size:16px;line-height:22px;text-align:center;">🎟️</div>
+      <div style="flex:1; min-width:0;"><b>${esc(String(p.bezeichnung || "Kurspaket").replace(/\s*\(.*$/, ""))}</b>
+        <span style="display:block;font-size:12.5px;color:var(--gray);margin-top:1px;">${esc(p.text)}</span></div>
+    </div>`;
+}
+
 function sdKontoHTML(d) {
   const k = (d && d.konto) || {};
   if (!k.gefunden) return "";
@@ -1662,7 +1747,7 @@ function sdSeiteHTML(d) {
     + sdAufgabenHTML(d)
     + sdFortschrittHTML(d)
     + sdTheorieHTML(d)
-    + sdKontoHTML(d)
+    + sdKontoHTML(d) + sdPaketHTML(d)
     + sdWeitereHTML(d);
   // Der Mediathek-Hinweis steht jetzt in der Mediathek selbst - dort, wo er
   // gebraucht wird. Auf der Startseite stand er bei jedem Aufruf im Weg.
