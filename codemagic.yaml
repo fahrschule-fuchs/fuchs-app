@@ -15,7 +15,7 @@ workflows:
         # Update hochzaehlen - Apple nimmt keine zweite Fassung mit derselben
         # Nummer an. Aendern laesst sich das hier oder in der
         # Codemagic-Oberflaeche unter "Environment variables".
-        APP_VERSION: "1.11"
+        APP_VERSION: "1.12"
         IOS_DIR: "apps/schueler/ios/App"
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
@@ -54,6 +54,8 @@ workflows:
               "Push nur iOS (1.9)": "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
               "Android ohne Push-Knopf (1.9)": "Store-App Android (Build 1.9)",
               "Theorie-Themen (1.11)": "renderTheorieThemen",
+              "Kurspaket auf der Startseite (1.12)": "sdPaketHTML",
+              "Erste-Hilfe Stornieren/Verschieben (1.12)": "kVerwaltungHTML",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
@@ -241,7 +243,7 @@ workflows:
         - signing-schueler
       vars:
         VERSION_OFFSET: 100
-        VERSION_NAME: "1.11"
+        VERSION_NAME: "1.12"
       node: 22
       java: 21
 
@@ -275,6 +277,8 @@ workflows:
               "Push nur iOS (1.9)": "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
               "Android ohne Push-Knopf (1.9)": "Store-App Android (Build 1.9)",
               "Theorie-Themen (1.11)": "renderTheorieThemen",
+              "Kurspaket auf der Startseite (1.12)": "sdPaketHTML",
+              "Erste-Hilfe Stornieren/Verschieben (1.12)": "kVerwaltungHTML",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
@@ -389,7 +393,8 @@ workflows:
                     'FuchsNative.istApp) ? `<button class="lb-knopf" id="lbDruckKnopf"',
                     "window.fuchsZurueck",
                     "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
-                    "Store-App Android (Build 1.9)", "renderTheorieThemen")
+                    "Store-App Android (Build 1.9)", "renderTheorieThemen",
+                    "sdPaketHTML", "kVerwaltungHTML")
           fehlt = [w for w in noetig if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
@@ -458,7 +463,7 @@ workflows:
         - signing
       vars:
         VERSION_OFFSET: 20
-        VERSION_NAME: "1.11"
+        VERSION_NAME: "1.12"
       node: 22
       java: 21
 
@@ -534,7 +539,7 @@ workflows:
           h = z.read("base/assets/public/index.html").decode("utf-8", "ignore")
           fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
                               "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
-                              "pFzVorbelegen", "akteAdresseHtml") if w not in h]
+                              "pFzVorbelegen", "akteAdresseHtml", "zusatzGewaehlt") if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt im Paket: " + ", ".join(fehlt))
@@ -603,7 +608,7 @@ workflows:
         XCODE_PROJECT: "apps/fahrlehrer/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         INFO_PLIST: "apps/fahrlehrer/ios/App/App/Info.plist"
-        VERSION_NAME: "1.11"
+        VERSION_NAME: "1.12"
       node: 22
       xcode: latest
 
@@ -614,7 +619,10 @@ workflows:
     publishing:
       app_store_connect:
         auth: integration
-        submit_to_testflight: true
+        # 27.10.2026 (1.12): Die TestFlight-Betapruefung scheiterte bei jedem Bau
+        # (Beta-Infos fehlen im App Store Connect). Der Bau wird trotzdem
+        # hochgeladen; App-Store-Einreichung und interne Tests sind davon nicht betroffen.
+        submit_to_testflight: false
 
     scripts:
       - name: Web-Bundle bauen und pruefen
@@ -815,7 +823,7 @@ workflows:
           h = z.read(treffer[0]).decode("utf-8", "ignore")
           fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
                               "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
-                              "pFzVorbelegen", "akteAdresseHtml") if w not in h]
+                              "pFzVorbelegen", "akteAdresseHtml", "zusatzGewaehlt") if w not in h]
           print("Oberflaeche in der App:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt in der App: " + ", ".join(fehlt))
