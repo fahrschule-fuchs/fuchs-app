@@ -1222,6 +1222,7 @@ async function ladeBuchen(){
     <div class="meta" id="bPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
     <label id="bZusatzZeile" style="display:none;gap:9px;align-items:center;font-size:14px;margin-top:-2px">
       <input type="checkbox" id="bZusatz" style="width:20px;height:20px"> Zusatzstunde (nicht aus dem Paket) – wird berechnet</label>
+    <div id="bNachweis"></div>
     <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
     <canvas id="bSig" width="640" height="220" style="width:100%;height:250px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;display:block"></canvas>
@@ -1276,6 +1277,11 @@ async function ladeBuchen(){
   document.getElementById("bSchueler").addEventListener("change",bKlasseNeu);
   bKlasseNeu();
   document.getElementById("bSchueler").addEventListener("change",bPreisNeu);
+  const bNachweisNeu=()=>{const sch=skSchueler(B_SCHUELER,document.getElementById("bSchueler").value)||{};
+    nachweisHinweis("bNachweis",bArt.value==="praktische_pruefung"&&!!sch.id,sch.telefon||"",SK_WAHL["bKlasse"]||sch.klasse||"");};
+  document.getElementById("bSchueler").addEventListener("change",bNachweisNeu);
+  bArt.addEventListener("change",bNachweisNeu);
+  bNachweisNeu();
   bArt.addEventListener("change",bPreisNeu);
   bDauer.addEventListener("input",bPreisNeu);
   bPreisNeu();
@@ -1401,6 +1407,7 @@ async function buchungSpeichern(){
   const btn=document.getElementById("bSpeichern");const alt=btn.textContent;btn.textContent="Speichert …";btn.disabled=true;
   const d=await jpost("fahrlehrer/buchen",{fl:FL,schueler_id,datum,beginn,dauer,art,unterschrift,
     klasse:SK_WAHL["bKlasse"]||"",
+    ...(art==="praktische_pruefung"&&NACHWEIS_GEZEIGT["bNachweis"]?{nachweis_bestaetigt:true}:{}),
     ...(zusatzGewaehlt("b")?{zusatzstunde:true}:{})});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){
@@ -2797,6 +2804,40 @@ function viewBlocker(id){
   };
 }
 
+// 29.10.2026 (Benjamin): Die Unterschrift zur Praktischen Pruefung gilt
+// zugleich fuer den Ausbildungsnachweis - EINE Unterschrift, vorher dieser
+// Hinweis mit dem Ausbildungsstand der Pruefungsklasse. Nur wenn er zu sehen
+// war, geht nachweis_bestaetigt an FUCHS; dort wird der Nachweis abgelegt.
+const NACHWEIS_SATZ="Mit meiner Unterschrift bestätige ich die Prüfungsfahrt und meinen Ausbildungsnachweis (Stand heute).";
+const NACHWEIS_GEZEIGT={};
+function nachweisStandZeilen(d, klasse){
+  if(!d||!d.ok||!d.staende||!d.staende.length)return "";
+  for(const st of d.staende){
+    const je=(st.je_klasse||[]).find(e=>e.klasse===klasse);
+    if(je){const g=st.grundstoff_gemeinsam||{};
+      return standKlasseZeilen(je)+(g.soll?standZeile("Theorie Grundstoff",g.ist,g.soll):"");}
+  }
+  const st=d.staende.find(x=>x.klasse===klasse)||d.staende[0];
+  return standKlasseZeilen(st)+(st.grundstoff_soll?standZeile("Theorie Grundstoff",st.grundstoff,st.grundstoff_soll):"");
+}
+async function nachweisHinweis(zielId, istPruefung, nummer, klasse){
+  const el=document.getElementById(zielId); if(!el)return;
+  NACHWEIS_GEZEIGT[zielId]=false;
+  if(!istPruefung){el.innerHTML="";return;}
+  el.innerHTML=`<div class="card" style="cursor:default;display:block;border:1.5px solid var(--orange,#E8600B);background:#FFF6EA">
+    <div class="eyebrow">🎓 Ausbildungsstand${klasse?" · Klasse "+esc(klasse):""}</div>
+    <div id="${zielId}Stand" style="margin-top:4px"><div class="meta">Lädt …</div></div>
+    <div style="font-weight:700;font-size:14.5px;margin-top:9px">${esc(NACHWEIS_SATZ)}</div>
+    <div class="meta" style="font-size:11.5px;margin-top:3px">Der unterschriebene Ausbildungsnachweis wird danach automatisch im Fahrschulmanager abgelegt.</div>
+  </div>`;
+  NACHWEIS_GEZEIGT[zielId]=true;
+  let d=null;
+  try{ if(nummer) d=await jpost("fahrlehrer/schueler-akte",{fl:FL,pin:PIN,nummer}); }catch(e){}
+  const st=document.getElementById(zielId+"Stand"); if(!st)return;
+  st.innerHTML=nachweisStandZeilen(d,klasse)
+    ||'<div class="meta">Stand gerade nicht lesbar – der Nachweis wird mit dem Stand von heute erstellt.</div>';
+}
+
 function signStunde(id){
   const s=FUCHS_TERMINE[id];if(!s)return;
   AKT_STUNDE=s;
@@ -2820,6 +2861,7 @@ function signStunde(id){
     <div class="meta" id="sPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
     <label id="sZusatzZeile" style="display:none;gap:9px;align-items:center;font-size:14px;margin-top:-2px">
       <input type="checkbox" id="sZusatz" style="width:20px;height:20px"> Zusatzstunde (nicht aus dem Paket) – wird berechnet</label>
+    <div id="sNachweis"></div>
     <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
     <canvas id="bSig" width="640" height="220" style="width:100%;height:250px;background:#fff;border:1.5px dashed var(--line);border-radius:12px;touch-action:none;display:block"></canvas>
@@ -2862,6 +2904,10 @@ function signStunde(id){
     sZeigen(anders?("Vorgabe für "+dArtText(sArtFeld)):"");
   });
   sZeigen("");
+  const sNachweisNeu=()=>nachweisHinweis("sNachweis",sArtFeld.value==="praktische_pruefung",s.nummer||"",
+    SK_WAHL["sKlasse"]||s.klasse||s.schueler_klasse||"");
+  sArtFeld.addEventListener("change",sNachweisNeu);
+  sNachweisNeu();
   document.getElementById("sArt").addEventListener("change",sPreisNeu);
   document.getElementById("sDauer").addEventListener("input",sPreisNeu);
   sPreisNeu();
@@ -2882,6 +2928,7 @@ async function stundeBestaetigen(){
     datum:AKT_STUNDE.datum_iso,beginn:AKT_STUNDE.uhrzeit,dauer,art,unterschrift,
     klasse:SK_WAHL["sKlasse"]||"",
     fahrzeug_id:AKT_STUNDE.fahrzeug_id||null,
+    ...(art==="praktische_pruefung"&&NACHWEIS_GEZEIGT["sNachweis"]?{nachweis_bestaetigt:true}:{}),
     ...(zusatzGewaehlt("s")?{zusatzstunde:true}:{})});
   btn.textContent=alt;btn.disabled=false;
   if(d&&d.ok){toast("Fahrstunde gebucht ✓");const s=AKT_STUNDE;AKT_STUNDE=null;
