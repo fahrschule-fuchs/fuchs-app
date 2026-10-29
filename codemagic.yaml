@@ -57,6 +57,7 @@ workflows:
               "Kurspaket auf der Startseite (1.12)": "sdPaketHTML",
               "Erste-Hilfe Stornieren/Verschieben (1.12)": "kVerwaltungHTML",
               "Jetzt bezahlen bei offenem Betrag (1.13)": "schuld.offen_cent",
+              "Guthaben-Text beim Kurs-Storno (1.13)": "Der Betrag bleibt als Guthaben auf deinem Fahrschulkonto.",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
@@ -281,6 +282,7 @@ workflows:
               "Kurspaket auf der Startseite (1.12)": "sdPaketHTML",
               "Erste-Hilfe Stornieren/Verschieben (1.12)": "kVerwaltungHTML",
               "Jetzt bezahlen bei offenem Betrag (1.13)": "schuld.offen_cent",
+              "Guthaben-Text beim Kurs-Storno (1.13)": "Der Betrag bleibt als Guthaben auf deinem Fahrschulkonto.",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
@@ -396,7 +398,8 @@ workflows:
                     "window.fuchsZurueck",
                     "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
                     "Store-App Android (Build 1.9)", "renderTheorieThemen",
-                    "sdPaketHTML", "kVerwaltungHTML", "schuld.offen_cent")
+                    "sdPaketHTML", "kVerwaltungHTML", "schuld.offen_cent",
+                    "Der Betrag bleibt als Guthaben auf deinem Fahrschulkonto.")
           fehlt = [w for w in noetig if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
@@ -542,7 +545,7 @@ workflows:
           fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
                               "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
                               "pFzVorbelegen", "akteAdresseHtml", "zusatzGewaehlt",
-                              "nachweisHinweis") if w not in h]
+                              "nachweisHinweis", "schuldHinweis") if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt im Paket: " + ", ".join(fehlt))
@@ -827,7 +830,7 @@ workflows:
           fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
                               "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
                               "pFzVorbelegen", "akteAdresseHtml", "zusatzGewaehlt",
-                              "nachweisHinweis") if w not in h]
+                              "nachweisHinweis", "schuldHinweis") if w not in h]
           print("Oberflaeche in der App:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt in der App: " + ", ".join(fehlt))

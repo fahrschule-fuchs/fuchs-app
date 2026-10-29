@@ -1204,6 +1204,7 @@ async function ladeBuchen(){
       <input type="checkbox" id="bAlle" style="width:17px;height:17px;flex:none">
       <span>auch lange ruhende anzeigen (${ruhende})</span></label>`:""}
     <div id="bKlasse"></div>
+    <div id="bSchuld"></div>
     <div class="row">
       <input id="bDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${heute}">
     </div>
@@ -1280,6 +1281,7 @@ async function ladeBuchen(){
   const bNachweisNeu=()=>{const sch=skSchueler(B_SCHUELER,document.getElementById("bSchueler").value)||{};
     nachweisHinweis("bNachweis",bArt.value==="praktische_pruefung"&&!!sch.id,sch.telefon||"",SK_WAHL["bKlasse"]||sch.klasse||"");};
   document.getElementById("bSchueler").addEventListener("change",bNachweisNeu);
+  document.getElementById("bSchueler").addEventListener("change",()=>schuldHinweis("bSchuld",document.getElementById("bSchueler").value));
   bArt.addEventListener("change",bNachweisNeu);
   bNachweisNeu();
   bArt.addEventListener("change",bPreisNeu);
@@ -2415,6 +2417,7 @@ async function viewPlanen(datum,zeit){
       <select id="pSchueler" class="app-select" style="margin-top:9px"></select>
       <div id="pGruppe" style="margin-top:10px"></div>
       <div id="pKlasse" style="margin-top:10px"></div>
+      <div id="pSchuld" style="margin-top:10px"></div>
     </div>
     <div class="row" style="display:flex;gap:9px">
       <input id="pDatum" type="date" class="app-input" style="text-align:left;flex:1" value="${datum}">
@@ -2451,6 +2454,8 @@ async function viewPlanen(datum,zeit){
     skSchueler(W_SCHUELER,document.getElementById("pSchueler").value)||{},()=>pFzVorbelegen());
   document.getElementById("pSchueler").addEventListener("change",pKlasseNeu);
   pKlasseNeu();
+  document.getElementById("pSchueler").addEventListener("change",()=>schuldHinweis("pSchuld",document.getElementById("pSchueler").value));
+  schuldHinweis("pSchuld",document.getElementById("pSchueler").value);
   const pArt=document.getElementById("pArt"), pDauer=document.getElementById("pDauer"),
         pFeld=document.getElementById("pSchuelerFeld"), pFz=document.getElementById("pFz"),
         pHin=document.getElementById("pHinweis");
@@ -2838,6 +2843,22 @@ async function nachweisHinweis(zielId, istPruefung, nummer, klasse){
     ||'<div class="meta">Stand gerade nicht lesbar – der Nachweis wird mit dem Stand von heute erstellt.</div>';
 }
 
+// 29.10.2026 (Release 1.13): Hinweis bei offenem Betrag der Kartei - nur
+// Hinweis, keine Sperre. Der Bot fragt im Manager nach (fahrlehrer/schuld).
+// Kommt nichts (alter Server, keine Verbindung), bleibt die Stelle leer.
+const SCHULD_LAUF={};
+async function schuldHinweis(zielId, schuelerId){
+  const el=document.getElementById(zielId); if(!el)return;
+  el.innerHTML="";
+  const lauf=SCHULD_LAUF[zielId]=(SCHULD_LAUF[zielId]||0)+1;
+  if(!schuelerId)return;
+  let d=null; try{ d=await jpost("fahrlehrer/schuld",{fl:FL,schueler_id:schuelerId}); }catch(e){}
+  if(lauf!==SCHULD_LAUF[zielId])return;
+  const z=document.getElementById(zielId); if(!z)return;
+  if(d&&d.ok&&d.ueber_grenze&&d.hinweis)
+    z.innerHTML=`<div class="hint" style="border-color:#E8A23A;background:#FFF3E0;color:#8A4B00;font-weight:600">⚠️ ${esc(d.hinweis)}</div>`;
+}
+
 function signStunde(id){
   const s=FUCHS_TERMINE[id];if(!s)return;
   AKT_STUNDE=s;
@@ -2861,6 +2882,7 @@ function signStunde(id){
     <div class="meta" id="sPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
     <label id="sZusatzZeile" style="display:none;gap:9px;align-items:center;font-size:14px;margin-top:-2px">
       <input type="checkbox" id="sZusatz" style="width:20px;height:20px"> Zusatzstunde (nicht aus dem Paket) – wird berechnet</label>
+    <div id="sSchuld"></div>
     <div id="sNachweis"></div>
     <div class="secttitel" style="font-size:15px;margin-top:8px">Unterschrift des Schülers</div>
     <div class="meta" style="margin-top:-4px">Gib dem Schüler das Gerät – hier unterschreiben:</div>
@@ -2908,6 +2930,7 @@ function signStunde(id){
     SK_WAHL["sKlasse"]||s.klasse||s.schueler_klasse||"");
   sArtFeld.addEventListener("change",sNachweisNeu);
   sNachweisNeu();
+  schuldHinweis("sSchuld",s.schueler_id);
   document.getElementById("sArt").addEventListener("change",sPreisNeu);
   document.getElementById("sDauer").addEventListener("input",sPreisNeu);
   sPreisNeu();
