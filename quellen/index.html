@@ -32,6 +32,15 @@
     display:flex; flex-direction:column;
   }
   .topbar{height:calc(6px + env(safe-area-inset-top)); background:var(--orange); flex-shrink:0;}
+  /* 16.11.2026 (Benjamin): Chat "Frag den Fuchs" - die Tastatur verdeckte auf dem iPhone das
+     Eingabefeld. Nur im Chat (body.chat-modus) folgt die App dem sichtbaren Bereich
+     (window.visualViewport, Werte per JS in --vv-h/--vv-top). Bei offener Tastatur
+     faellt die untere Leiste weg, die Nachrichtenliste darf schrumpfen. */
+  body.chat-modus .phone{position:fixed; left:0; right:0; margin:0 auto; top:var(--vv-top,0px); height:var(--vv-h,100dvh);}
+  body.chat-modus main{overflow:hidden;}
+  body.chat-modus #chatListe{min-height:80px !important;}
+  body.chat-modus.tastatur-offen nav{display:none;}
+  body.chat-modus.tastatur-offen main{padding:10px 16px; gap:8px;}
   header{
     display:flex; align-items:center; gap:10px; padding:10px 20px;
     background:#fff; border-bottom:1px solid var(--line); flex-shrink:0;
@@ -4751,8 +4760,8 @@ function renderChat() {
     <div id="chatListe" style="flex:1; display:flex; flex-direction:column; gap:10px; overflow-y:auto; min-height:200px;"></div>
     <div style="display:flex; gap:8px;">
       <input id="chatInput" placeholder="Nachricht schreiben …"
-        style="flex:1; border:1.5px solid var(--line); border-radius:999px; padding:12px 16px; font-size:16px; outline:none; background:#fff; font-family:inherit;">
-      <button id="chatSenden" style="background:var(--orange); color:#fff; border:none; border-radius:999px; padding:0 18px; font-size:15px; font-weight:700; cursor:pointer;">➤</button>
+        style="flex:1; min-width:0; border:1.5px solid var(--line); border-radius:999px; padding:12px 16px; font-size:16px; outline:none; background:#fff; font-family:inherit;">
+      <button id="chatSenden" style="flex-shrink:0; background:var(--orange); color:#fff; border:none; border-radius:999px; padding:0 18px; font-size:15px; font-weight:700; cursor:pointer;">➤</button>
     </div>`;
   const liste = document.getElementById("chatListe");
   const input = document.getElementById("chatInput");
@@ -4807,8 +4816,51 @@ function renderChat() {
   }
   document.getElementById("chatSenden").addEventListener("click", senden);
   input.addEventListener("keydown", e => { if (e.key === "Enter") senden(); });
+  // 16.11.2026: beim Fokus (Tastatur kommt) Eingabe und letzte Nachricht sichtbar halten.
+  input.addEventListener("focus", () => { chatSichtbar(); setTimeout(chatSichtbar, 300); setTimeout(chatSichtbar, 650); });
   zeichne();
+  chatModus(true);
 }
+
+// 16.11.2026 (Benjamin): Chat an window.visualViewport ausrichten. Nur solange der Chat
+// offen ist - danach ist alles wie vorher (Klasse weg, Viewport-Meta wie vorher).
+let chatVVmax = 0;
+function chatModus(an) {
+  const b = document.body, r = document.documentElement.style;
+  const m = document.querySelector('meta[name="viewport"]');
+  if (m) {
+    const basis = m.getAttribute("content").replace(/,\s*interactive-widget=[^,]*/, "");
+    m.setAttribute("content", an ? basis + ", interactive-widget=resizes-content" : basis);
+  }
+  b.classList.toggle("chat-modus", !!an);
+  if (!an) { b.classList.remove("tastatur-offen"); r.removeProperty("--vv-h"); r.removeProperty("--vv-top"); return; }
+  chatViewport();
+}
+function chatViewport() {
+  if (!document.body.classList.contains("chat-modus")) return;
+  if (!document.getElementById("chatInput")) { chatModus(false); return; }   // Chat verlassen
+  const vv = window.visualViewport;
+  const h = vv ? vv.height : window.innerHeight, top = vv ? vv.offsetTop : 0;
+  chatVVmax = Math.max(chatVVmax, h, window.innerHeight * (vv ? 0 : 1));
+  const r = document.documentElement.style;
+  r.setProperty("--vv-h", Math.round(h) + "px");
+  r.setProperty("--vv-top", Math.round(top) + "px");
+  document.body.classList.toggle("tastatur-offen", h < chatVVmax - 120);
+  chatSichtbar();
+}
+function chatSichtbar() {
+  const l = document.getElementById("chatListe"), i = document.getElementById("chatInput");
+  if (l) l.scrollTop = l.scrollHeight;
+  if (i && i.scrollIntoView) { try { i.scrollIntoView({ block: "nearest" }); } catch (e) {} }
+}
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", chatViewport);
+  window.visualViewport.addEventListener("scroll", chatViewport);
+} else window.addEventListener("resize", chatViewport);
+window.addEventListener("orientationchange", () => { chatVVmax = 0; setTimeout(chatViewport, 350); });
+// Chat auf anderem Weg verlassen (nicht ueber die Leiste): Modus trotzdem aus.
+try { new MutationObserver(() => { if (document.body.classList.contains("chat-modus") && !document.getElementById("chatInput")) chatModus(false); })
+  .observe(document.getElementById("main"), { childList: true }); } catch (e) {}
 
 // ── Meine Ausbildung (Diagrammkarte) ─────────────────────────
 let ausbKatalog = null;
@@ -5507,6 +5559,7 @@ function waehleTab(id, label, ansicht) {
     return;
   }
   document.querySelectorAll("nav button").forEach(b => b.classList.toggle("aktiv", b.dataset.tab === id));
+  if (typeof chatModus === "function") chatModus(false);   // 16.11.2026: Chat-Ansicht zuruecksetzen
   // Die untere Leiste gibt nichts mit und landet deshalb wie bisher in der
   // Uebersicht. Wer gezielt auf "Freie Termine" tippt, kommt dorthin.
   if (id === "fahrstunden") { fsAnsicht = ansicht || "liste"; }
