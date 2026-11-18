@@ -15,7 +15,7 @@ workflows:
         # Update hochzaehlen - Apple nimmt keine zweite Fassung mit derselben
         # Nummer an. Aendern laesst sich das hier oder in der
         # Codemagic-Oberflaeche unter "Environment variables".
-        APP_VERSION: "1.14"
+        APP_VERSION: "1.15"
         IOS_DIR: "apps/schueler/ios/App"
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
@@ -60,6 +60,9 @@ workflows:
               "Guthaben-Text beim Kurs-Storno (1.13)": "Der Betrag bleibt als Guthaben auf deinem Fahrschulkonto.",
               "Chat bleibt ueber der Tastatur (1.14)": "function chatViewport()",
               "Senden-Knopf im Bild (1.14)": "<button id=\"chatSenden\" style=\"flex-shrink:0; ",
+              "Absage-Knopf je Fahrlehrer abschaltbar (1.15)": "const absageNurFl = !!t.absage_gesperrt;",
+              "Absage in zwei Schritten mit Grund (1.15)": "function fsStornoSchritt2",
+              "Verschieben statt absagen (1.15)": "function fsVerschiebenStart",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
@@ -247,7 +250,7 @@ workflows:
         - signing-schueler
       vars:
         VERSION_OFFSET: 100
-        VERSION_NAME: "1.14"
+        VERSION_NAME: "1.15"
       node: 22
       java: 21
 
@@ -287,6 +290,9 @@ workflows:
               "Guthaben-Text beim Kurs-Storno (1.13)": "Der Betrag bleibt als Guthaben auf deinem Fahrschulkonto.",
               "Chat bleibt ueber der Tastatur (1.14)": "function chatViewport()",
               "Senden-Knopf im Bild (1.14)": "<button id=\"chatSenden\" style=\"flex-shrink:0; ",
+              "Absage-Knopf je Fahrlehrer abschaltbar (1.15)": "const absageNurFl = !!t.absage_gesperrt;",
+              "Absage in zwei Schritten mit Grund (1.15)": "function fsStornoSchritt2",
+              "Verschieben statt absagen (1.15)": "function fsVerschiebenStart",
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
           print("Web-Bundle: %d Zeichen" % len(s))
