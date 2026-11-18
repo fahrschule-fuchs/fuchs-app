@@ -5096,17 +5096,25 @@ function zeichneFahrstunden(d) {
   if (kommende.length) {
     h += `<div class="card" style="padding:0; overflow:hidden;">`;
     kommende.forEach((t, i) => {
-      const kannStorno = (t.id !== undefined && t.id !== null);
+      // 17.11.2026 (Benjamin): Absage beim Fahrlehrer abgeschaltet -> kein Knopf, nur der Hinweis.
+      const absageNurFl = !!t.absage_gesperrt;
+      // 18.11.2026 (Klaus): App-Absage erschweren, Umbuchen, Sperren: Pruefung, Vielabsager-Sperre, begonnen -> Hinweis vom Server.
+      const sperre = t.absage_sperre || null;
+      const sperrText = sperre ? (sperre.text || "") : (absageNurFl ? "Bitte sprich Absagen direkt mit deinem Fahrlehrer ab." : "");
+      const kannStorno = (t.id !== undefined && t.id !== null) && !absageNurFl && !sperre;
+      const kannVerschieben = (t.id !== undefined && t.id !== null) && !!(sperre && sperre.umbuchen);
       h += `<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 14px; ${i ? "border-top:1px solid #F1EBE4;" : ""}">
         <div style="min-width:0;">
           <div style="font-weight:700; font-size:14.5px; color:var(--dark);">${esc(t.datum)}${t.uhrzeit ? " · " + esc(t.uhrzeit) + (t.bis ? "–" + esc(t.bis) : "") + " Uhr" : ""}</div>
           <div style="font-size:12.5px; color:var(--gray); margin-top:1px;">${esc(t.art_text || "Fahrstunde")}${t.fahrlehrer && t.fahrlehrer !== "unbekannt" ? " · " + esc(t.fahrlehrer) : ""}</div>
+          ${sperrText ? `<div style="font-size:12px; color:#8A4B10; margin-top:3px; line-height:1.35;">${esc(sperrText)}</div>` : ""}
         </div>
         <div style="display:flex; gap:6px; flex:0 0 auto;">
         ${bezahlbar() && Number(t.preis_cent) > 0 ? `<button onclick="renderBezahlen(${Number(t.preis_cent)}, 'Fahrstunde ${esc(t.datum)}')"
           style="flex:0 0 auto; padding:7px 13px; border:none; background:var(--orange); color:#fff;
                  border-radius:999px; font-size:12.5px; font-weight:700; white-space:nowrap;">💳 ${eur(t.preis_cent)}</button>` : ""}
         ${kannStorno ? `<button onclick="fsStornoStart(${t.id})" style="flex:0 0 auto; padding:7px 13px; border:1px solid #E7D9CC; background:#fff; color:#8A4B10; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer;">Absagen</button>` : ""}
+        ${kannVerschieben ? `<button onclick="fsVerschiebenStart(${t.id})" style="flex:0 0 auto; padding:7px 13px; border:1px solid #E7D9CC; background:#fff; color:#8A4B10; border-radius:10px; font-size:12.5px; font-weight:600; cursor:pointer;">Verschieben</button>` : ""}
         </div>
       </div>`;
     });
@@ -5151,7 +5159,27 @@ function fsEuro(n) { return (Number(n || 0)).toFixed(2).replace(".", ",") + " �
 function fsToast(msg) {
   let t = document.getElementById("toast");
   if (!t) { t = document.createElement("div"); t.id = "toast"; t.style.cssText = "position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:10px 16px;border-radius:999px;font-size:13px;z-index:99999;max-width:85%;text-align:center;transition:opacity .3s;"; document.body.appendChild(t); }
+  t.style.pointerEvents = "none";   // 18.11.2026 (Klaus): App-Absage erschweren, Umbuchen, Sperren: fing unsichtbar Klicks im Absage-Fenster ab
   t.textContent = msg; t.style.opacity = "1"; clearTimeout(t._timer); t._timer = setTimeout(() => { t.style.opacity = "0"; }, 3400);
+}
+
+// 18.11.2026 (Klaus): App-Absage erschweren, Umbuchen, Sperren
+// Schritt 1: "Willst du die Stunde wirklich absagen?" mit echten Hinweisen vom Server.
+// Schritt 2: Grund (Pflicht) + Frist/Kosten, dann "Endgültig absagen".
+// "Lieber verschieben": freie Zeiten des Fahrlehrers dieser Stunde - neuer Termin und
+// Absage der alten Stunde in einem Schritt; sonst eine vorbelegte Anfrage ans Buero.
+let fsStornoV = null, fsStornoId = null, fsStornoGrund = "";
+let fsNotiz = "", fsVerschiebeId = null;
+const FS_KNOPF_HAUPT = "width:100%; padding:14px; border:none; border-radius:12px; background:#E8600B; color:#fff; font-size:16px; font-weight:800; cursor:pointer;";
+const FS_KNOPF_ZWEIT = "margin-top:8px; width:100%; padding:12px; border:1.5px solid #E7D9CC; border-radius:12px; background:#fff; color:#8A4B10; font-size:15px; font-weight:700; cursor:pointer;";
+const FS_KNOPF_KLEIN = "margin-top:10px; width:100%; padding:8px; border:none; background:none; color:#9A9A9A; font-size:13px; text-decoration:underline; cursor:pointer;";
+const FS_GRUENDE = [["krank", "Krank"], ["schule", "Schule, Arbeit, Ausbildung"], ["urlaub", "Urlaub, verreist"], ["sonstiges", "Sonstiges"]];
+
+function fsNichtMoeglich(titel, text, verschiebenId) {
+  fsModal(`<div style="font-size:16px; font-weight:800; color:var(--dark); margin-bottom:8px;">${esc(titel)}</div>
+    <div style="font-size:14px; color:var(--gray); line-height:1.45;">${esc(text || "Das hat gerade nicht geklappt.")}</div>
+    ${verschiebenId ? `<button onclick="fsVerschiebenStart(${verschiebenId})" style="margin-top:16px; ${FS_KNOPF_HAUPT}">Lieber verschieben</button>` : ""}
+    <button onclick="fsModalSchliessen()" style="margin-top:${verschiebenId ? 8 : 16}px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Schließen</button>`);
 }
 
 async function fsStornoStart(id) {
@@ -5159,54 +5187,168 @@ async function fsStornoStart(id) {
   let v;
   try {
     const r = await fetch("fahrstunden/storno", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, fahrstunde_id: id, ausfuehren: false }) });
+      body: JSON.stringify({ token, fahrstunde_id: id, ausfuehren: false, dialog: 2 }) });
     v = await r.json();
   } catch (e) { v = { ok: false, fehler: "Verbindung fehlgeschlagen." }; }
-  if (!v || !v.ok) {
-    fsModal(`<div style="font-size:16px; font-weight:800; color:var(--dark); margin-bottom:8px;">Absage nicht möglich</div>
-      <div style="font-size:14px; color:var(--gray); line-height:1.45;">${esc((v && v.fehler) || "Das hat gerade nicht geklappt.")}</div>
-      <button onclick="fsModalSchliessen()" style="margin-top:16px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Schließen</button>`);
-    return;
-  }
-  const termin = `${esc(v.datum_de || "")}${v.uhrzeit ? ", " + esc(v.uhrzeit) + " Uhr" : ""}`;
-  const art = esc(v.art_text || "Fahrstunde");
-  if (v.kostenpflichtig) {
-    fsModal(`
-      <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:4px;">Fahrstunde absagen?</div>
-      <div style="font-size:13.5px; color:var(--gray); margin-bottom:12px;">${art} · ${termin}</div>
-      <div style="background:#FDECEC; border:1px solid #F3B4B4; border-radius:12px; padding:13px 14px;">
-        <div style="font-weight:800; color:#B3261E; font-size:14.5px;">⚠️ Diese Absage ist kostenpflichtig</div>
-        <div style="font-size:13.5px; color:#7A1F1A; line-height:1.5; margin-top:6px;">
-          Die AGB-Frist von <b>${v.frist} Werktagen</b> ist unterschritten. Die Stunde wird als
-          <b>Fehlstunde (FE)</b> gewertet und mit <b>${fsEuro(v.betrag)}</b> (75 % des Entgelts) berechnet.</div>
-      </div>
-      <button onclick="fsStornoAusfuehren(${id})" style="margin-top:14px; width:100%; padding:13px; border:none; border-radius:12px; background:#B3261E; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">Trotzdem absagen · ${fsEuro(v.betrag)}</button>
-      <button onclick="fsModalSchliessen()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Doch nicht absagen</button>`);
-  } else {
-    fsModal(`
-      <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:4px;">Fahrstunde absagen?</div>
-      <div style="font-size:13.5px; color:var(--gray); margin-bottom:12px;">${art} · ${termin}</div>
-      <div style="background:#E9F7EE; border:1px solid #A7DCBB; border-radius:12px; padding:13px 14px;">
-        <div style="font-weight:800; color:#1E7A43; font-size:14.5px;">✓ Rechtzeitig – kostenfrei</div>
-        <div style="font-size:13.5px; color:#1E5B37; line-height:1.5; margin-top:6px;">
-          Du sagst rechtzeitig ab (Frist: ${v.frist} Werktage). Für diese Absage entstehen <b>keine Kosten</b>.</div>
-      </div>
-      <button onclick="fsStornoAusfuehren(${id})" style="margin-top:14px; width:100%; padding:13px; border:none; border-radius:12px; background:#E8600B; color:#fff; font-size:15px; font-weight:700; cursor:pointer;">Fahrstunde absagen</button>
-      <button onclick="fsModalSchliessen()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Abbrechen</button>`);
-  }
+  if (!v || !v.ok) { fsNichtMoeglich("Absage nicht möglich", v && v.fehler, v && v.umbuchen_erlaubt ? id : null); return; }
+  fsStornoV = v; fsStornoId = id; fsStornoGrund = "";
+  fsStornoSchritt1();
 }
 
-async function fsStornoAusfuehren(id) {
+function fsTerminText(v) {
+  return `${esc(v.art_text || "Fahrstunde")} · ${esc(v.datum_de || "")}${v.uhrzeit ? ", " + esc(v.uhrzeit) + " Uhr" : ""}`;
+}
+
+function fsStornoSchritt1() {
+  const v = fsStornoV, id = fsStornoId;
+  const zeilen = (v.hinweise || []).map(z => `<li style="margin:5px 0;">${esc(z)}</li>`).join("");
+  fsModal(`
+    <div style="font-size:18px; font-weight:800; color:var(--dark); margin-bottom:4px;">Willst du die Stunde wirklich absagen?</div>
+    <div style="font-size:13.5px; color:var(--gray); margin-bottom:10px;">${fsTerminText(v)}</div>
+    <ul style="margin:0 0 4px; padding-left:20px; font-size:14px; color:var(--dark); line-height:1.45;">${zeilen}</ul>
+    ${v.absage_warnung ? `<div style="background:#FFF4E5; border:1px solid #F5C98B; border-radius:12px; padding:10px 12px; font-size:13.5px; color:#8A4B10; line-height:1.45; margin-top:8px;">${esc(v.absage_warnung)}</div>` : ""}
+    <button onclick="fsModalSchliessen()" style="margin-top:14px; ${FS_KNOPF_HAUPT}">Stunde behalten</button>
+    <button onclick="fsVerschiebenStart(${id})" style="${FS_KNOPF_ZWEIT}">Lieber verschieben</button>
+    <button onclick="fsStornoSchritt2()" style="${FS_KNOPF_KLEIN}">Trotzdem absagen</button>`);
+}
+
+function fsStornoSchritt2() {
+  const v = fsStornoV;
+  const chips = FS_GRUENDE.map(([k, l]) => `<button class="fs-chip fs-grund${fsStornoGrund === k ? " an" : ""}" data-grund="${k}" onclick="fsStornoGrundWahl('${k}')" style="padding:10px 14px; font-size:14px; border-radius:999px;">${esc(l)}</button>`).join("");
+  const frist = v.kostenpflichtig
+    ? `<div style="background:#FDECEC; border:1px solid #F3B4B4; border-radius:12px; padding:12px 13px; margin-top:12px;">
+        <div style="font-weight:800; color:#B3261E; font-size:14.5px;">⚠️ Diese Absage kostet 75 % = ${fsEuro(v.betrag)}</div>
+        <div style="font-size:13px; color:#7A1F1A; line-height:1.5; margin-top:5px;">Die Frist von <b>${v.frist} Werktagen</b> ist unterschritten. Die Stunde wird als Fehlstunde (FE) berechnet.</div></div>`
+    : `<div style="background:#E9F7EE; border:1px solid #A7DCBB; border-radius:12px; padding:12px 13px; margin-top:12px;">
+        <div style="font-weight:800; color:#1E7A43; font-size:14.5px;">✓ Rechtzeitig – kostenfrei</div>
+        <div style="font-size:13px; color:#1E5B37; line-height:1.5; margin-top:5px;">Du sagst rechtzeitig ab (Frist: ${v.frist} Werktage). Für diese Absage entstehen <b>keine Kosten</b>.</div></div>`;
+  fsModal(`
+    <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:4px;">Warum sagst du ab?</div>
+    <div style="font-size:13.5px; color:var(--gray); margin-bottom:10px;">${fsTerminText(v)}</div>
+    <div style="display:flex; gap:7px; flex-wrap:wrap;">${chips}</div>
+    <input id="fsStornoText" maxlength="120" placeholder="Kurz erklären (freiwillig)" style="margin-top:10px; width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; font-size:14px; font-family:inherit; outline:none;">
+    ${frist}
+    <div id="fsStornoHinweis" style="font-size:13px; color:#D64545; text-align:center; margin-top:8px; min-height:16px;"></div>
+    <button id="fsStornoOk" onclick="fsStornoAusfuehren()" ${fsStornoGrund ? "" : "disabled"} style="margin-top:4px; width:100%; padding:13px; border:none; border-radius:12px; background:${v.kostenpflichtig ? "#B3261E" : "#8A4B10"}; color:#fff; font-size:15px; font-weight:700; cursor:pointer; opacity:${fsStornoGrund ? 1 : 0.45};">Endgültig absagen${v.kostenpflichtig ? " · " + fsEuro(v.betrag) : ""}</button>
+    <button onclick="fsStornoSchritt1()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Zurück</button>`);
+}
+
+function fsStornoGrundWahl(k) {
+  fsStornoGrund = k;
+  document.querySelectorAll(".fs-grund").forEach(el => el.classList.toggle("an", el.dataset.grund === k));
+  const b = document.getElementById("fsStornoOk");
+  if (b) { b.disabled = false; b.style.opacity = "1"; }
+  const h = document.getElementById("fsStornoHinweis");
+  if (h) h.textContent = "";
+}
+
+async function fsStornoAusfuehren() {
+  const id = fsStornoId;
+  if (!fsStornoGrund) {
+    const h = document.getElementById("fsStornoHinweis");
+    if (h) h.textContent = "Bitte wähle einen Grund.";
+    return;
+  }
+  const inp = document.getElementById("fsStornoText");
+  const grundText = inp ? inp.value : "";
   fsModal(`<div style="text-align:center; color:var(--gray); font-size:14px; padding:16px 0;">Absage wird gespeichert …</div>`);
   let v;
   try {
     const r = await fetch("fahrstunden/storno", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, fahrstunde_id: id, ausfuehren: true }) });
+      body: JSON.stringify({ token, fahrstunde_id: id, ausfuehren: true, dialog: 2, grund: fsStornoGrund, grund_text: grundText }) });
     v = await r.json();
   } catch (e) { v = { ok: false, fehler: "Verbindung fehlgeschlagen." }; }
   fsModalSchliessen();
   if (!v || !v.ok) { fsToast((v && v.fehler) || "Absage fehlgeschlagen."); return; }
   fsToast(v.kostenpflichtig ? `Abgesagt · Fehlstunde ${fsEuro(v.betrag)} berechnet` : "Fahrstunde abgesagt – kostenfrei ✓");
+  renderFahrstunden();
+}
+
+// ---- Lieber verschieben (Umbuchen) ----
+let fsUmbuchenV = null;
+async function fsVerschiebenStart(id) {
+  fsModal(`<div style="text-align:center; color:var(--gray); font-size:14px; padding:16px 0;">Einen Moment – ich suche freie Zeiten …</div>`);
+  let v;
+  try {
+    const r = await fetch("fahrstunden/umbuchen", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, fahrstunde_id: id, ausfuehren: false }) });
+    v = await r.json();
+  } catch (e) { v = { ok: false, fehler: "Verbindung fehlgeschlagen." }; }
+  if (!v || !v.ok) {
+    if (v && v.anfrage) { fsVerschiebenAnfrage(id, v.anfrage_text, v.fehler); return; }
+    fsNichtMoeglich("Verschieben nicht möglich", v && v.fehler, null);
+    return;
+  }
+  fsUmbuchenV = v; fsStornoId = id;
+  const u = v.umbuchen || {};
+  if (!u.moeglich) {
+    const wer = v.fahrlehrer_vorname || "deinem Fahrlehrer";
+    const text = u.grund === "sperre" ? (u.sperre_text || "Freie Termine kannst du gerade nicht buchen.")
+      : u.grund === "nicht_selbstbuchbar" ? "Diese Stunde kannst du nicht selbst verschieben."
+      : `Bei ${wer} gibt es gerade keine passenden freien Zeiten.`;
+    fsVerschiebenAnfrage(id, u.anfrage_text, text);
+    return;
+  }
+  const kosten = v.kostenpflichtig
+    ? `<div style="font-size:13px; color:#B3261E; line-height:1.45; margin-top:6px;">Deine bisherige Stunde wird dabei abgesagt – das kostet 75 % = <b>${fsEuro(v.betrag)}</b> (Frist ${v.frist} Werktage unterschritten).</div>`
+    : `<div style="font-size:13px; color:#1E7A43; line-height:1.45; margin-top:6px;">Deine bisherige Stunde wird dabei kostenfrei abgesagt.</div>`;
+  const liste = (u.termine || []).map(t => (t.varianten && t.varianten.length ? t.varianten : [{}]).map(va => `
+      <button onclick="fsVerschiebenWahl(${t.id}, '${esc(va.klasse || "")}', '${esc(va.getriebe || "")}')" style="display:block; width:100%; text-align:left; margin-top:8px; padding:11px 13px; border:1.5px solid #E7D9CC; border-radius:12px; background:#fff; cursor:pointer;">
+        <div style="font-weight:800; font-size:14.5px; color:var(--dark);">${esc(t.datum_text || t.datum)} · ${esc(t.beginn)}–${esc(t.ende || "")} Uhr</div>
+        <div style="font-size:12.5px; color:var(--gray); margin-top:2px;">${[va.getriebe_text, va.fahrzeug].filter(Boolean).map(esc).join(" · ")}</div>
+      </button>`).join("")).join("");
+  fsModal(`
+    <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:4px;">Stunde verschieben</div>
+    <div style="font-size:13.5px; color:var(--gray);">Bisher: ${fsTerminText(v)}</div>
+    ${kosten}
+    <div style="max-height:46vh; overflow:auto; margin-top:6px;">${liste}</div>
+    <button onclick="fsVerschiebenAnfrage(${id}, fsUmbuchenV && fsUmbuchenV.umbuchen && fsUmbuchenV.umbuchen.anfrage_text, '')" style="${FS_KNOPF_KLEIN}">Keine passt – Verschiebung anfragen</button>
+    <button onclick="fsModalSchliessen()" style="margin-top:4px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Abbrechen</button>`);
+}
+
+function fsVerschiebenWahl(neuId, klasse, getriebe) {
+  const v = fsUmbuchenV, u = (v && v.umbuchen) || {};
+  const t = (u.termine || []).find(x => Number(x.id) === Number(neuId));
+  if (!t) return;
+  fsModal(`
+    <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:8px;">Verschieben bestätigen</div>
+    <div style="font-size:14px; color:var(--dark); line-height:1.5;">Neuer Termin: <b>${esc(t.datum_text || t.datum)}, ${esc(t.beginn)}–${esc(t.ende || "")} Uhr</b></div>
+    <div style="font-size:14px; color:var(--dark); line-height:1.5;">Bisherige Stunde: ${fsTerminText(v)} – wird abgesagt${v.kostenpflichtig ? ` (kostet 75 % = <b>${fsEuro(v.betrag)}</b>)` : " (kostenfrei)"}.</div>
+    ${t.storno_text ? `<div style="font-size:12.5px; color:var(--gray); margin-top:6px;">${esc(t.storno_text)}</div>` : ""}
+    <button onclick="fsVerschiebenAusfuehren(${neuId}, '${esc(klasse)}', '${esc(getriebe)}')" style="margin-top:14px; ${FS_KNOPF_HAUPT}">Verschieben</button>
+    <button onclick="fsVerschiebenStart(${fsStornoId})" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Zurück</button>`);
+}
+
+async function fsVerschiebenAusfuehren(neuId, klasse, getriebe) {
+  const id = fsStornoId;
+  fsModal(`<div style="text-align:center; color:var(--gray); font-size:14px; padding:16px 0;">Wird verschoben …</div>`);
+  let v;
+  try {
+    const r = await fetch("fahrstunden/umbuchen", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, fahrstunde_id: id, neu_id: neuId, klasse, getriebe, ausfuehren: true }) });
+    v = await r.json();
+  } catch (e) { v = { ok: false, fehler: "Verbindung fehlgeschlagen. Deine Stunde bleibt bestehen." }; }
+  if (!v || !v.ok) { fsNichtMoeglich("Verschieben hat nicht geklappt", v && v.fehler, null); return; }
+  fsModalSchliessen();
+  const n = v.neu || {};
+  fsToast(`Verschoben auf ${n.datum ? n.datum.split("-").reverse().join(".") : ""} ${n.beginn || ""} Uhr ✓`);
+  renderFahrstunden();
+}
+
+function fsVerschiebenAnfrage(id, text, hinweis) {
+  fsModal(`
+    <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:8px;">Verschiebung anfragen</div>
+    ${hinweis ? `<div style="font-size:14px; color:var(--gray); line-height:1.45;">${esc(hinweis)}</div>` : ""}
+    <div style="font-size:14px; color:var(--dark); line-height:1.45; margin-top:8px;">Schick dem Büro eine Anfrage – deine Stunde bleibt bestehen, bis dein Fahrlehrer oder das Büro sie ändert.</div>
+    <button onclick="fsAnfrageVerschieben(${id})" style="margin-top:14px; ${FS_KNOPF_HAUPT}">Verschiebung anfragen</button>
+    <button onclick="fsModalSchliessen()" style="margin-top:8px; width:100%; padding:12px; border:none; border-radius:12px; background:#F0EBE5; color:#1A1A1A; font-size:15px; font-weight:600; cursor:pointer;">Schließen</button>`);
+  fsNotiz = text || "";
+}
+
+function fsAnfrageVerschieben(id) {
+  fsModalSchliessen();
+  fsVerschiebeId = id;
+  fsAnsicht = "anfrage";
   renderFahrstunden();
 }
 
@@ -5312,6 +5454,10 @@ function renderFsAnfrage() {
     h += `</div></div>`;
   }
   h += `</div>
+    <div class="card">
+      <div class="eyebrow">Nachricht an das Büro (freiwillig)</div>
+      <textarea id="fsNotiz" maxlength="300" rows="2" style="margin-top:8px; width:100%; box-sizing:border-box; border:1.5px solid var(--line); border-radius:12px; padding:10px 12px; font-size:14px; font-family:inherit; outline:none; resize:vertical;">${esc(fsNotiz || "")}</textarea>
+    </div>
     <button class="btn-primary" id="fsSenden" style="width:100%;" onclick="sendeFsAnfrage()">Anfrage senden</button>
     <div id="fsHinweis" class="meta" style="text-align:center; color:#D64545;"></div>`;
   main.innerHTML = `<div style="display:flex; flex-direction:column; gap:12px;">${h}</div>`;
@@ -5334,11 +5480,12 @@ async function sendeFsAnfrage() {
   try {
     const r = await fetch("fahrstunden/anfrage", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, filiale: fsFiliale, ab_datum: fsAbDatum, verfuegbarkeit: fsAuswahl, anzahl: fsAnzahl, dauer_min: FS_MINUTEN }),
+      body: JSON.stringify({ token, filiale: fsFiliale, ab_datum: fsAbDatum, verfuegbarkeit: fsAuswahl, anzahl: fsAnzahl, dauer_min: FS_MINUTEN,
+        notiz: ((document.getElementById("fsNotiz") || {}).value || "").slice(0, 300), verschieben_id: fsVerschiebeId || undefined }),
     });
     const d = await r.json();
     if (!d.ok) { hinweis.textContent = d.fehler || "Das hat nicht geklappt – versuch es nochmal."; btn.disabled = false; btn.textContent = "Anfrage senden"; return; }
-    fsAuswahl = {}; fsAbDatum = ""; fsFiliale = ""; fsAnzahl = 1;
+    fsAuswahl = {}; fsAbDatum = ""; fsFiliale = ""; fsAnzahl = 1; fsNotiz = ""; fsVerschiebeId = null;
     main.innerHTML = `<div style="display:flex; flex-direction:column; gap:14px;">
       <h1>Anfrage gesendet 🦊</h1>
       <div class="card" style="border:none; background:var(--orange-soft);">
