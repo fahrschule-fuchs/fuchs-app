@@ -478,7 +478,7 @@ workflows:
         - signing
       vars:
         VERSION_OFFSET: 20
-        VERSION_NAME: "1.14"
+        VERSION_NAME: "1.15"
       node: 22
       java: 21
 
@@ -555,7 +555,10 @@ workflows:
           fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
                               "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
                               "pFzVorbelegen", "akteAdresseHtml", "zusatzGewaehlt",
-                              "nachweisHinweis", "schuldHinweis") if w not in h]
+                              "nachweisHinweis", "schuldHinweis",
+                              # FL 1.15 (18.11.2026): Sonnenuntergang, Notizen, Kontostand-Zeile
+                              "function sonneTag", "async function notizKasten",
+                              "function kontoZeile") if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt im Paket: " + ", ".join(fehlt))
@@ -624,7 +627,7 @@ workflows:
         XCODE_PROJECT: "apps/fahrlehrer/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         INFO_PLIST: "apps/fahrlehrer/ios/App/App/Info.plist"
-        VERSION_NAME: "1.14"
+        VERSION_NAME: "1.15"
       node: 22
       xcode: latest
 
@@ -840,7 +843,10 @@ workflows:
           fehlt = [w for w in ("terminMenue", "kontaktKarteHTML", "wknopf",
                               "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
                               "pFzVorbelegen", "akteAdresseHtml", "zusatzGewaehlt",
-                              "nachweisHinweis", "schuldHinweis") if w not in h]
+                              "nachweisHinweis", "schuldHinweis",
+                              # FL 1.15 (18.11.2026): Sonnenuntergang, Notizen, Kontostand-Zeile
+                              "function sonneTag", "async function notizKasten",
+                              "function kontoZeile") if w not in h]
           print("Oberflaeche in der App:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt in der App: " + ", ".join(fehlt))
