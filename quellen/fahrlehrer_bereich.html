@@ -114,6 +114,13 @@
  .wstd{font-size:9.5px; color:#7A6C61; text-align:center; border-bottom:1px solid var(--line,#E7DED6); padding-top:1px;}
  .wspalte{flex:1; min-width:48px; position:relative; border-right:1px solid var(--line,#E7DED6); cursor:pointer;}
  .wlinie{position:absolute; left:0; right:0; border-bottom:1px solid #f3eee9;}
+ /* 18.11.2026 (Benjamin): FL-Wuensche (B): Sonnenuntergang / Daemmerung - nur Hintergrund, Bloecke liegen darueber */
+ .wdaemm{position:absolute; left:0; right:0; background:rgba(70,90,160,.08); pointer-events:none;}
+ .wnacht{position:absolute; left:0; right:0; background:rgba(30,40,100,.16); pointer-events:none;}
+ .wsonne{position:absolute; left:0; right:0; border-top:1.5px dashed #E8A23A; pointer-events:none;}
+ .wsonne span{position:absolute; right:2px; top:-12px; font-size:8.5px; font-weight:700; color:#A86400; background:rgba(255,250,240,.92); border-radius:4px; padding:0 3px; line-height:11px; white-space:nowrap;}
+ .wtag em{display:block; font-style:normal; font-size:8.5px; color:#4A5490; margin-top:1px; line-height:1.15;}
+ .wtag.heute em{color:#fff;}
  .pruefbox{border:1.5px solid #C0392B;border-radius:12px;padding:9px 11px;margin:0 0 11px;
   background:#FDF1EF}
 .pruefh{font-weight:800;font-size:13px;color:#A5271B;margin-bottom:6px}
@@ -227,6 +234,18 @@ function zusatzGewaehlt(prefix){
   const z=document.getElementById(prefix+"Zusatz"), zz=document.getElementById(prefix+"ZusatzZeile");
   return !!(z&&z.checked&&zz&&zz.style.display!=="none");
 }
+// 18.11.2026 (Benjamin): FL-Wuensche (A): "Kontostand nach dieser Stunde" unter dem Preis.
+// Der Server rechnet (Saldo der Kartei minus diese Stunde, falls noch nicht
+// gebucht); kommt nichts (fremder Schueler, alter Server), bleibt die Zeile leer.
+function kontoZeile(prefix,d){
+  const el=document.getElementById(prefix+"Konto"); if(!el)return;
+  const k=d&&d.konto;
+  if(!k){el.innerHTML="";return;}
+  if(k.unklar){el.innerHTML=`<div style="font-size:14px;font-weight:600;color:#6A6A6A">Kontostand wird gerade geklärt</div>`;return;}
+  const farbe=Number(k.saldo_nach)>=0?"var(--green,#2E9E5B)":"#D64545";
+  el.innerHTML=`<div style="font-size:14px;font-weight:600">Kontostand nach dieser Stunde: <b style="color:${farbe}">${esc(k.text||"")}</b></div>`
+    +(k.offen_hinweis?`<div style="font-size:13px;font-weight:700;color:#D64545;margin-top:2px">${esc(k.offen_hinweis)}</div>`:"");
+}
 function preisLader(prefix, werte){
   let lauf=0;
   return async function(){
@@ -234,12 +253,12 @@ function preisLader(prefix, werte){
     const hin=document.getElementById(prefix+"PreisHinweis");
     if(!feld)return;
     const w=werte()||{};
-    if(!w.schueler_id){feld.textContent="–";if(hin)hin.textContent="";return;}
+    if(!w.schueler_id){feld.textContent="–";if(hin)hin.textContent="";kontoZeile(prefix,null);return;}
     const nr=++lauf;
     feld.textContent="…";
     // fahrzeug_id nur mitschicken, wenn die Maske eines nennt - sonst nimmt
     // der Server wie bisher das Stammfahrzeug des Fahrlehrers.
-    const anfrage={fl:FL,schueler_id:w.schueler_id,art:w.art,dauer:w.dauer};
+    const anfrage={fl:FL,schueler_id:w.schueler_id,art:w.art,dauer:w.dauer,konto_feld:1};
     // 26.10.2026: 7-Tage-Fuchs - Schalter "Zusatzstunde" geht mit in die Vorschau.
     if(zusatzGewaehlt(prefix))anfrage.zusatzstunde=true;
     if(w.fahrzeug_id!==undefined)anfrage.fahrzeug_id=w.fahrzeug_id;
@@ -249,6 +268,7 @@ function preisLader(prefix, werte){
     if(w.stunde_id)anfrage.stunde_id=w.stunde_id;
     const d=await jpost("fahrlehrer/stunde-preis",anfrage);
     if(nr!==lauf)return;
+    kontoZeile(prefix,d);
     const bez=document.getElementById(prefix+"PreisLabel");
     const zz=document.getElementById(prefix+"ZusatzZeile");
     if(zz)zz.style.display=(d&&d.sieben_tage)?"flex":"none";
@@ -1121,6 +1141,7 @@ function zeichneAkte(){
     ${akteKontoHtml(k)}
     ${akteStandHtml(AKTE.staende)}
     ${akteInfosHtml(AKTE.infos)}
+    ${akteNotizenHtml(AKTE.notizen)}
     ${akteTheorieHtml(AKTE.theorie_lernstand)}
     ${akteKommendHtml(AKTE.kommend)}
     ${akteGefahrenHtml(AKTE.gefahren, AKTE.zusammenfassung)}
@@ -1221,6 +1242,7 @@ async function ladeBuchen(){
       <span style="font-size:14px;font-weight:600"><span id="bPreisLabel">💶 Diese Stunde wird berechnet: </span><b id="bPreis">…</b></span>
     </div>
     <div class="meta" id="bPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
+    <div id="bKonto" style="margin-top:-2px"></div>
     <label id="bZusatzZeile" style="display:none;gap:9px;align-items:center;font-size:14px;margin-top:-2px">
       <input type="checkbox" id="bZusatz" style="width:20px;height:20px"> Zusatzstunde (nicht aus dem Paket) – wird berechnet</label>
     <div id="bNachweis"></div>
@@ -1728,13 +1750,65 @@ function wEnde(beginn, dauer){
   return String(Math.floor(g/60)%24).padStart(2,"0")+":"+String(g%60).padStart(2,"0");
 }
 
+// 18.11.2026 (Benjamin): FL-Wuensche (B): Sonnenuntergang und Ende der buergerlichen Daemmerung
+// fuer Berlin (52,52 N / 13,40 O), lokal gerechnet - dieselbe NOAA-Naeherung wie
+// die Nachtfahrt-Pruefung im Manager (Zenit 90,833 Grad bzw. 96 Grad), Sommer-/
+// Winterzeit nach EU-Regel (letzter Sonntag Maerz/Oktober, 01:00 UTC).
+const SONNE_LAT=52.52, SONNE_LNG=13.40, SONNE_CACHE={};
+function sonneUTCMin(iso,zenit){
+  const rad=Math.PI/180, d=new Date(iso+"T12:00:00Z");
+  const tage=Math.floor((d-new Date(Date.UTC(d.getUTCFullYear(),0,0)))/86400000);
+  const lngStunde=SONNE_LNG/15, t=tage+((18-lngStunde)/24);
+  const M=(0.9856*t)-3.289;
+  let L=M+(1.916*Math.sin(M*rad))+(0.020*Math.sin(2*M*rad))+282.634; L=((L%360)+360)%360;
+  let RA=Math.atan(0.91764*Math.tan(L*rad))/rad; RA=((RA%360)+360)%360;
+  RA+=(Math.floor(L/90)*90-Math.floor(RA/90)*90); RA/=15;
+  const sinDec=0.39782*Math.sin(L*rad), cosDec=Math.cos(Math.asin(sinDec));
+  const cosH=(Math.cos(zenit*rad)-sinDec*Math.sin(SONNE_LAT*rad))/(cosDec*Math.cos(SONNE_LAT*rad));
+  if(cosH<-1||cosH>1)return null;
+  const H=(Math.acos(cosH)/rad)/15;
+  let UT=H+RA-(0.06571*t)-6.622-lngStunde; UT=((UT%24)+24)%24;
+  return UT*60;
+}
+function berlinVersatz(iso,utcMin){
+  const j=Number(String(iso).slice(0,4));
+  const letzterSo=(m)=>{const d=new Date(Date.UTC(j,m+1,0));return d.getUTCDate()-d.getUTCDay();};
+  const t=Date.parse(iso+"T00:00:00Z")+utcMin*60000;
+  return (t>=Date.UTC(j,2,letzterSo(2),1)&&t<Date.UTC(j,9,letzterSo(9),1))?120:60;
+}
+function sonneTag(iso){
+  if(iso in SONNE_CACHE)return SONNE_CACHE[iso];
+  const lokal=(z)=>{const u=sonneUTCMin(iso,z);return u===null?null:Math.round(u+berlinVersatz(iso,u));};
+  const hm=(m)=>String(Math.floor(m/60)%24).padStart(2,"0")+":"+String(m%60).padStart(2,"0");
+  const u=lokal(90.833), d=lokal(96);
+  return SONNE_CACHE[iso]=(u===null||d===null)?null:{unter:hm(u),dunkel:hm(d),unterMin:u,dunkelMin:d};
+}
+function sonneKopf(iso){
+  const s=sonneTag(iso);
+  return s?`<em title="Sonnenuntergang ${s.unter} · Ende der bürgerlichen Dämmerung ${s.dunkel} (Berlin)">dunkel ab ${s.dunkel}</em>`:"";
+}
+function sonneSpalte(iso){
+  const s=sonneTag(iso); if(!s)return "";
+  const H=(WBIS-WVON)*WPX, y=(m)=>Math.round(Math.max(0,Math.min(H,(m-WVON*60)/60*WPX)));
+  const yU=y(s.unterMin), yD=y(s.dunkelMin);
+  let h="";
+  if(yD>yU)h+=`<div class="wdaemm" style="top:${yU}px;height:${yD-yU}px"></div>`;
+  if(H>yD)h+=`<div class="wnacht" style="top:${yD}px;height:${H-yD}px"></div>`;
+  if(yU>0&&yU<H)h+=`<div class="wsonne" style="top:${yU}px"><span>☀ ${s.unter}</span></div>`;
+  return h;
+}
+function sonneLegende(){
+  return `<span><i style="background:rgba(70,90,160,.2)"></i>☀ Sonnenuntergang · Dämmerung</span>`
+    +`<span><i style="background:rgba(30,40,100,.35)"></i>dunkel (Berlin)</span>`;
+}
+
 function zeichneWoche(){
   const el=document.getElementById("wGitter"); if(!el)return;
   const heute=wHeute();
   let kopf=`<div class="wkopf"><div class="wecke"></div>`;
   for(let i=0;i<7;i++){const iso=wPlus(WOCHE_START,i);
     const summe=azKopf(WOCHE_DATEN.filter(x=>x.datum_iso===iso));
-    kopf+=`<div class="wtag${iso===heute?" heute":""}"><b>${WTAGE[i]}</b><span>${wKurz(iso)}</span>${summe}</div>`;}
+    kopf+=`<div class="wtag${iso===heute?" heute":""}"><b>${WTAGE[i]}</b><span>${wKurz(iso)}</span>${summe}${sonneKopf(iso)}</div>`;}
   kopf+=`</div>`;
   let leiste=`<div class="wleiste">`;
   for(let s=WVON;s<WBIS;s++) leiste+=`<div class="wstd" style="height:${WPX}px">${String(s).padStart(2,"0")}</div>`;
@@ -1845,7 +1919,7 @@ function zeichneWoche(){
           bisText?`<span class="wbis">${esc(bisText)}</span>`:""
         }${klBadge}${fertig?"🔑 ":""}${esc(wer)}${bemZeile}</div>`;
     }
-    spalten+=`<div class="wspalte" data-tag="${iso}" style="height:${(WBIS-WVON)*WPX}px">${raster}${blocks}</div>`;
+    spalten+=`<div class="wspalte" data-tag="${iso}" style="height:${(WBIS-WVON)*WPX}px">${raster}${sonneSpalte(iso)}${blocks}</div>`;
   }
   const arten=[...new Set(WOCHE_DATEN.map(x=>x.art))].filter(a=>ART_NAME[a]);
   const gesehen=new Set(); let leg="";
@@ -1858,6 +1932,7 @@ function zeichneWoche(){
   // Bei B96 und Co. faehrt ein Fahrlehrer zulaessig mit zwei Schuelern
   // gleichzeitig - dann stehen die Termine nebeneinander wie im Manager.
   if(wHatDoppel()) leg+=`<span title="Zwei Schüler zur selben Zeit – z. B. B96-Anhängerausbildung">⇉ gleichzeitig</span>`;
+  leg+=sonneLegende();
   leg+=`<span class="wzeit">Minuten je Tag: <b>Praxis</b>/<b>gesamt</b> · erlaubt ${AZ_PRAXIS_MAX}/${AZ_GESAMT_MAX}</span>`;
   el.innerHTML=`${pruefKasten()}${leg?`<div class="wlegende">${leg}</div>`:""}<div class="wrahmen"><div style="min-width:100%">${kopf}<div class="wkoerper">${leiste}${spalten}</div></div></div>`;
   el.querySelectorAll(".wspalte").forEach(sp=>{
@@ -2332,6 +2407,7 @@ function terminMenue(id){
   main().innerHTML=`
     <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
     <div><div class="eyebrow">${blocker?"Geblockte Zeit":"Termin"}</div><h1>${esc(name)}</h1></div>
+    <div id="tmNotiz"></div>
     <div class="card zeile" style="cursor:default">
       <div class="zeit">${esc((e.uhrzeit||"").slice(0,5))}${e.bis?"–"+esc(e.bis):""}</div>
       <div class="info"><div class="titel">${esc(e.datum||"")}</div>
@@ -2347,8 +2423,10 @@ function terminMenue(id){
         "Es geht um deine Fahrstunde am " + String(e.datum||"")
         + (e.uhrzeit?(" um " + String(e.uhrzeit).slice(0,5) + " Uhr"):"") + ".")}
     ${knoepfe}
+    <div id="tmNotizen"></div>
     <div class="meta" id="tmFehler" style="color:#D64545;min-height:16px"></div>`;
   main().scrollTop=0;
+  if(!blocker&&e.schueler_id&&e.status!=="frei")notizKasten("tmNotiz",e.schueler_id,id,"tmNotizen");
 }
 
 // Fehlstunde streichen - Termin UND Forderung verschwinden zusammen.
@@ -2859,6 +2937,121 @@ async function schuldHinweis(zielId, schuelerId){
     z.innerHTML=`<div class="hint" style="border-color:#E8A23A;background:#FFF3E0;color:#8A4B00;font-weight:600">⚠️ ${esc(d.hinweis)}</div>`;
 }
 
+// 18.11.2026 (Benjamin): FL-Wuensche (C): Notizen zur Stunde - nur Ausbildungsstand. Eigene
+// Tabelle im Manager; sichtbar nur fuer Fahrlehrer, die den Schueler planen
+// duerfen, und fuer das Buero in der Akte. Nicht in der Schueler-App.
+const NOTIZ_KNOEPFE=["Einparken","Vorfahrt/Kreuzung","Spurwechsel","Autobahn","Überland","Nacht","Grundfahraufgaben","Prüfungsreif?"];
+const NOTIZ_HINWEIS="Nur Ausbildungsstand – sachlich, nichts Persönliches.";
+function nzDatum(ts){const m=String(ts||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+"."+m[2]+"."+m[1]:"";}
+async function notizenLaden(schuelerId){
+  if(!schuelerId)return null;
+  let d=null; try{d=await jpost("fahrlehrer/notizen",{fl:FL,schueler_id:schuelerId});}catch(e){}
+  return (d&&d.ok)?(d.notizen||[]):null;
+}
+function letzteNotizHTML(n){
+  return `<div class="hint" style="border-color:#E8C33A;background:#FFF8D6;color:#3F3300">
+    <div style="font-weight:700;margin-bottom:3px">📝 Letzte Notiz (${esc(nzDatum(n.angelegt_am))}, ${esc(n.fahrlehrer||"Fahrlehrer")}):</div>
+    <div style="white-space:pre-wrap">${esc(n.text||"")}</div></div>`;
+}
+function notizZeileHTML(n,mitKnopf,stundeId){
+  return `<div style="border-top:1px solid var(--line);padding:6px 0">
+    <div class="meta" style="font-size:11.5px">${esc(nzDatum(n.angelegt_am))} ${esc(String(n.angelegt_am||"").slice(11,16))} · ${esc(n.fahrlehrer||"")}${n.geaendert_am?" · geändert":""}</div>
+    <div style="font-size:13.5px;white-space:pre-wrap">${esc(n.text||"")}</div>
+    ${mitKnopf&&n.aenderbar?`<button class="btn-ghost" style="margin-top:4px;padding:6px 10px" onclick="notizBearbeiten(${Number(stundeId)},${Number(n.id)})">✎ ändern / löschen</button>`:""}</div>`;
+}
+// Oben: letzte Notiz aus einer ANDEREN Stunde. Optional (listeId): Notizen zu
+// dieser Stunde und der Knopf "Notiz zur Stunde". Ohne Recht bleibt alles leer.
+async function notizKasten(zielId,schuelerId,stundeId,listeId){
+  const liste=await notizenLaden(schuelerId);
+  if(!liste)return;
+  const z=document.getElementById(zielId);
+  const vorher=liste.find(n=>String(n.fahrstunde_id)!==String(stundeId||""));
+  if(z&&vorher)z.innerHTML=letzteNotizHTML(vorher);
+  const l=listeId?document.getElementById(listeId):null;
+  if(!l)return;
+  const diese=liste.filter(n=>String(n.fahrstunde_id)===String(stundeId||""));
+  l.innerHTML=(diese.length?`<div class="card" style="cursor:default;display:block;border-left:5px solid #E8C33A">
+      <div style="font-weight:800;margin-bottom:2px">📝 Notiz zu dieser Stunde</div>${diese.map(n=>notizZeileHTML(n,true,stundeId)).join("")}</div>`:"")
+    +tmKnopf("📝 Notiz zur Stunde","notizBearbeiten("+Number(stundeId)+")");
+}
+function notizEditorHTML(pre,text){
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px">${NOTIZ_KNOEPFE.map(k=>
+      `<button type="button" class="nzk" data-k="${esc(k)}" style="border:1.5px solid var(--line);background:#fff;border-radius:16px;padding:6px 10px;font-size:13px;cursor:pointer">${esc(k)}</button>`).join("")}</div>
+    <textarea id="${pre}Text" class="app-input" rows="4" maxlength="1000" style="text-align:left;min-height:96px;resize:vertical" placeholder="${esc(NOTIZ_HINWEIS)}">${esc(text||"")}</textarea>
+    <div class="meta" style="margin-top:2px">${esc(NOTIZ_HINWEIS)}</div>`;
+}
+function notizKnoepfeBinden(boxId,pre){
+  const box=document.getElementById(boxId); if(!box)return;
+  box.querySelectorAll(".nzk").forEach(b=>b.onclick=()=>{
+    const ta=document.getElementById(pre+"Text"); if(!ta)return;
+    const alt=ta.value.replace(/[\s,]+$/,"");
+    ta.value=alt?alt+", "+b.dataset.k:b.dataset.k; ta.focus();
+  });
+}
+// Notiz anlegen oder (nur Verfasser, nur am selben Tag) aendern/loeschen - ueber den Termin.
+async function notizBearbeiten(stundeId,notizId){
+  const e=FUCHS_TERMINE[stundeId]||{};
+  let alt=null;
+  if(notizId){
+    const l=await notizenLaden(e.schueler_id);
+    alt=(l||[]).find(n=>String(n.id)===String(notizId))||null;
+    if(!alt||!alt.aenderbar){toast("Ändern geht nur am selben Tag – und nur bei eigenen Notizen.");return terminMenue(stundeId);}
+  }
+  main().innerHTML=`
+    <button class="btn-ghost" onclick="terminMenue(${Number(stundeId)})">← Zurück</button>
+    <div><div class="eyebrow">${esc(e.schueler||"Fahrstunde")}${e.datum?" · "+esc(e.datum):""}</div><h1>📝 Notiz zur Stunde</h1></div>
+    <div id="nzBox">${notizEditorHTML("nz",alt?alt.text:"")}</div>
+    <button class="btn-primary" id="nzSpeichern">Notiz speichern</button>
+    ${alt?`<button class="btn-primary" id="nzLoeschen" style="background:#C23">🗑 Notiz löschen</button>`:""}
+    <div class="meta" id="nzFehler" style="color:#D64545;min-height:16px"></div>`;
+  notizKnoepfeBinden("nzBox","nz");
+  const err=document.getElementById("nzFehler");
+  document.getElementById("nzSpeichern").onclick=async()=>{
+    const text=(document.getElementById("nzText").value||"").trim();
+    if(!text){err.textContent="Bitte einen Text eingeben.";return;}
+    const d=alt?await jpost("fahrlehrer/notiz-aendern",{fl:FL,notiz_id:alt.id,text})
+               :await jpost("fahrlehrer/notiz",{fl:FL,stunde_id:stundeId,text});
+    if(d&&d.ok){toast("Notiz gespeichert ✓");terminMenue(stundeId);return;}
+    err.textContent=(d&&d.fehler)||FEHLERTEXT||"Speichern fehlgeschlagen.";
+  };
+  const lo=document.getElementById("nzLoeschen");
+  if(lo)lo.onclick=async()=>{
+    if(!confirm("Diese Notiz löschen?"))return;
+    const d=await jpost("fahrlehrer/notiz-loeschen",{fl:FL,notiz_id:alt.id});
+    if(d&&d.ok){toast("Notiz gelöscht");terminMenue(stundeId);return;}
+    err.textContent=(d&&d.fehler)||FEHLERTEXT||"Löschen fehlgeschlagen.";
+  };
+}
+// Nach dem Unterschreiben: Notiz freiwillig - die anderen Knoepfe bleiben.
+async function notizNachBuchung(s){
+  const liste=await notizenLaden(s.schueler_id);
+  const el=document.getElementById("nbNotiz");
+  if(!liste||!el)return;
+  el.innerHTML=`<div class="card" style="cursor:default;display:block;border-left:5px solid #E8C33A">
+      <div style="font-weight:800">📝 Notiz zur Stunde <span class="meta" style="font-weight:400">(freiwillig)</span></div>
+      <div id="nbBox">${notizEditorHTML("nb","")}</div>
+      <button class="btn-primary" id="nbSpeichern" style="margin-top:8px">Notiz speichern</button>
+      <div class="meta" id="nbFehler" style="color:#D64545;min-height:16px"></div></div>`;
+  notizKnoepfeBinden("nbBox","nb");
+  document.getElementById("nbSpeichern").onclick=async()=>{
+    const f=document.getElementById("nbFehler"), text=(document.getElementById("nbText").value||"").trim();
+    if(!text){f.textContent="Bitte einen Text eingeben – oder einfach weiter.";return;}
+    const d=await jpost("fahrlehrer/notiz",{fl:FL,stunde_id:s.id,text});
+    if(d&&d.ok){el.innerHTML=`<div class="hint" style="border-color:#E8C33A;background:#FFF8D6">✓ Notiz gespeichert: ${esc(text)}</div>`;return;}
+    f.textContent=(d&&d.fehler)||FEHLERTEXT||"Speichern fehlgeschlagen.";
+  };
+}
+function akteNotizenHtml(l){
+  if(!l||!l.length)return "";
+  return `<div class="card" style="cursor:default;display:block;border-left:5px solid #E8C33A">
+    <div style="font-weight:800;margin-bottom:4px">📝 Notizen zur Stunde</div>
+    ${l.map(n=>`<div style="border-top:1px solid var(--line);padding:6px 0">
+      <div class="meta" style="font-size:11.5px">${esc(nzDatum(n.angelegt_am))} · ${esc(n.fahrlehrer||"")}${
+        n.stunde_datum&&n.stunde_datum!==String(n.angelegt_am||"").slice(0,10)?" · Stunde vom "+esc(nzDatum(n.stunde_datum)):""}${n.geaendert_am?" · geändert":""}</div>
+      <div style="font-size:13.5px;white-space:pre-wrap">${esc(n.text||"")}</div></div>`).join("")}
+  </div>`;
+}
+
 function signStunde(id){
   const s=FUCHS_TERMINE[id];if(!s)return;
   AKT_STUNDE=s;
@@ -2868,6 +3061,7 @@ function signStunde(id){
     <button class="btn-ghost" onclick="wZurueckGehen()">← Zurück</button>
     <div><div class="eyebrow">Fahrstunde bestätigen</div><h1>✍️ ${esc(s.schueler||"Fahrstunde")}</h1></div>
     <div class="card zeile" style="cursor:default"><div class="zeit">${esc(s.uhrzeit||"")}${s.bis?"–"+esc(s.bis):""}</div><div class="info"><div class="titel">${esc(s.datum)}</div><div class="sub">${esc(s.art_text)}</div></div>${s.klasse?`<div class="klbadge">${esc(s.klasse)}</div>`:""}</div>
+    <div id="sNotiz"></div>
     <div class="row">
       <select id="sArt" class="app-select" style="flex:1">${artOpts}</select>
       <input id="sDauer" type="number" class="app-input" inputmode="numeric" min="5" max="600" step="5"
@@ -2880,6 +3074,7 @@ function signStunde(id){
       <span style="font-size:14px;font-weight:600"><span id="sPreisLabel">💶 Diese Stunde wird berechnet: </span><b id="sPreis">…</b></span>
     </div>
     <div class="meta" id="sPreisHinweis" style="margin-top:-4px;color:#B26A00"></div>
+    <div id="sKonto" style="margin-top:-2px"></div>
     <label id="sZusatzZeile" style="display:none;gap:9px;align-items:center;font-size:14px;margin-top:-2px">
       <input type="checkbox" id="sZusatz" style="width:20px;height:20px"> Zusatzstunde (nicht aus dem Paket) – wird berechnet</label>
     <div id="sSchuld"></div>
@@ -2931,6 +3126,7 @@ function signStunde(id){
   sArtFeld.addEventListener("change",sNachweisNeu);
   sNachweisNeu();
   schuldHinweis("sSchuld",s.schueler_id);
+  notizKasten("sNotiz",s.schueler_id,s.id,null);
   document.getElementById("sArt").addEventListener("change",sPreisNeu);
   document.getElementById("sDauer").addEventListener("input",sPreisNeu);
   sPreisNeu();
@@ -2971,6 +3167,7 @@ function nachBuchung(s,d){
       ${d.betrag_text?`<div class="meta" style="margin-top:5px">💶 Berechnet: <b>${esc(d.betrag_text)}</b>${d.saldo_neu!=null?" · Kontostand jetzt "+esc(eurTxt(d.saldo_neu)):""}</div>`:""}
     </div>
     ${d.hinweis?`<div class="hint" style="border-color:#E8C39A;background:#FFF6EA">⚠ ${esc(d.hinweis)}</div>`:""}
+    <div id="nbNotiz"></div>
     ${s.art==="praktische_pruefung"
       ? `<div class="hint">Alles erledigt für die Fahrt. Das <b>Prüfungsergebnis</b> trägst du ein,
            wenn ihr zurück seid – der Termin bleibt bis dahin rot markiert.</div>
@@ -2979,6 +3176,7 @@ function nachBuchung(s,d){
       : `<div class="hint">Bitte jetzt die <b>Ausbildungskarte</b> von ${esc((s.schueler||"dem Schüler").split(" ")[0])} weiterführen – trag den heutigen Fortschritt ein, der Schüler sieht es direkt in seiner App.</div>
          <button class="btn-primary" id="zurKarte">📋 Ausbildungskarte pflegen</button>`}
     <button class="btn-ghost" onclick="wZurueckGehen()">Später · zurück zum Plan</button>`;
+  if(s.id&&s.schueler_id)notizNachBuchung(s);
   const kKnopf=document.getElementById("zurKarte");
   if(kKnopf)kKnopf.onclick=()=>{
     if(s.nummer)viewKarte(s.nummer,s.schueler,s.id);
@@ -2998,8 +3196,8 @@ async function viewAusfall(id){
       <div class="meta">${esc(i.art_text||"Fahrstunde")} · ${esc(i.datum||"")} · ${esc(i.beginn||"")} Uhr · ${i.dauer} Min.</div></div>
     <div class="hint" style="${kurz?"background:#FDE8E8":""}">
       ${kurz
-        ? `<b>⚠ Kurzfristige Absage.</b> Bis zum Termin ${i.tage===0?"ist kein voller Arbeitstag mehr":"sind es nur noch "+i.tage+" Arbeitstag"+(i.tage===1?"":"e")} – die Frist beträgt ${i.frist} Arbeitstage${i.sonderfahrt?" (Sonderfahrt)":""}. Laut AGB darf die Stunde mit <b>75 % des Entgelts</b> berechnet werden.`
-        : `Die Frist von ${i.frist} Arbeitstagen${i.sonderfahrt?" (Sonderfahrt)":""} ist eingehalten – die Absage ist kostenfrei. Berechnet werden kann sie trotzdem, wenn der Schüler nicht erschienen ist.`}
+        ? `<b>⚠ Kurzfristige Absage.</b> Bis zum Termin ${i.pruefung?(i.tage<=0?"ist kein Tag mehr":"sind es nur noch "+i.tage+" Tag"+(i.tage===1?"":"e"))+" – bei einer Prüfung beträgt die Frist "+i.frist+" Tage":(i.tage===0?"ist kein voller Arbeitstag mehr":"sind es nur noch "+i.tage+" Arbeitstag"+(i.tage===1?"":"e"))+" – die Frist beträgt "+i.frist+" Arbeitstage"+(i.sonderfahrt?" (Sonderfahrt)":"")}. Laut AGB darf die Stunde mit <b>75 % des Entgelts</b> berechnet werden.`
+        : `Die Frist von ${i.frist} ${i.pruefung?"Tagen":"Arbeitstagen"}${i.sonderfahrt?" (Sonderfahrt)":""} ist eingehalten – die Absage ist kostenfrei. Berechnet werden kann sie trotzdem, wenn der Schüler nicht erschienen ist.`}
     </div>
     <input id="aGrund" class="app-input" style="text-align:left" placeholder="Grund (freiwillig) – z. B. krank, Auto defekt">
     <button class="btn-primary" id="aFehl">🚫 Fehlstunde berechnen${i.betrag>0?" · "+esc(i.betrag_text):""}</button>
