@@ -51,7 +51,6 @@ jeder Schritt wird beim Bauen ausgegeben.
 | Boot-Skript vorangestellt | ✔ | ✔ |
 | Manifest-Verweis entfernt (erzeugt sonst 404) | ✔ | ✔ |
 | Bildpfade auf gebündelte Dateien umgebogen | — | ✔ (`/app/…png` → `…png`) |
-| Video-Fallback auf absolute Adresse | ✔ | — |
 | Link zur Fahrlehrer-App absolut | ✔ | — |
 | Fehlende CSS-Klasse `.row` ergänzt | — | ✔ (kosmetischer Fehler im Original) |
 
@@ -148,6 +147,7 @@ ohne WhatsApp, es müssen nur zwei Datensätze angelegt werden.
   serverseitig statt der PIN bei jedem Aufruf — das ist ein eigener kleiner Umbau
   und keine Voraussetzung für die Einreichung.
 - **Der Team-Zugangscode wird nur im Browser geprüft.** Siehe `server/demo-zugang.md`.
-- **Videos kommen weiter vom CDN.** Das ist richtig so; sie gehören nicht ins
-  App-Bundle. Das `<meta name="referrer" content="no-referrer">` im Original muss
-  erhalten bleiben, sonst blockt der Hotlinkschutz die Streams.
+- **Videos kommen vom eigenen Server** (`https://app.fahrsyn.de/app/theorievideos/`,
+  seit 1.16, absolute Adresse direkt in der Quelle). Sie gehören nicht ins App-Bundle.
+  Das `<meta name="referrer" content="no-referrer">` im Original stammt aus der Zeit
+  der Coachy-Streams (Hotlinkschutz) und schadet nicht.
