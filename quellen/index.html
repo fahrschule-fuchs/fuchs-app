@@ -624,30 +624,68 @@
 <script>
 // ============================================================
 // FUCHS-App · iPhone-Testversion (Stand 14.07.2026)
-// Wird vom fuchs_app_server.py (Bot-PC, Port 8020) ausgeliefert.
-// Videos: HLS-Stream vom Video-CDN (Safari nativ), Fallback MP4
-// über den Server. Chat: echter Foxy-Bot über /app-chat.
+// Wird vom Bot auf dem Server ausgeliefert (https://app.fahrsyn.de/app/).
+// Videos (23.11.2026): eigene Theorievideos als MP4 vom Server
+// (theorievideos/), Untertitel zuschaltbar. Chat: echter Foxy-Bot über /app-chat.
 // ============================================================
-const LEKTIONEN = [
-  { nr: 1,  gruppe: "Grundstoff", titel: "Persönliche Voraussetzungen", dauer: "21:36", datei: "Lektion-01_Persoenliche-Voraussetzungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/adae0399-ca3f-433a-93c1-8dceba7fcc62/playlist.m3u8" },
-  { nr: 2,  gruppe: "Grundstoff", titel: "Rechtliche Rahmenbedingungen", dauer: "20:27", datei: "Lektion-02_Rechtliche-Rahmenbedingungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/941ea622-8b57-4bae-b02e-dfe07207bba6/playlist.m3u8" },
-  { nr: 3,  gruppe: "Grundstoff", titel: "Verkehrseinrichtungen und Verkehrszeichen", dauer: "17:15", datei: "Lektion-03_Verkehrseinrichtungen-und-Verkehrszeichen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/fede511b-78a1-40f6-95e3-990a8b5e2c24/playlist.m3u8" },
-  { nr: 4,  gruppe: "Grundstoff", titel: "Straßenverkehrssysteme und ihre Nutzung", dauer: "20:14", datei: "Lektion-04_Strassenverkehrssysteme-und-ihre-Nutzung.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/76fad974-eb8a-48c7-95a6-a91ab2ccd9cb/playlist.m3u8" },
-  { nr: 5,  gruppe: "Grundstoff", titel: "Vorfahrt", dauer: "15:19", datei: "Lektion-05_Vorfahrt.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/647e9cf5-01c2-40d1-8c32-677a9d98764a/playlist.m3u8" },
-  { nr: 6,  gruppe: "Grundstoff", titel: "Verkehrsregelungen / Bahnübergänge", dauer: "21:29", datei: "Lektion-06_Verkehrsregelungen-Bahnuebergaenge.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/42ad2be4-c3ce-4ddf-a78f-4407a34d237c/playlist.m3u8" },
-  { nr: 7,  gruppe: "Grundstoff", titel: "Geschwindigkeit, Abstand und umweltschonende Fahrweise", dauer: "28:57", datei: "Lektion-07_Geschwindigkeit-Abstand-und-umweltschonende-Fahrweise.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/40118ada-a7dd-49ee-a320-c5da0215b85a/playlist.m3u8" },
-  { nr: 8,  gruppe: "Grundstoff", titel: "Andere Teilnehmer im Straßenverkehr", dauer: "26:48", datei: "Lektion-08_Andere-Teilnehmer-im-Strassenverkehr.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/d0f5d4a6-dccb-43fe-849d-4647d8ec918a/playlist.m3u8" },
-  { nr: 9,  gruppe: "Grundstoff", titel: "Verkehrsverhalten bei Fahrmanövern, Verkehrsbeobachtungen", dauer: "24:33", datei: "Lektion-09_Verkehrsverhalten-bei-Fahrmanoevern-Verkehrsbeobachtungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/8aae1a67-f5ea-42c8-b72b-fc89bc9013ff/playlist.m3u8" },
-  { nr: 10, gruppe: "Grundstoff", titel: "Ruhender Verkehr", dauer: "17:08", datei: "Lektion-10_Ruhender-Verkehr.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/f14b9086-cfaf-4604-9908-213887f80391/playlist.m3u8" },
-  { nr: 11, gruppe: "Grundstoff", titel: "Verhalten in besonderen Situationen", dauer: "26:21", datei: "Lektion-11_Verhalten-in-besonderen-Situationen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/f8400da5-1636-4924-bb24-e35e7becdb95/playlist.m3u8" },
-  { nr: 12, gruppe: "Grundstoff", titel: "Lebenslanges Lernen", dauer: "22:50", datei: "Lektion-12_Lebenslanges-Lernen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/d66e05a4-614b-4e9b-bb6d-49f407363573/playlist.m3u8" },
-  { nr: 13, gruppe: "Zusatzstoff Klasse B", titel: "Technische Bedingungen", dauer: "18:55", datei: "Lektion-13_Zusatzstoff-B1-Technische-Bedingungen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/4441e544-a730-4f98-9594-d3b5979a2efb/playlist.m3u8" },
-  { nr: 14, gruppe: "Zusatzstoff Klasse B", titel: "Fahren mit Solokraftfahrzeugen und Zügen, Personen- und Güterbeförderung", dauer: "11:15", datei: "Lektion-14_Zusatzstoff-B2-Fahren-mit-Solarkraftfahrzeugen-und-Zuegen.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/a27fef02-3b5c-42a6-8352-002d5bdfee80/playlist.m3u8" },
-  { nr: 15, gruppe: "Zusatzstoff Klasse A", titel: "Fahrer/Beifahrer, Fahrzeug", dauer: "28:58", datei: "Lektion-15_Zusatzstoff-A1-Fahrer-Beifahrer-Fahrzeug.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/2abd615d-b3c0-45a6-9ff0-c0425f1c89d3/playlist.m3u8" },
-  { nr: 16, gruppe: "Zusatzstoff Klasse A", titel: "Fahrtechnik und Fahrphysik", dauer: "24:47", datei: "Lektion-16_Zusatzstoff-A2-Fahrtechnik-und-Fahrphysik.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/2fd55e3b-87f8-4fc1-a99f-aede1ef64bd7/playlist.m3u8" },
-  { nr: 17, gruppe: "Zusatzstoff Klasse A", titel: "Besondere Schwierigkeiten und Gefahren", dauer: "25:38", datei: "Lektion-17_Zusatzstoff-A3-Besondere-Schwierigkeiten-und-Gefahren.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/18a3f7e5-c44e-46ef-9ba8-3a209ab3f869/playlist.m3u8" },
-  { nr: 18, gruppe: "Zusatzstoff Klasse A", titel: "Besonderes Verhalten beim Motorradfahren", dauer: "18:00", datei: "Lektion-18_Zusatzstoff-A4-Besonderes-Verhalten-beim-Motorradfahren.mp4", hls: "https://vz-fe1cff86-fb2.b-cdn.net/282b7890-120c-4540-862a-6e99ebcc9b69/playlist.m3u8" },
+// 23.11.2026: Neue Theorievideos (18, firmenneutral) statt des Coachy-Kurses.
+// Die Liste kommt vom Server (videos/liste) - je Schueler nach Klasse
+// gefiltert: B1/B2 nur Klasse B, A1-A4 nur Motorrad, 01-12 alle. Die Liste
+// hier ist nur der Rueckfall, wenn der Server nicht antwortet. Nummern 101-118,
+// damit der Stand der alten Videos (1-18) nicht als "angesehen" mitzaehlt.
+// 24.11.2026: absolute Adresse - in der Store-App liegt die Seite lokal
+// (capacitor://localhost bzw. https://localhost), ein relativer Pfad zeigte dort ins Leere.
+const VIDEO_BASIS = "https://app.fahrsyn.de/app/theorievideos/";
+let LEKTIONEN = [
+  { nr: 101, kennung: "01", gruppe: "Grundstoff", titel: "Persönliche Voraussetzungen", dauer: "11:06", datei: "Theorievideo_01_Persoenliche-Voraussetzungen_Pilot.mp4", untertitel: "Theorievideo_01_Persoenliche-Voraussetzungen_Pilot.vtt", fuer: "alle" },
+  { nr: 102, kennung: "02", gruppe: "Grundstoff", titel: "Rechtliche Rahmenbedingungen", dauer: "11:13", datei: "Theorievideo_02_Rechtliche-Rahmenbedingungen.mp4", untertitel: "Theorievideo_02_Rechtliche-Rahmenbedingungen.vtt", fuer: "alle" },
+  { nr: 103, kennung: "03", gruppe: "Grundstoff", titel: "Verkehrszeichen und Verkehrseinrichtungen", dauer: "9:06", datei: "Theorievideo_03_Verkehrszeichen-und-Verkehrseinrichtungen.mp4", untertitel: "Theorievideo_03_Verkehrszeichen-und-Verkehrseinrichtungen.vtt", fuer: "alle" },
+  { nr: 104, kennung: "04", gruppe: "Grundstoff", titel: "Straßenverkehrssysteme und ihre Nutzung", dauer: "9:24", datei: "Theorievideo_04_Strassenverkehrssysteme-und-ihre-Nutzung.mp4", untertitel: "Theorievideo_04_Strassenverkehrssysteme-und-ihre-Nutzung.vtt", fuer: "alle" },
+  { nr: 105, kennung: "05", gruppe: "Grundstoff", titel: "Vorfahrt", dauer: "8:09", datei: "Theorievideo_05_Vorfahrt.mp4", untertitel: "Theorievideo_05_Vorfahrt.vtt", fuer: "alle" },
+  { nr: 106, kennung: "06", gruppe: "Grundstoff", titel: "Verkehrsregelungen und Bahnübergänge", dauer: "8:22", datei: "Theorievideo_06_Verkehrsregelungen-und-Bahnuebergaenge.mp4", untertitel: "Theorievideo_06_Verkehrsregelungen-und-Bahnuebergaenge.vtt", fuer: "alle" },
+  { nr: 107, kennung: "07", gruppe: "Grundstoff", titel: "Geschwindigkeit, Abstand, umweltschonende Fahrweise", dauer: "7:51", datei: "Theorievideo_07_Geschwindigkeit-Abstand-Umwelt.mp4", untertitel: "Theorievideo_07_Geschwindigkeit-Abstand-Umwelt.vtt", fuer: "alle" },
+  { nr: 108, kennung: "08", gruppe: "Grundstoff", titel: "Andere Teilnehmer im Straßenverkehr", dauer: "7:30", datei: "Theorievideo_08_Andere-Teilnehmer-im-Strassenverkehr.mp4", untertitel: "Theorievideo_08_Andere-Teilnehmer-im-Strassenverkehr.vtt", fuer: "alle" },
+  { nr: 109, kennung: "09", gruppe: "Grundstoff", titel: "Fahrmanöver und Verkehrsbeobachtung", dauer: "6:44", datei: "Theorievideo_09_Fahrmanoever-und-Verkehrsbeobachtung.mp4", untertitel: "Theorievideo_09_Fahrmanoever-und-Verkehrsbeobachtung.vtt", fuer: "alle" },
+  { nr: 110, kennung: "10", gruppe: "Grundstoff", titel: "Ruhender Verkehr", dauer: "6:47", datei: "Theorievideo_10_Ruhender-Verkehr.mp4", untertitel: "Theorievideo_10_Ruhender-Verkehr.vtt", fuer: "alle" },
+  { nr: 111, kennung: "11", gruppe: "Grundstoff", titel: "Verhalten in besonderen Situationen", dauer: "6:37", datei: "Theorievideo_11_Verhalten-in-besonderen-Situationen.mp4", untertitel: "Theorievideo_11_Verhalten-in-besonderen-Situationen.vtt", fuer: "alle" },
+  { nr: 112, kennung: "12", gruppe: "Grundstoff", titel: "Lebenslanges Lernen", dauer: "6:01", datei: "Theorievideo_12_Lebenslanges-Lernen.mp4", untertitel: "Theorievideo_12_Lebenslanges-Lernen.vtt", fuer: "alle" },
+  { nr: 113, kennung: "B1", gruppe: "Zusatzstoff Klasse B", titel: "Technische Bedingungen", dauer: "6:29", datei: "Theorievideo_B1_Technische-Bedingungen.mp4", untertitel: "Theorievideo_B1_Technische-Bedingungen.vtt", fuer: "B" },
+  { nr: 114, kennung: "B2", gruppe: "Zusatzstoff Klasse B", titel: "Personen- und Güterbeförderung", dauer: "6:30", datei: "Theorievideo_B2_Personen-und-Gueterbefoerderung.mp4", untertitel: "Theorievideo_B2_Personen-und-Gueterbefoerderung.vtt", fuer: "B" },
+  { nr: 115, kennung: "A1", gruppe: "Zusatzstoff Motorrad (A, A1, A2)", titel: "Fahrer, Beifahrer, Fahrzeug", dauer: "6:01", datei: "Theorievideo_A1_Fahrer-Beifahrer-Fahrzeug.mp4", untertitel: "Theorievideo_A1_Fahrer-Beifahrer-Fahrzeug.vtt", fuer: "A" },
+  { nr: 116, kennung: "A2", gruppe: "Zusatzstoff Motorrad (A, A1, A2)", titel: "Fahrtechnik und Fahrphysik", dauer: "5:51", datei: "Theorievideo_A2_Fahrtechnik-und-Fahrphysik.mp4", untertitel: "Theorievideo_A2_Fahrtechnik-und-Fahrphysik.vtt", fuer: "A" },
+  { nr: 117, kennung: "A3", gruppe: "Zusatzstoff Motorrad (A, A1, A2)", titel: "Besondere Schwierigkeiten und Gefahren", dauer: "5:48", datei: "Theorievideo_A3_Besondere-Schwierigkeiten-und-Gefahren.mp4", untertitel: "Theorievideo_A3_Besondere-Schwierigkeiten-und-Gefahren.vtt", fuer: "A" },
+  { nr: 118, kennung: "A4", gruppe: "Zusatzstoff Motorrad (A, A1, A2)", titel: "Besonderes Verhalten beim Motorradfahren", dauer: "5:51", datei: "Theorievideo_A4_Besonderes-Verhalten-beim-Motorradfahren.mp4", untertitel: "Theorievideo_A4_Besonderes-Verhalten-beim-Motorradfahren.vtt", fuer: "A" },
 ];
+let videoListe = { fuer: null, fertig: false, laeuft: null };
+function videoListeBereit() { return videoListe.fertig && videoListe.fuer === token; }
+function ladeVideoListe() {
+  if (videoListe.laeuft && videoListe.fuer === token) return videoListe.laeuft;
+  videoListe = { fuer: token, fertig: false, laeuft: null };
+  videoListe.laeuft = (async () => {
+    try {
+      const ctl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+      const uhr = ctl ? setTimeout(() => ctl.abort(), 8000) : null;
+      const r = await fetch("videos/liste", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token }), ...(ctl ? { signal: ctl.signal } : {}),
+      });
+      if (uhr) clearTimeout(uhr);
+      const d = await r.json();
+      if (d && d.ok && Array.isArray(d.videos) && d.videos.length) LEKTIONEN = d.videos;
+    } catch (e) {}
+    videoListe.fertig = true;
+    videoZahlAuffrischen();
+  })();
+  return videoListe.laeuft;
+}
+function videoGesehen() { return LEKTIONEN.filter(l => fortschritt[l.nr]?.done).length; }
+function videoZaehlText() { return videoGesehen() + " von " + LEKTIONEN.length + " Videos angesehen"; }
+function videoZaehlProzent() { return LEKTIONEN.length ? Math.round(videoGesehen() / LEKTIONEN.length * 100) : 0; }
+function videoZahlAuffrischen() {
+  const z = document.getElementById("mtHomeZahl"), b = document.getElementById("mtHomeBalken");
+  if (z) z.textContent = videoZaehlText();
+  if (b) b.style.width = videoZaehlProzent() + "%";
+}
 
 // ── Gespeicherter Zustand (auf dem Gerät) ────────────────────
 function lade(schluessel, standard) {
@@ -959,10 +997,10 @@ function renderHomeAlt() {
     <input type="file" id="bildInput" accept="image/*" style="display:none;">
     ${token ? `<div id="kontoSlot">${kontoKarteHTML()}</div>` : ""}
     ${token ? `<div id="theorieSlot">${theorieKarteHTML()}</div>` : ""}
-    <div class="card" onclick="waehleTab('mediathek','Videos')">
-      <div class="eyebrow">Mediathek</div>
-      <div style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">${gesehen} von ${LEKTIONEN.length} Lektionen angesehen</div>
-      <div class="bar" style="margin-top:10px;"><div style="width:${Math.round(gesehen/LEKTIONEN.length*100)}%"></div></div>
+    ${(token && !videoListeBereit() ? (ladeVideoListe(), "") : "")}<div class="card" onclick="waehleTab('mediathek','Videos')">
+      <div class="eyebrow">Theorievideos</div>
+      <div id="mtHomeZahl" style="font-size:17px; font-weight:700; color:var(--dark); margin-top:4px;">${videoZaehlText()}</div>
+      <div class="bar" style="margin-top:10px;"><div id="mtHomeBalken" style="width:${videoZaehlProzent()}%"></div></div>
       <div style="font-size:13px; color:var(--orange); font-weight:600; margin-top:10px;">Weiterschauen →</div>
     </div>
     <div class="card" onclick="waehleTab('fahrstunden','Fahrstunden')">
@@ -2240,6 +2278,22 @@ async function renderKontakt() {
     h += `<div class="card"><div class="eyebrow">Dein/e Fahrlehrer/in</div>
       <div class="meta" style="margin-top:6px;">Sobald du Fahrstunden hattest, erscheint hier dein/e Fahrlehrer/in.</div></div>`;
   }
+  // 23.11.2026: weitere/r Fahrlehrer/in der Kartei (Fahrlehrer 2), gleiche Karte
+  for (const w of (Array.isArray(k.fahrlehrer_weitere) ? k.fahrlehrer_weitere : [])) {
+    if (!w || !w.name) continue;
+    h += `<div class="card kontakt-weitere"><div class="eyebrow">Weitere/r Fahrlehrer/in</div>
+      <div style="font-size:20px; font-weight:800; margin-top:4px;">${esc(w.name)}</div>`;
+    if (w.mobil) {
+      const tel = w.mobil.replace(/[^\d+]/g, "");
+      h += `<div style="display:flex; gap:10px; margin-top:12px; flex-wrap:wrap;">
+        <a href="tel:${tel}" class="kbtn">📞 Anrufen</a>
+        <a href="https://wa.me/${waNummer(w.mobil)}" target="_blank" rel="noopener" class="kbtn kbtn-wa">💬 WhatsApp</a></div>
+        <div class="meta" style="margin-top:8px;">${esc(w.mobil)}</div>`;
+    } else {
+      h += `<div class="meta" style="margin-top:8px;">Handynummer ist nicht hinterlegt – frag gern im Büro danach.</div>`;
+    }
+    h += `</div>`;
+  }
   const f = k.filiale;
   if (f && f.name) {
     h += `<div class="card"><div class="eyebrow">Dein Büro · ${esc(f.name)}</div><div style="margin-top:8px;">`;
@@ -2470,13 +2524,18 @@ async function dokOeffnen(id) {
 // ── Mediathek ────────────────────────────────────────────────
 function renderListe() {
   aktiv = null;
-  const gesehen = LEKTIONEN.filter(l => fortschritt[l.nr]?.done).length;
+  if (token && !videoListeBereit()) {
+    main.innerHTML = `<h1>Mediathek</h1><div class="meta" id="mtLaedt">Videos werden geladen …</div>`;
+    ladeVideoListe().then(() => { if (document.getElementById("mtLaedt")) renderListe(); });
+    return;
+  }
+  const gesehen = videoGesehen();
   const gruppen = [...new Set(LEKTIONEN.map(l => l.gruppe))];
   let html = `
     <h1>Mediathek</h1>
-    <div class="meta">${gesehen} von ${LEKTIONEN.length} Lektionen angesehen</div>
-    <div class="hint" style="margin-top:10px;">ℹ️ Die Mediathek ist eine <b>Ergänzung</b>
-      und ersetzt aktuell nicht den Pflicht-Theorieunterricht in deiner Filiale.</div>
+    <div class="meta">${gesehen} von ${LEKTIONEN.length} Videos angesehen</div>
+    <div class="hint" style="margin-top:10px;">ℹ️ Die Videos sind eine <b>Ergänzung</b>
+      und ersetzen nicht den Pflicht-Theorieunterricht in deiner Filiale.</div>
     <div class="sd-karte" style="border-color:var(--orange); cursor:pointer;"
          onclick="renderLernbereich()">
       <div class="sd-eyebrow">Theorie lernen</div>
@@ -2492,11 +2551,11 @@ function renderListe() {
       const f = fortschritt[l.nr];
       const pct = f?.dauer ? Math.min(100, Math.round((f.pos / f.dauer) * 100)) : 0;
       html += `
-        <div class="card zeile" onclick="renderPlayer(${l.nr})">
-          <div class="nr ${f?.done ? "done" : ""}">${l.nr}</div>
+        <div class="card zeile" onclick="renderPlayer(${Number(l.nr)})">
+          <div class="nr ${f?.done ? "done" : ""}">${esc(l.kennung || String(l.nr))}</div>
           <div class="info">
             <div class="titel">${esc(l.titel)}</div>
-            <div class="sub">${l.dauer} Min · ${f?.done ? "✓ angesehen" : pct > 0 ? pct + " % gesehen" : "noch offen"}</div>
+            <div class="sub">${esc(l.dauer)} Min · ${f?.done ? "✓ angesehen" : pct > 0 ? pct + " % gesehen" : "noch offen"}</div>
             ${pct > 0 && !f?.done ? `<div class="bar"><div style="width:${pct}%"></div></div>` : ""}
           </div>
           <div class="play">▶</div>
@@ -2507,29 +2566,77 @@ function renderListe() {
   main.scrollTop = 0;
 }
 
+// Alle Geraete bekommen dieselbe MP4-Datei vom Server (H.264/AAC, Faststart -
+// spielt in Safari/iOS und Chrome/Android). Die Untertitelspur (Deutsch) haengt
+// als <track> ohne "default" daran: sie ist aus, bis man sie einschaltet.
+// 24.11.2026: Das Video selbst laeuft ohne crossorigin (wie frueher die Streams),
+// damit die native App nichts zusaetzlich pruefen muss. Liegt die Seite nicht
+// auf app.fahrsyn.de (Store-App), wird die Untertiteldatei per fetch geholt und
+// als lokale Blob-Datei angehaengt - so braucht <track> keine fremde Herkunft.
 function videoQuelle(l) {
-  // Safari (iPhone/iPad/Mac) spielt HLS nativ -> schneller CDN-Stream.
-  // Andere Browser bekommen die MP4-Datei vom Server.
-  const v = document.createElement("video");
-  const kannHls = v.canPlayType("application/vnd.apple.mpegurl");
-  return kannHls ? l.hls : "videos/" + l.datei;
+  return VIDEO_BASIS + l.datei;
+}
+function videoGleicheHerkunft() {
+  try { return new URL(VIDEO_BASIS).origin === location.origin; } catch (e) { return false; }
+}
+async function untertitelAnhaengen(v, l) {
+  const k = document.getElementById("utKnopf");
+  try {
+    let src = VIDEO_BASIS + l.untertitel;
+    if (!videoGleicheHerkunft()) {
+      const r = await fetch(src);
+      if (!r.ok) throw new Error("Untertitel " + r.status);
+      const text = await r.text();
+      src = URL.createObjectURL(new Blob([text], { type: "text/vtt" }));
+    }
+    if (document.getElementById("player") !== v) return;   // inzwischen anderes Video
+    const t = document.createElement("track");
+    t.kind = "subtitles"; t.srclang = "de"; t.label = "Deutsch"; t.src = src;
+    v.appendChild(t);
+    try { t.track.mode = "disabled"; } catch (e) {}          // standardmaessig AUS
+    if (k) k.style.display = "";
+    untertitelKnopf();
+  } catch (e) {
+    if (k) k.style.display = "none";
+  }
+}
+
+function untertitelSpur() {
+  const v = document.getElementById("player");
+  return v && v.textTracks && v.textTracks.length ? v.textTracks[0] : null;
+}
+function untertitelKnopf() {
+  const k = document.getElementById("utKnopf"), t = untertitelSpur();
+  if (k) k.textContent = (t && t.mode === "showing") ? "Untertitel ausschalten" : "Untertitel einschalten";
+}
+function untertitelUmschalten() {
+  const t = untertitelSpur();
+  if (!t) return;
+  t.mode = t.mode === "showing" ? "disabled" : "showing";
+  untertitelKnopf();
 }
 
 function renderPlayer(nr) {
-  const l = LEKTIONEN.find(x => x.nr === nr);
+  const l = LEKTIONEN.find(x => Number(x.nr) === Number(nr));
+  if (!l) { renderListe(); return; }
   aktiv = l;
   const f = fortschritt[nr];
   main.innerHTML = `
-    <button class="btn-ghost" onclick="renderListe()">← Alle Lektionen</button>
+    <button class="btn-ghost" onclick="renderListe()">← Alle Videos</button>
     <div>
-      <div class="eyebrow">${esc(l.gruppe)} · Lektion ${l.nr}</div>
+      <div class="eyebrow">${esc(l.gruppe)} · ${esc(l.kennung || String(l.nr))}</div>
       <h1 style="font-size:20px; line-height:1.3;">${esc(l.titel)}</h1>
-      <div class="meta" style="margin-top:2px;">${l.dauer} Min</div>
+      <div class="meta" style="margin-top:2px;">${esc(l.dauer)} Min</div>
     </div>
-    <video id="player" src="${videoQuelle(l)}" controls playsinline preload="metadata"></video>
+    <video id="player" src="${esc(videoQuelle(l))}" controls playsinline preload="metadata"></video>
+    ${l.untertitel ? `<button class="btn-ghost" id="utKnopf" onclick="untertitelUmschalten()"
+      style="width:100%; margin-top:2px; display:none;">Untertitel einschalten</button>` : ""}
     <div class="done-note" id="doneNote" style="display:${f?.done ? "block" : "none"}">✓ Als angesehen markiert</div>
     <div class="hint">ℹ️ Ergänzung – ersetzt nicht den Pflicht-Theorieunterricht in deiner Filiale.</div>`;
   const v = document.getElementById("player");
+  // Untertitel werden nachgeladen und sind standardmaessig AUS.
+  if (l.untertitel) untertitelAnhaengen(v, l);
+  try { if (v.textTracks) v.textTracks.addEventListener("change", untertitelKnopf); } catch (e) {}
   v.addEventListener("loadedmetadata", () => {
     const p = fortschritt[nr]?.pos;
     if (p && p > 3 && p < v.duration - 5) v.currentTime = p;
