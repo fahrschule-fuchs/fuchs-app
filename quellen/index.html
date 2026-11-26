@@ -1792,7 +1792,9 @@ function sdSeiteHTML(d) {
   // dann gehoert er ueber "Als Naechstes". Ist eine geplant, ist die wichtiger.
   const frei = sdFreiHTML(d);
   const hatTermin = !!(d && d.termin);
-  return sdKopfHTML(d)
+  // 26.11.2026: Platz fuer den Update-Hinweis der Store-App (fuchs-native.js, ab 1.17)
+  return '<div id="fuchsUpdateHinweis" style="display:none"></div>'
+    + sdKopfHTML(d)
     + (hatTermin ? "" : frei)
     + sdTerminHTML(d)
     + (hatTermin ? frei : "")
@@ -1920,6 +1922,7 @@ async function renderHome() {
   if (!d) { renderHomeAlt(); return; }
   if (d.bekannt === false) { renderHomeAlt(); return; }
   main.innerHTML = sdSeiteHTML(d);
+  if (window.FuchsNative && window.FuchsNative.updateHinweis) window.FuchsNative.updateHinweis();
   const bi = document.getElementById("bildInput");
   if (bi) bi.onchange = bildGewaehlt;
   main.scrollTop = 0;

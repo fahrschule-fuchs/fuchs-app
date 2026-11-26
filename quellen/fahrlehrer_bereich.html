@@ -504,6 +504,7 @@ function viewSchueler(){
       ? "Deine Schüler aus den Fahrstunden der letzten 12 Monate. Wähle einen – die passende Karte (Pkw/Motorrad) lädt automatisch."
       : "Wähle einen Schüler oder gib eine Handynummer ein. Stufe antippen = sofort gespeichert, der Schüler sieht es direkt in seiner App.");
   main().innerHTML=`
+    <div id="fuchsUpdateHinweis" style="display:none"></div>
     <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>Hallo, ${esc(FLNAME.split(" ")[0]||FLNAME)}</h1></div>
     <div class="card klick zeile" onclick="navSub('woche')">
       <div class="nr" style="background:#FDEBDD">🗓</div>
@@ -541,6 +542,7 @@ function viewSchueler(){
     <input id="suche" class="app-input" style="text-align:left" placeholder="🔍 Suche: Vorname, Nachname oder Geburtstag">
     <select id="schueler" class="app-select">${schuelerOptions("")}</select>
     <div id="karte"></div>`;
+  if(window.FuchsNative&&window.FuchsNative.updateHinweis)window.FuchsNative.updateHinweis();   // 26.11.2026 Update-Hinweis (Store-App ab 1.17)
   const sel=document.getElementById("schueler");
   if(aktNummer)sel.value=aktNummer;
   document.getElementById("suche").oninput=e=>{sel.innerHTML=schuelerOptions(e.target.value);if(aktNummer)sel.value=aktNummer;};
