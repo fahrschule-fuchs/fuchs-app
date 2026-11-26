@@ -260,6 +260,7 @@ workflows:
     environment:
       groups:
         - signing-schueler
+        - google_credentials
       vars:
         VERSION_OFFSET: 100
         VERSION_NAME: "1.17"
@@ -268,6 +269,15 @@ workflows:
 
     artifacts:
       - apps/schueler/android/app/build/outputs/bundle/release/*.aab
+
+    # 26.11.2026 (Klaus): Fertiges Paket automatisch in die Play Console laden -
+    # nur als ENTWURF im Produktions-Track, kein Roll-out. Versionshinweise
+    # traegt Cowork in der Play Console ein und reicht selbst ein.
+    publishing:
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: production
+        submit_as_draft: true
 
     scripts:
       - name: Web-Bundle bauen und pruefen
@@ -503,6 +513,7 @@ workflows:
     environment:
       groups:
         - signing
+        - google_credentials
       vars:
         VERSION_OFFSET: 20
         VERSION_NAME: "1.17"
@@ -511,6 +522,15 @@ workflows:
 
     artifacts:
       - apps/fahrlehrer/android/app/build/outputs/bundle/release/*.aab
+
+    # 26.11.2026 (Klaus): Fertiges Paket automatisch in die Play Console laden -
+    # nur als ENTWURF im Produktions-Track, kein Roll-out. Versionshinweise
+    # traegt Cowork in der Play Console ein und reicht selbst ein.
+    publishing:
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: production
+        submit_as_draft: true
 
     scripts:
       - name: Web-Bundle bauen und pruefen
