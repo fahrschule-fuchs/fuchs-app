@@ -504,6 +504,7 @@ function viewSchueler(){
       ? "Deine Schüler aus den Fahrstunden der letzten 12 Monate. Wähle einen – die passende Karte (Pkw/Motorrad) lädt automatisch."
       : "Wähle einen Schüler oder gib eine Handynummer ein. Stufe antippen = sofort gespeichert, der Schüler sieht es direkt in seiner App.");
   main().innerHTML=`
+    <div id="fuchsUpdateHinweis" style="display:none"></div>
     <div><div class="eyebrow">Fahrlehrer-Bereich</div><h1>Hallo, ${esc(FLNAME.split(" ")[0]||FLNAME)}</h1></div>
     <div class="card klick zeile" onclick="navSub('woche')">
       <div class="nr" style="background:#FDEBDD">🗓</div>
@@ -541,6 +542,7 @@ function viewSchueler(){
     <input id="suche" class="app-input" style="text-align:left" placeholder="🔍 Suche: Vorname, Nachname oder Geburtstag">
     <select id="schueler" class="app-select">${schuelerOptions("")}</select>
     <div id="karte"></div>`;
+  if(window.FuchsNative&&window.FuchsNative.updateHinweis)window.FuchsNative.updateHinweis();   // 26.11.2026 Update-Hinweis (Store-App ab 1.17)
   const sel=document.getElementById("schueler");
   if(aktNummer)sel.value=aktNummer;
   document.getElementById("suche").oninput=e=>{sel.innerHTML=schuelerOptions(e.target.value);if(aktNummer)sel.value=aktNummer;};
@@ -1128,6 +1130,29 @@ function akteStandHtml(staende){
   }).join("");
 }
 
+// 25.11.2026: Simulator-Stand (nur lesen) - kommt mit dem Ausbildungsstand vom Manager.
+// 26.11.2026 (Klaus): Simulator-Paket in der Akte - nur lesen (Kontingent und Kaeufe)
+function akteSimPaketHtml(p,dm){
+  if(!p||!p.berechtigt||!(p.gekauft||p.genommen||p.geplant))return "";
+  const k=(p.kaeufe||[]).filter(x=>x.status==="freigeschaltet").map(x=>dm(x.datum)+" ("+x.einheiten+")").join(", ");
+  return `<div style="font-size:13px;margin-top:6px">🎟️ Paket: <b>${p.offen}</b> Einheiten offen · gekauft ${p.gekauft} · genommen ${p.genommen} · geplant ${p.geplant}${p.verfallen?" · verfallen "+p.verfallen:""}${k?"<br><span style=\"color:var(--gray,#6A6A6A)\">Käufe: "+esc(k)+"</span>":""}</div>`;
+}
+
+function akteSimulatorHtml(staende){
+  const s=(staende||[]).map(x=>x&&x.simulator).find(x=>x&&x.gesamt);
+  if(!s)return "";
+  const dm=d=>String(d||"").slice(0,10).split("-").reverse().join(".");
+  const zeile=t=>{
+    const st=t.status==="absolviert"?`<span style="color:var(--green,#2E9E5B);font-weight:700">✓ ${t.absolviert.map(dm).join(", ")}</span>`
+      :t.status==="geplant"?`<span style="color:#B07800">geplant ${t.geplant.map(dm).join(", ")}</span>`:`<span style="color:var(--gray,#6A6A6A)">offen</span>`;
+    return `<div style="display:flex;gap:9px;padding:3px 0;font-size:13px"><div style="flex:0 0 18px;color:var(--gray,#6A6A6A)">${t.nr}</div>
+      <div style="flex:1">${esc(t.name)}</div><div style="white-space:nowrap">${st}</div></div>`;
+  };
+  return `<div class="card" style="cursor:default;display:block">
+    <div class="eyebrow">🖥️ Simulator · ${s.absolviert} von ${s.gesamt} Themen · ${s.minuten} Min.</div>${akteSimPaketHtml(s.paket,dm)}
+    <div style="margin-top:6px">${(s.themen||[]).map(zeile).join("")}</div></div>`;
+}
+
 function zeichneAkte(){
   const el=document.getElementById("kontoKarte");if(!el||!AKTE)return;
   const k=AKTE.konto||{};
@@ -1140,6 +1165,7 @@ function zeichneAkte(){
     </div>
     ${akteKontoHtml(k)}
     ${akteStandHtml(AKTE.staende)}
+    ${akteSimulatorHtml(AKTE.staende)}
     ${akteInfosHtml(AKTE.infos)}
     ${akteNotizenHtml(AKTE.notizen)}
     ${akteTheorieHtml(AKTE.theorie_lernstand)}

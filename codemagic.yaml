@@ -15,7 +15,7 @@ workflows:
         # Update hochzaehlen - Apple nimmt keine zweite Fassung mit derselben
         # Nummer an. Aendern laesst sich das hier oder in der
         # Codemagic-Oberflaeche unter "Environment variables".
-        APP_VERSION: "1.16"
+        APP_VERSION: "1.17"
         IOS_DIR: "apps/schueler/ios/App"
         XCODE_PROJECT: "apps/schueler/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
@@ -67,8 +67,16 @@ workflows:
               "Videoliste je Klasse vom Server (1.16)": "fetch(\"videos/liste\"",
               "Untertitel als Blob in der App (1.16)": "function untertitelAnhaengen(",
               "Kontakt zeigt Fahrlehrer 2 (1.16)": "fahrlehrer_weitere",
+              "Fahrsimulator-Seite (1.17)": "async function renderSimulator()",
+              "Fahrsimulator-Startkarte und Kachel (1.17)": "function sdSimHTML(",
+              "Simulator-Erklaerblock und Paket-Fortschritt (1.17)": "function simFortschrittHTML(",
+              "Rueckkehr nach Paketkauf (1.17)": "async function simRueckkehr(",
+              "Platz fuer den Update-Hinweis (1.17)": 'id="fuchsUpdateHinweis"',
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
+          # 26.11.2026: Die Huelle schickt die App-Version mit (Update-Hinweis 1.17)
+          if "X-App-Version" not in io.open("apps/schueler/www/fuchs-native.js", encoding="utf-8").read():
+              fehlt.append("App-Version in fuchs-native.js (1.17)")
           print("Web-Bundle: %d Zeichen" % len(s))
           for name in noetig:
               print(("  ok   " if name not in fehlt else "  FEHLT ") + name)
@@ -254,7 +262,7 @@ workflows:
         - signing-schueler
       vars:
         VERSION_OFFSET: 100
-        VERSION_NAME: "1.16"
+        VERSION_NAME: "1.17"
       node: 22
       java: 21
 
@@ -301,8 +309,16 @@ workflows:
               "Videoliste je Klasse vom Server (1.16)": "fetch(\"videos/liste\"",
               "Untertitel als Blob in der App (1.16)": "function untertitelAnhaengen(",
               "Kontakt zeigt Fahrlehrer 2 (1.16)": "fahrlehrer_weitere",
+              "Fahrsimulator-Seite (1.17)": "async function renderSimulator()",
+              "Fahrsimulator-Startkarte und Kachel (1.17)": "function sdSimHTML(",
+              "Simulator-Erklaerblock und Paket-Fortschritt (1.17)": "function simFortschrittHTML(",
+              "Rueckkehr nach Paketkauf (1.17)": "async function simRueckkehr(",
+              "Platz fuer den Update-Hinweis (1.17)": 'id="fuchsUpdateHinweis"',
           }
           fehlt = [name for name, marke in noetig.items() if marke not in s]
+          # 26.11.2026: Die Huelle schickt die App-Version mit (Update-Hinweis 1.17)
+          if "X-App-Version" not in io.open("apps/schueler/www/fuchs-native.js", encoding="utf-8").read():
+              fehlt.append("App-Version in fuchs-native.js (1.17)")
           print("Web-Bundle: %d Zeichen" % len(s))
           for name in noetig:
               print(("  ok   " if name not in fehlt else "  FEHLT ") + name)
@@ -417,8 +433,11 @@ workflows:
                     "window.Capacitor.getPlatform() === 'ios') : (('serviceWorker' in navigator)",
                     "Store-App Android (Build 1.9)", "renderTheorieThemen",
                     "sdPaketHTML", "kVerwaltungHTML", "schuld.offen_cent",
-                    "Der Betrag bleibt als Guthaben auf deinem Fahrschulkonto.")
+                    "Der Betrag bleibt als Guthaben auf deinem Fahrschulkonto.",
+                    'id="fuchsUpdateHinweis"')
           fehlt = [w for w in noetig if w not in h]
+          if "X-App-Version" not in z.read("base/assets/public/fuchs-native.js").decode("utf-8", "ignore"):
+              fehlt.append("App-Version in fuchs-native.js (1.17)")
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt im Paket: " + ", ".join(fehlt))
@@ -486,7 +505,7 @@ workflows:
         - signing
       vars:
         VERSION_OFFSET: 20
-        VERSION_NAME: "1.15"
+        VERSION_NAME: "1.17"
       node: 22
       java: 21
 
@@ -566,7 +585,11 @@ workflows:
                               "nachweisHinweis", "schuldHinweis",
                               # FL 1.15 (18.11.2026): Sonnenuntergang, Notizen, Kontostand-Zeile
                               "function sonneTag", "async function notizKasten",
-                              "function kontoZeile") if w not in h]
+                              "function kontoZeile",
+                              # FL 1.17 (26.11.2026): Simulator-Uebungen und Paket-Einheiten in der Akte
+                              "function akteSimulatorHtml", "function akteSimPaketHtml",
+                              # FL 1.17 (26.11.2026): Platz fuer den Update-Hinweis
+                              'id="fuchsUpdateHinweis"') if w not in h]
           print("Oberflaeche im Paket:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt im Paket: " + ", ".join(fehlt))
@@ -635,7 +658,7 @@ workflows:
         XCODE_PROJECT: "apps/fahrlehrer/ios/App/App.xcodeproj"
         XCODE_SCHEME: "App"
         INFO_PLIST: "apps/fahrlehrer/ios/App/App/Info.plist"
-        VERSION_NAME: "1.15"
+        VERSION_NAME: "1.17"
       node: 22
       xcode: latest
 
@@ -854,7 +877,11 @@ workflows:
                               "nachweisHinweis", "schuldHinweis",
                               # FL 1.15 (18.11.2026): Sonnenuntergang, Notizen, Kontostand-Zeile
                               "function sonneTag", "async function notizKasten",
-                              "function kontoZeile") if w not in h]
+                              "function kontoZeile",
+                              # FL 1.17 (26.11.2026): Simulator-Uebungen und Paket-Einheiten in der Akte
+                              "function akteSimulatorHtml", "function akteSimPaketHtml",
+                              # FL 1.17 (26.11.2026): Platz fuer den Update-Hinweis
+                              'id="fuchsUpdateHinweis"') if w not in h]
           print("Oberflaeche in der App:", len(h), "Zeichen")
           if fehlt:
               raise SystemExit("ABBRUCH - fehlt in der App: " + ", ".join(fehlt))

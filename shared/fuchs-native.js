@@ -12,6 +12,7 @@
         App-Logik sieht es aus, als gaebe es weiterhin Web-Push.
      3. Externe Links (WhatsApp, Karten, Telefon) oeffnen im System.
      4. Android-Zurueck, Startbildschirm, Offline-Hinweis.
+     (5. Kamera, 6. App-Version und Update-Hinweis - seit 1.17)
 
    Erwartet die vom Build erzeugte Konstante window.FUCHS_CFG.
    ===================================================================== */
@@ -49,6 +50,51 @@
   }
   window.FuchsNative.absolut = absolut;
 
+  /* -----------------------------------------------------------------
+     App-Version (1.17): Jeder Aufruf an unseren Server bekommt
+     X-App-Version, X-App-Plattform und X-App-Name mit. Der Server merkt
+     sich daraus nur Version/Plattform/Datum und sagt, ob es eine neuere
+     Version gibt (Abschnitt 6). Die Version kommt aus dem Store-Paket
+     selbst (App.getInfo), nicht aus dieser Datei.
+     ----------------------------------------------------------------- */
+  var APP_NAME = CFG.app === 'fahrlehrer' ? 'fl' : 'fs';
+  var VERS_RE = /^\d{1,3}(\.\d{1,3}){0,2}$/;
+  var APP_VERSION = '';
+  var versionFertig = false;
+  try { APP_VERSION = localStorage.getItem('fuchsAppVersion') || ''; } catch (e) {}
+  if (!VERS_RE.test(APP_VERSION)) APP_VERSION = '';
+  var versionGeholt = (NATIV && P.App && P.App.getInfo)
+    ? P.App.getInfo().then(function (i) {
+        var v = String((i && i.version) || '').trim();
+        if (VERS_RE.test(v)) {
+          APP_VERSION = v;
+          try { localStorage.setItem('fuchsAppVersion', v); } catch (e) {}
+        }
+      }).catch(function () {}).then(function () {
+        versionFertig = true;
+        window.FuchsNative.version = APP_VERSION;
+      })
+    : Promise.resolve();
+  function versionWarten() {
+    if (versionFertig) return Promise.resolve();
+    return Promise.race([versionGeholt, new Promise(function (r) { setTimeout(r, 1500); })]);
+  }
+  function mitVersion(url) {
+    return typeof url === 'string' && url.indexOf(ORIGIN + '/app/') === 0 &&
+      url.indexOf('/app/theorievideos/') < 0 &&
+      (window.FuchsNative.plattform === 'ios' || window.FuchsNative.plattform === 'android');
+  }
+  function versionKopf(o) {
+    if (!APP_VERSION) return o;
+    o = Object.assign({}, o || {});
+    var h = new Headers(o.headers || {});
+    h.set('X-App-Version', APP_VERSION);
+    h.set('X-App-Plattform', window.FuchsNative.plattform);
+    h.set('X-App-Name', APP_NAME);
+    o.headers = h;
+    return o;
+  }
+
   if (NATIV && window.fetch) {
     var originalFetch = window.fetch.bind(window);
     window.fetch = function (eingabe, optionen) {
@@ -59,6 +105,16 @@
             return pushAnmeldungAbfangen(optionen);
           }
           eingabe = absolut(eingabe);
+          if (mitVersion(eingabe)) {
+            var adresse = eingabe, opt = optionen;
+            return versionWarten().then(function () {
+              return originalFetch(adresse, versionKopf(opt));
+            }).then(function (antwort) {
+              // 426 = diese Version ist unter der Mindestversion
+              if (antwort && antwort.status === 426) updatePruefen();
+              return antwort;
+            });
+          }
         } else if (eingabe && eingabe.url) {
           eingabe = new Request(absolut(eingabe.url), eingabe);
         }
@@ -406,4 +462,148 @@
       promptLabelCancel: 'Abbrechen'
     }).then(function (f) { return f.dataUrl; });
   };
+
+  /* =================================================================
+     6. UPDATE-HINWEIS (1.17)
+     -----------------------------------------------------------------
+     Der Server sagt je App und Plattform, welche Version die neueste
+     ist und ob es eine Mindestversion gibt (gepflegt im
+     Fahrschulmanager, Verwaltung -> App-Versionen).
+     - kleiner als "neueste": Hinweis oben auf der Startseite (die Seite
+       stellt dafuer <div id="fuchsUpdateHinweis"> bereit), wegtippbar,
+       kommt nach 3 Tagen wieder.
+     - kleiner als "Mindestversion": Vollbild mit Store-Knopf.
+     Der Store wird ueber eine normale Adresse geoeffnet; Capacitor gibt
+     fremde Adressen an das System weiter (App Store / Play Store).
+     ================================================================= */
+  var UPD_WEG = 'fuchsUpdateWeg';
+  var UPD_PAUSE_MS = 3 * 24 * 3600 * 1000;
+  var updLetzte = 0;
+  window.FuchsNative.update = null;
+
+  function updWeggetippt(neueste) {
+    try {
+      var w = JSON.parse(localStorage.getItem(UPD_WEG) || 'null');
+      return !!(w && w.v === neueste && Date.now() - Number(w.t || 0) < UPD_PAUSE_MS);
+    } catch (e) { return false; }
+  }
+
+  window.FuchsNative.storeOeffnen = function (link) {
+    link = link || (window.FuchsNative.update || {}).link || '';
+    if (!/^https:\/\/(apps\.apple\.com|itunes\.apple\.com|play\.google\.com)\//.test(link)) return false;
+    window.location.href = link;
+    return true;
+  };
+
+  function knopf(text) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = text;
+    b.setAttribute('style', 'margin-top:8px;background:#F67B32;color:#fff;border:none;border-radius:999px;' +
+      'padding:9px 16px;font-weight:700;font-size:14px;line-height:1.2;font-family:inherit;cursor:pointer;');
+    b.onclick = function () { window.FuchsNative.storeOeffnen(); };
+    return b;
+  }
+
+  window.FuchsNative.updateHinweis = function () {
+    var el = document.getElementById('fuchsUpdateHinweis');
+    if (!el) return;
+    var d = window.FuchsNative.update;
+    el.innerHTML = '';
+    if (!d || !d.veraltet || d.gesperrt || updWeggetippt(d.neueste)) { el.style.display = 'none'; return; }
+    var karte = document.createElement('div');
+    karte.setAttribute('style', 'display:flex;align-items:flex-start;gap:12px;background:#FEF0E6;' +
+      'border:1px solid #F9C9A5;border-radius:16px;padding:12px 10px 12px 14px;margin:0 0 14px;');
+    var zeichen = document.createElement('div');
+    zeichen.textContent = '⬆';
+    zeichen.setAttribute('style', 'width:38px;height:38px;border-radius:12px;background:#F67B32;color:#fff;' +
+      'display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;flex-shrink:0;');
+    var mitte = document.createElement('div');
+    mitte.setAttribute('style', 'flex:1;min-width:0;');
+    var titel = document.createElement('div');
+    titel.textContent = d.titel || 'Neue Version verfügbar';
+    titel.setAttribute('style', 'font-weight:800;color:#1A1A1A;font-size:15px;');
+    var text = document.createElement('div');
+    text.textContent = d.text || '';
+    text.setAttribute('style', 'font-size:12.5px;color:#6A6A6A;margin-top:1px;');
+    mitte.appendChild(titel); mitte.appendChild(text); mitte.appendChild(knopf('Jetzt aktualisieren'));
+    var weg = document.createElement('button');
+    weg.type = 'button';
+    weg.textContent = '×';
+    weg.setAttribute('aria-label', 'Hinweis ausblenden');
+    weg.setAttribute('style', 'background:none;border:none;color:#6A6A6A;font-size:22px;line-height:1;padding:0 4px;cursor:pointer;');
+    weg.onclick = function () {
+      try { localStorage.setItem(UPD_WEG, JSON.stringify({ v: d.neueste, t: Date.now() })); } catch (e) {}
+      window.FuchsNative.updateHinweis();
+    };
+    karte.appendChild(zeichen); karte.appendChild(mitte); karte.appendChild(weg);
+    el.appendChild(karte);
+    el.style.display = '';
+  };
+
+  function sperreZeigen(d) {
+    if (!document.body) {
+      document.addEventListener('DOMContentLoaded', function () { sperreZeigen(d); }, { once: true });
+      return;
+    }
+    var s = document.getElementById('fuchsUpdateSperre');
+    if (!s) {
+      s = document.createElement('div');
+      s.id = 'fuchsUpdateSperre';
+      document.body.appendChild(s);
+    }
+    s.setAttribute('style', 'position:fixed;left:0;top:0;right:0;bottom:0;z-index:100000;background:#FBF8F5;' +
+      'display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;' +
+      'padding:32px 28px calc(32px + env(safe-area-inset-bottom));font-family:inherit;');
+    s.innerHTML = '';
+    var bild = document.createElement('img');
+    bild.src = 'fuchs-icon.png';
+    bild.alt = '';
+    bild.setAttribute('style', 'width:84px;height:84px;border-radius:22px;margin-bottom:18px;');
+    bild.onerror = function () { bild.remove(); };
+    var h = document.createElement('div');
+    h.textContent = 'Neue Version erforderlich';
+    h.setAttribute('style', 'font-size:23px;font-weight:800;color:#1A1A1A;margin-bottom:8px;');
+    var p = document.createElement('div');
+    p.textContent = d.sperrtext || 'Bitte aktualisiere die App.';
+    p.setAttribute('style', 'font-size:16px;color:#1A1A1A;max-width:320px;line-height:1.4;');
+    var klein = document.createElement('div');
+    klein.textContent = 'Deine Version: ' + (d.version || APP_VERSION) + ' · ' + (d.plattform === 'ios' ? 'im App Store' : 'bei Google Play');
+    klein.setAttribute('style', 'font-size:12.5px;color:#6A6A6A;margin:10px 0 8px;');
+    var k = knopf('Jetzt aktualisieren');
+    k.style.padding = '13px 26px';
+    k.style.fontSize = '16px';
+    s.appendChild(bild); s.appendChild(h); s.appendChild(p); s.appendChild(klein); s.appendChild(k);
+  }
+
+  function sperreWeg() {
+    var s = document.getElementById('fuchsUpdateSperre');
+    if (s) s.remove();
+  }
+
+  function updatePruefen() {
+    if (!NATIV || !originalFetch) return Promise.resolve(null);
+    updLetzte = Date.now();
+    return versionWarten().then(function () {
+      if (!APP_VERSION) return null;
+      return originalFetch(ORIGIN + '/app/app-version', versionKopf({
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }));
+    }).then(function (r) { return r && r.ok ? r.json() : null; })
+      .then(function (d) {
+        if (!d || !d.ok || !d.bekannt) return null;
+        window.FuchsNative.update = d;
+        if (d.gesperrt) sperreZeigen(d); else sperreWeg();
+        window.FuchsNative.updateHinweis();
+        return d;
+      }).catch(function () { return null; });
+  }
+  window.FuchsNative.updatePruefen = updatePruefen;
+
+  if (NATIV) {
+    updatePruefen();
+    // Nach der Rueckkehr aus dem Hintergrund hoechstens alle 6 Stunden neu fragen
+    window.addEventListener('fuchs:reaktiviert', function () {
+      if (Date.now() - updLetzte > 6 * 3600 * 1000) updatePruefen();
+    });
+  }
 })();
