@@ -1616,6 +1616,7 @@ function sdAufgabenHTML(d) {
 function sdAufgabe(ziel) {
   if (ziel === "bezahlen") renderBezahlen(Number((startDaten && startDaten.konto && startDaten.konto.saldo) || 0) * 100);
   else if (ziel === "kurse") renderKurse();
+  else if (ziel === "simulator") renderSimulator();
   else if (ziel === "dokumente") renderDokumente();
   else waehleTab("home", "Start");
 }
@@ -1753,6 +1754,7 @@ const SD_SYM = {
   erstehilfe: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="6.5" width="17" height="12" rx="2.5"/><path d="M12 10v5"/><path d="M9.5 12.5h5"/></svg>',
   // Frueher ein Vorhaengeschloss. Ein Schloss heisst "zu" - gemeint ist aber
   // das Gegenteil. Jetzt ein Lenkrad (Benjamin, 09.09.2026).
+  simulator: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><circle cx="12" cy="10" r="3"/></svg>',
   freietermine: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.7"/><path d="M12 3.5v5.8"/><path d="m4.7 16.3 4.9-2.9"/><path d="m19.3 16.3-4.9-2.9"/></svg>',
 };
 
@@ -1768,6 +1770,8 @@ function sdWeitereHTML(d) {
       : "selbst buchen", "waehleTab('fahrstunden','Fahrstunden','frei')"],
   ];
   if (d && d.kurse_aktiv) felder.push(["erstehilfe", "Erste-Hilfe-Kurs", "Termin buchen", "renderKurse()"]);
+  // 25.11.2026: Fahrsimulator - nur fuer berechtigte Karteien (nicht 7-Tage-Fuchs)
+  if (d && d.simulator && d.simulator.karte) felder.push(["simulator", "Fahrsimulator", d.simulator.offen ? d.simulator.offen + " Einheiten offen" : "Paket & Termine", "renderSimulator()"]);
   // Bleibt am Ende eine Kachel allein uebrig, nimmt sie die ganze Breite -
   // eine halbe Kachel neben einer Luecke sieht aus wie ein Fehler.
   const allein = felder.length % 2 === 1;
@@ -1793,6 +1797,7 @@ function sdSeiteHTML(d) {
     + sdTerminHTML(d)
     + (hatTermin ? frei : "")
     + sdAufgabenHTML(d)
+    + sdSimHTML(d)
     + sdFortschrittHTML(d)
     + sdTheorieHTML(d)
     + sdKontoHTML(d) + sdPaketHTML(d)
@@ -2061,6 +2066,9 @@ async function zahlungNachschauen() {
       let kursSid = null;
       try { kursSid = localStorage.getItem("fuchs_kurs"); } catch (e) {}
       if (d.kurs || kursSid === sid) { await kursRueckkehr(sid); return; }
+      let simSid = null;   // 25.11.2026: Simulator-Paket
+      try { simSid = localStorage.getItem("fuchs_sim"); } catch (e) {}
+      if (simSid === sid) { await simRueckkehr(sid); return; }
       alert("Danke! " + eur(d.betrag_cent) + " sind auf deinem Fahrschulkonto gutgeschrieben. 🦊");
     } else if (d.status === "unterwegs") {
       try { localStorage.removeItem("fuchs_zahlung"); } catch (e) {}
@@ -2102,6 +2110,9 @@ async function zahlungRueckkehr() {
       let kursSid = null;
       try { kursSid = localStorage.getItem("fuchs_kurs"); } catch (e) {}
       if (d.kurs || kursSid === sid) { await kursRueckkehr(sid); return; }
+      let simSid = null;   // 25.11.2026: Simulator-Paket
+      try { simSid = localStorage.getItem("fuchs_sim"); } catch (e) {}
+      if (simSid === sid) { await simRueckkehr(sid); return; }
       alert("Danke! " + eur(d.betrag_cent) + " sind auf deinem Fahrschulkonto gutgeschrieben. 🦊");
       return;
     }
@@ -5315,7 +5326,7 @@ function fsStornoSchritt1() {
     <ul style="margin:0 0 4px; padding-left:20px; font-size:14px; color:var(--dark); line-height:1.45;">${zeilen}</ul>
     ${v.absage_warnung ? `<div style="background:#FFF4E5; border:1px solid #F5C98B; border-radius:12px; padding:10px 12px; font-size:13.5px; color:#8A4B10; line-height:1.45; margin-top:8px;">${esc(v.absage_warnung)}</div>` : ""}
     <button onclick="fsModalSchliessen()" style="margin-top:14px; ${FS_KNOPF_HAUPT}">Stunde behalten</button>
-    <button onclick="fsVerschiebenStart(${id})" style="${FS_KNOPF_ZWEIT}">Lieber verschieben</button>
+    ${v.simulator ? "" : `<button onclick="fsVerschiebenStart(${id})" style="${FS_KNOPF_ZWEIT}">Lieber verschieben</button>`}
     <button onclick="fsStornoSchritt2()" style="${FS_KNOPF_KLEIN}">Trotzdem absagen</button>`);
 }
 
@@ -5328,7 +5339,7 @@ function fsStornoSchritt2() {
         <div style="font-size:13px; color:#7A1F1A; line-height:1.5; margin-top:5px;">Die Frist von <b>${v.frist} Werktagen</b> ist unterschritten. Die Stunde wird als Fehlstunde (FE) berechnet.</div></div>`
     : `<div style="background:#E9F7EE; border:1px solid #A7DCBB; border-radius:12px; padding:12px 13px; margin-top:12px;">
         <div style="font-weight:800; color:#1E7A43; font-size:14.5px;">✓ Rechtzeitig – kostenfrei</div>
-        <div style="font-size:13px; color:#1E5B37; line-height:1.5; margin-top:5px;">Du sagst rechtzeitig ab (Frist: ${v.frist} Werktage). Für diese Absage entstehen <b>keine Kosten</b>.</div></div>`;
+        <div style="font-size:13px; color:#1E5B37; line-height:1.5; margin-top:5px;">${v.frist_satz ? esc(v.frist_satz) : `Du sagst rechtzeitig ab (Frist: ${v.frist} Werktage). Für diese Absage entstehen <b>keine Kosten</b>.`}</div></div>`;
   fsModal(`
     <div style="font-size:17px; font-weight:800; color:var(--dark); margin-bottom:4px;">Warum sagst du ab?</div>
     <div style="font-size:13.5px; color:var(--gray); margin-bottom:10px;">${fsTerminText(v)}</div>
@@ -5367,7 +5378,7 @@ async function fsStornoAusfuehren() {
   } catch (e) { v = { ok: false, fehler: "Verbindung fehlgeschlagen." }; }
   fsModalSchliessen();
   if (!v || !v.ok) { fsToast((v && v.fehler) || "Absage fehlgeschlagen."); return; }
-  fsToast(v.kostenpflichtig ? `Abgesagt · Fehlstunde ${fsEuro(v.betrag)} berechnet` : "Fahrstunde abgesagt – kostenfrei ✓");
+  fsToast(v.kostenpflichtig ? `Abgesagt · Fehlstunde ${fsEuro(v.betrag)} berechnet` : (v.simulator ? "Simulatorstunde abgesagt – Einheiten zurück ✓" : "Fahrstunde abgesagt – kostenfrei ✓"));
   renderFahrstunden();
 }
 
@@ -5776,6 +5787,232 @@ const TABS = [
   { id: "chat", label: "Chat", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a7.5 7.5 0 0 1-7.5 7.5H8L4 22v-4.2A7.5 7.5 0 0 1 12.5 4.5 7.5 7.5 0 0 1 20 12z"/></svg>' },
   { id: "mediathek", label: "Lernen", icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5C10.5 5 8 4.5 4 5v13c4-.5 6.5 0 8 1.5"/><path d="M12 6.5C13.5 5 16 4.5 20 5v13c-4-.5-6.5 0-8 1.5"/><path d="M12 6.5v13"/></svg>' },
 ];
+// ── Fahrsimulator: Paket kaufen, Simulatorstunden buchen und absagen ──
+// (Klaus, 25.11.2026) Alle Regeln prueft der Server; hier wird nur gezeigt.
+// 7-Tage-Fuchs-Karteien bekommen vom Server "berechtigt: false" und sehen
+// weder Karte noch Kachel.
+let simInfo = null, simDauer = 0, simZeitenDaten = null, simWahl = null;
+
+async function simRuf(pfad, daten) {
+  try {
+    const r = await fetch(pfad, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ token }, daten || {})) });
+    return await r.json();
+  } catch (e) { return { ok: false, fehler: "Verbindung fehlgeschlagen. Bitte gleich noch einmal." }; }
+}
+function simKopf() {
+  return `<button class="btn-ghost" onclick="renderHome()">← Zurück</button>
+    <h1 style="margin-bottom:2px;">Fahrsimulator</h1>`;
+}
+function simDatumLang(iso) {
+  const d = new Date(String(iso).slice(0, 10) + "T12:00:00");
+  return d.toLocaleDateString("de-DE", { weekday: "long", day: "numeric", month: "long" });
+}
+function simPlus(hhmm, m) {
+  const [h, mi] = String(hhmm).split(":").map(Number); const t = h * 60 + mi + Number(m || 0);
+  return String(Math.floor(t / 60) % 24).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
+}
+
+// Startseite: Karte "Neu: Fahrsimulator" bzw. offenes Kontingent
+function sdSimHTML(d) {
+  const s = d && d.simulator;
+  if (!s || !s.karte) return "";
+  if (s.offen > 0) {
+    return `<div class="sd-frei" onclick="renderSimulator()">
+        <div class="sd-eyebrow">Fahrsimulator</div>
+        <div class="sd-gross">${s.offen === 1 ? "1 Einheit" : s.offen + " Einheiten"} offen</div>
+        <div class="sd-meta">${s.buchungen ? (s.buchungen === 1 ? "1 Termin gebucht" : s.buchungen + " Termine gebucht") : "Jetzt einen Termin am Simulator buchen"}</div>
+        <div class="sd-knopfreihe"><button class="sd-knopf voll">Termin buchen</button></div>
+      </div>`;
+  }
+  return `<div class="sd-frei" onclick="renderSimulator()">
+      <div class="sd-eyebrow">Neu</div>
+      <div class="sd-gross">${esc(s.text || "Neu: Fahrsimulator")}</div>
+      <div class="sd-meta">Üben am Simulator bei 7 Tage Fuchs, Roedernallee 183</div>
+      <div class="sd-knopfreihe"><button class="sd-knopf voll">Zum Paket</button></div>
+    </div>`;
+}
+
+// 26.11.2026 (Klaus): Erklaerblock - auch ohne Paket sichtbar. Paketdaten aus den Einstellungen.
+function simErklaerHTML(p) {
+  p = p || {};
+  const paket = `${p.einheiten || 6} Einheiten à 45 Min. für ${p.preis_text || "99,95 €"}${p.zusatz ? " " + p.zusatz : ""}`;
+  const z = "font-size:14px; line-height:1.45; color:var(--dark);";
+  return `<div class="card" id="simErklaer" style="display:block;">
+    <div style="font-size:16.5px; font-weight:800; color:var(--dark); line-height:1.3; margin-bottom:8px;">Fahrsimulator – sicher üben, bevor es auf die Straße geht</div>
+    <div style="${z} padding-left:14px; text-indent:-14px;">• Ohne Verkehr und ohne Stress: Lenken, Anfahren, Bremsen und Schalten in Ruhe üben.</div>
+    <div style="${z} padding-left:14px; text-indent:-14px; margin-top:3px;">• Knifflige Situationen gefahrlos erleben: Abbiegen, Vorfahrt, Überholen, Autobahn.</div>
+    <div style="${z} padding-left:14px; text-indent:-14px; margin-top:3px;">• So startest du entspannter und sicherer in deine Fahrstunden.</div>
+    <div style="${z} margin-top:10px;"><b>Was du übst:</b> Das System wählt automatisch die nächste Übung – von den Grundfertigkeiten bis zur Autobahn.</div>
+    <div style="${z} margin-top:6px;"><b>Wo:</b> Fahrschule Fuchs, Roedernallee 183, 13407 Berlin – während der Öffnungszeiten.</div>
+    <div style="${z} margin-top:6px;"><b>Paket:</b> ${esc(paket)}. Pro Termin buchst du 90, 135 oder 180 Min. (2–4 Übungen). Absage bis 24 Std. vorher kostenlos.</div>
+  </div>`;
+}
+// 26.11.2026 (Klaus): Fortschritt bezogen aufs Paket (Summen ueber alle Pakete), keine "x von 9" in der Schueler-App.
+function simFortschrittHTML(k) {
+  k = k || {};
+  const gekauft = Number(k.gekauft || 0), genutzt = Number(k.genommen || 0) + Number(k.verfallen || 0);
+  const geplant = Number(k.geplant || 0), offen = Number(k.offen || 0);
+  const frei = k.nicht_freigeschaltet ? `<div class="meta" style="color:#8A4B10; margin-top:6px;">Ein Paket wird freigeschaltet, sobald es bezahlt ist.</div>` : "";
+  if (!gekauft) return `<div class="card" id="simFortschritt" style="display:block;">
+      <div class="eyebrow">Dein Paket</div>
+      <div style="font-size:14px; color:var(--dark); margin-top:4px;">Noch kein Paket – unten kannst du eins kaufen.</div>${frei}</div>`;
+  const anteil = x => Math.max(0, Math.min(100, Math.round(x / gekauft * 1000) / 10));
+  return `<div class="card" id="simFortschritt" style="display:block;">
+      <div class="eyebrow">Dein Paket</div>
+      <div style="height:10px; border-radius:6px; background:#F0EBE5; overflow:hidden; display:flex; margin-top:9px;">
+        <div style="width:${anteil(genutzt)}%; background:var(--orange);"></div>
+        <div style="width:${anteil(geplant)}%; background:#F5B98A;"></div></div>
+      <div style="font-size:14px; color:var(--dark); margin-top:8px;"><b>${genutzt} von ${gekauft} Einheiten genutzt</b> · ${geplant} gebucht · ${offen} frei</div>${frei}
+    </div>`;
+}
+
+async function renderSimulator() {
+  aktiv = null;
+  main.innerHTML = simKopf() + `<div class="card"><div class="meta">Lädt …</div></div>`;
+  main.scrollTop = 0;
+  const d = await simRuf("simulator/info");
+  simInfo = d;
+  if (!d || !d.ok) {
+    main.innerHTML = simKopf() + `<div class="card"><div style="font-size:14px; color:var(--gray);">${esc((d && d.fehler) || "Der Fahrsimulator ist gerade nicht erreichbar.")}</div></div>`;
+    return;
+  }
+  if (!d.berechtigt) {
+    main.innerHTML = simKopf() + `<div class="card"><div style="font-size:14px; color:var(--gray);">${d.aktiv === false
+      ? "Die Simulator-Buchung ist gerade nicht verfügbar. Frag gern im Büro nach."
+      : "Der Fahrsimulator ist in deiner Ausbildung fest eingeplant – das Büro trägt deine Termine ein."}</div></div>`;
+    return;
+  }
+  const k = d.kontingent || {}, p = d.paket || {};
+  const dauern = d.dauern || [];
+  if (!dauern.includes(simDauer)) simDauer = dauern[0] || 0;
+  const buchungen = (d.buchungen || []).map(b => `<div class="card">
+      <div style="font-size:16px; font-weight:800; color:var(--dark);">${esc(simDatumLang(b.datum))}</div>
+      <div style="font-size:15px; font-weight:700; color:var(--orange);">${esc(b.beginn)}–${esc(b.ende)} Uhr · ${b.dauer} Min.</div>
+      <div style="font-size:13.5px; margin-top:4px;">${esc(b.titel)}</div>
+      ${b.absage_text ? `<div class="meta" style="margin-top:6px;">${esc(b.absage_text)}</div>` : ""}
+      ${b.absagbar ? `<button onclick="simAbsageFrage(${Number(b.buchung_id)})" style="${FS_KNOPF_ZWEIT}">Termin absagen</button>` : ""}
+    </div>`).join("");
+  const chips = dauern.map(m => `<button onclick="simDauerWahl(${m})"
+      style="padding:10px 14px; font-size:14px; border-radius:20px; border:1.5px solid ${m === simDauer ? "#E8600B" : "#E7D9CC"}; background:${m === simDauer ? "#E8600B" : "#fff"}; color:${m === simDauer ? "#fff" : "#1A1A1A"}; font-weight:700; cursor:pointer;">${m} Min. · ${m / 45} Übungen</button>`).join(" ");
+  main.innerHTML = simKopf() + `
+    ${simErklaerHTML(p)}
+    <div class="hint">Üben am Fahrsimulator bei <b>7 Tage Fuchs</b>, ${esc(d.ort || "")}.<br>Buchbar: ${esc(d.oeffnung_text || "")}</div>
+    ${simFortschrittHTML(k)}
+    ${buchungen ? `<h2 style="font-size:17px; margin:14px 2px 6px;">Deine Simulator-Termine</h2>${buchungen}` : ""}
+    <h2 style="font-size:17px; margin:14px 2px 6px;">Termin buchen</h2>
+    ${d.sperre ? `<div class="card"><div style="font-size:14px; color:#8A4B10;">${esc(d.sperre)}</div></div>`
+      : !dauern.length ? `<div class="card"><div style="font-size:14px; color:var(--gray);">${(k.offen || 0) > 0
+          ? "Für eine Buchung brauchst du mindestens 2 Einheiten (90 Minuten)." : "Du hast gerade keine Einheiten. Hol dir unten ein Paket."}</div></div>`
+      : `<div style="display:flex; gap:7px; flex-wrap:wrap; margin:2px 0 8px;">${chips}</div><div id="simZeiten"><div class="card"><div class="meta">Freie Zeiten werden geladen …</div></div></div>`}
+    <div class="card">
+      <div style="display:flex; align-items:baseline; justify-content:space-between; gap:10px;">
+        <div><b>${esc(p.name || "Simulator-Paket")}</b></div>
+        <div style="font-size:19px; font-weight:800; color:var(--dark); white-space:nowrap;">${esc(p.preis_text || "")}</div>
+      </div>
+      <div class="meta" style="margin-top:4px;">Mehrere Pakete zählen zusammen. Freigeschaltet wird nach der Zahlung.</div>
+      <div id="simKaufFehler" style="color:#B3261E; font-size:13.5px; margin-top:6px;"></div>
+      ${d.bezahlen_moeglich ? `<button class="btn-primary" style="width:100%; margin-top:10px;" onclick="simKaufen()">Paket kaufen und bezahlen</button>` : ""}
+      <div class="meta" style="margin-top:8px;">${esc(d.hinweis_kauf || "Paket im Büro oder per Überweisung kaufen.")}</div>
+    </div>
+    <div class="hint" style="margin-top:2px;">${(d.regeln || []).map(esc).join(" · ")}</div>`;
+  if (!d.sperre && dauern.length) simZeitenLaden();
+}
+
+function simDauerWahl(m) { simDauer = m; renderSimulator(); }
+
+async function simZeitenLaden() {
+  const el = document.getElementById("simZeiten");
+  if (!el) return;
+  const z = await simRuf("simulator/zeiten", { dauer: simDauer });
+  simZeitenDaten = z;
+  if (!document.getElementById("simZeiten")) return;
+  if (!z || !z.ok) { el.innerHTML = `<div class="card"><div style="font-size:14px; color:var(--gray);">${esc((z && z.fehler) || "Die freien Zeiten sind gerade nicht abrufbar.")}</div></div>`; return; }
+  if (z.sperre) { el.innerHTML = `<div class="card"><div style="font-size:14px; color:#8A4B10;">${esc(z.sperre)}</div></div>`; return; }
+  const vorschau = (z.themen_vorschau || []).length ? `<div class="meta" style="margin:0 2px 8px;">Du übst: <b>${esc(z.themen_vorschau.join(", "))}</b></div>` : "";
+  if (!(z.tage || []).length) { el.innerHTML = vorschau + `<div class="card"><div style="font-size:14px; color:var(--gray);">In den nächsten Wochen ist für ${simDauer} Minuten nichts mehr frei. Probier eine kürzere Dauer oder schau später noch einmal.</div></div>`; return; }
+  el.innerHTML = vorschau + z.tage.map(t => `<div class="card">
+      <div style="font-size:15.5px; font-weight:800; color:var(--dark); margin-bottom:8px;">${esc(simDatumLang(t.datum))}</div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">${t.zeiten.map(u => `<button onclick="simFrage('${t.datum}','${u}')"
+        style="padding:8px 11px; font-size:14px; border-radius:10px; border:1.5px solid #E7D9CC; background:#fff; font-weight:700; cursor:pointer;">${u}</button>`).join("")}</div>
+    </div>`).join("");
+}
+
+function simFrage(datum, beginn) {
+  simWahl = { datum, beginn, dauer: simDauer };
+  const th = (simZeitenDaten && simZeitenDaten.themen_vorschau) || [];
+  fsModal(`
+    <div style="font-size:18px; font-weight:800; color:var(--dark); margin-bottom:4px;">Simulator verbindlich buchen?</div>
+    <div style="font-size:15px; font-weight:700; color:var(--orange);">${esc(simDatumLang(datum))}, ${esc(beginn)}–${esc(simPlus(beginn, simDauer))} Uhr</div>
+    <div style="font-size:14px; margin-top:8px; line-height:1.45;">Du übst: <b>${esc(th.join(", "))}</b><br>
+      📍 Fahrschule Fuchs, ${esc((simInfo && simInfo.ort || "").replace(/^Fahrschule Fuchs,\s*/, ""))}<br>
+      Verbraucht ${simDauer / 45} Einheiten. Kostenfreie Absage bis 24 Stunden vorher.</div>
+    <div id="simFrageFehler" style="font-size:13px; color:#D64545; text-align:center; margin-top:8px; min-height:16px;"></div>
+    <button onclick="simBuchen()" style="margin-top:6px; ${FS_KNOPF_HAUPT}">Verbindlich buchen</button>
+    <button onclick="fsModalSchliessen()" style="${FS_KNOPF_ZWEIT}">Abbrechen</button>`);
+}
+
+async function simBuchen() {
+  if (!simWahl) return;
+  const d = await simRuf("simulator/buchen", simWahl);
+  if (!d || !d.ok) {
+    const f = document.getElementById("simFrageFehler");
+    if (f) f.textContent = (d && d.fehler) || "Buchen fehlgeschlagen.";
+    if (d && (d.vergeben || d.code)) simZeitenLaden();
+    return;
+  }
+  fsModal(`
+    <div style="font-size:18px; font-weight:800; color:#1E7A43; margin-bottom:6px;">Gebucht ✓</div>
+    <div style="font-size:15px; font-weight:700;">${esc(simDatumLang(d.datum))}, ${esc(d.beginn)}–${esc(d.ende)} Uhr</div>
+    <div style="font-size:14px; margin-top:6px; line-height:1.45;">${esc(d.titel || "")}</div>
+    <div class="meta" style="margin-top:8px;">Der Termin steht jetzt unter „Fahrstunden“. Noch offen: ${d.kontingent ? d.kontingent.offen : "?"} Einheiten.</div>
+    <button onclick="fsModalSchliessen(); renderSimulator();" style="margin-top:12px; ${FS_KNOPF_HAUPT}">Fertig</button>`);
+}
+
+function simAbsageFrage(id) {
+  const b = ((simInfo && simInfo.buchungen) || []).find(x => Number(x.buchung_id) === Number(id));
+  if (!b) return;
+  fsModal(`
+    <div style="font-size:18px; font-weight:800; color:var(--dark); margin-bottom:4px;">Simulator-Termin absagen?</div>
+    <div style="font-size:14px; color:var(--gray); margin-bottom:8px;">${esc(simDatumLang(b.datum))}, ${esc(b.beginn)}–${esc(b.ende)} Uhr</div>
+    <div style="background:#E9F7EE; border:1px solid #A7DCBB; border-radius:12px; padding:10px 12px; font-size:13.5px; color:#1E5B37;">✓ Rechtzeitig – kostenfrei. Deine ${b.dauer / 45} Einheiten bekommst du zurück.</div>
+    <div id="simAbsFehler" style="font-size:13px; color:#D64545; text-align:center; margin-top:8px; min-height:16px;"></div>
+    <button onclick="fsModalSchliessen()" style="margin-top:6px; ${FS_KNOPF_HAUPT}">Termin behalten</button>
+    <button onclick="simAbsagen(${Number(id)})" style="${FS_KNOPF_KLEIN}">Ja, absagen</button>`);
+}
+
+async function simAbsagen(id) {
+  const d = await simRuf("simulator/absagen", { buchung_id: id });
+  if (!d || !d.ok) { const f = document.getElementById("simAbsFehler"); if (f) f.textContent = (d && d.fehler) || "Absage fehlgeschlagen."; return; }
+  fsModalSchliessen();
+  fsToast("Simulator-Termin abgesagt – Einheiten zurück ✓");
+  renderSimulator();
+}
+
+async function simKaufen() {
+  const f = document.getElementById("simKaufFehler");
+  if (f) f.textContent = "";
+  const d = await simRuf("simulator/kaufen");
+  if (!d || !d.ok || !d.url) { if (f) f.textContent = (d && d.fehler) || "Die Bezahlseite ließ sich nicht öffnen. Bitte später noch einmal."; return; }
+  try { localStorage.setItem("fuchs_zahlung", d.id); localStorage.setItem("fuchs_sim", d.id); } catch (e) {}
+  window.location.href = d.url;
+}
+
+// Rueckkehr von der Bezahlseite: Ist das Paket freigeschaltet?
+async function simRueckkehr(sid) {
+  try { localStorage.removeItem("fuchs_sim"); } catch (e) {}
+  for (let i = 0; i < 8; i++) {
+    const d = await simRuf("simulator/kauf-status", { id: sid });
+    if (d && d.gefunden && d.status === "freigeschaltet") {
+      alert("Danke! 🦊 Dein Simulator-Paket ist freigeschaltet: " + d.einheiten + " Einheiten à 45 Min.\n\nJetzt kannst du einen Termin buchen.");
+      renderSimulator();
+      return;
+    }
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  alert("Danke! Deine Zahlung ist angekommen. Das Paket wird gerade freigeschaltet – schau gleich unter „Fahrsimulator“ nach. 🦊");
+}
+
 function demoHinweis(label) {
   let t = document.getElementById("toast");
   if (!t) {
